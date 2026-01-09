@@ -168,7 +168,6 @@ export const participant = onchainTable(
     isRevnet: t.boolean(),
     address: t.hex().notNull(),
     firstOwned: t.integer(),
-    cashOutValue: t.bigint().notNull().default(BigInt(0)),
     borrowableAmount: t.bigint().notNull().default(BigInt(0)),
   }),
   (t) => ({
