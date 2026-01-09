@@ -1,7 +1,6 @@
 import { ponder, type Context, type Event } from "ponder:registry";
 import { zeroAddress } from "viem";
 import { ERC20ToProjectId, participant, project } from "ponder:schema";
-import { refreshParticipantCashoutValue } from "../../lib/cashout-coefficients";
 
 ponder.on("ERC20:Transfer", handleTransfer);
 
@@ -45,12 +44,6 @@ async function handleTransfer(params: {
         balance: row.balance - value,
       }));
 
-    await refreshParticipantCashoutValue({
-      db: context.db,
-      chainId,
-      projectId,
-      participantAddress: from,
-    });
   }
 
   // Increase the amount for the receiver
@@ -71,11 +64,5 @@ async function handleTransfer(params: {
         balance: row.balance + value,
       }));
 
-    await refreshParticipantCashoutValue({
-      db: context.db,
-      chainId,
-      projectId,
-      participantAddress: to,
-    });
   }
 }

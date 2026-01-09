@@ -1,6 +1,5 @@
-import { and, eq, sql } from "ponder";
 import type { Context } from "ponder:registry";
-import { cashoutCoefficientSnapshot, participant, project, ruleset } from "ponder:schema";
+import { cashoutCoefficientSnapshot, project, ruleset } from "ponder:schema";
 
 const MAX_TAX = 10_000n;
 const WAD = 1_000_000_000_000_000_000n; // 1 × 10¹⁸
@@ -20,12 +19,7 @@ const WAD2 = WAD * WAD; // 1 × 10³⁶ – for B only
  * B = overflow * tax / MAX_TAX / (totalSupply ** 2)
  *
  * By precomputing and storing these two coefficients (A and B) per project,
- * we minimize recalculation overhead:
- * - On regular transfers (no mint/burn), only two participant rows are updated.
- * - On mint/burn, overflow changes, or tax changes, we recompute A and B once per project,
- *   then update all participants in a single SQL pass.
- *
- * This approach ensures efficient, near-real-time updates with minimal database workload.
+ * we minimize recalculation overhead for read-time cash-out computations.
  */
 
 /**
@@ -125,113 +119,4 @@ export async function refreshProjectCashoutCoefficients({
     });
   }
 
-  await bulkRefreshParticipants({
-    db,
-    chainId,
-    projectId,
-    A,
-    B,
-  });
-}
-
-/**
- * One-shot recompute of cashOutValue for every holder of {chainId, projectId}.
- * Runs in ≤ 2 ms even with 500 000 rows because it's a single UPDATE statement.
- */
-async function bulkRefreshParticipants({
-  db,
-  chainId,
-  projectId,
-  A, // 18-dec BigInt  (cashout__A)
-  B, // 36-dec BigInt  (cashout__B)
-}: {
-  db: Context["db"];
-  chainId: number;
-  projectId: number;
-  A: bigint;
-  B: bigint;
-}) {
-  const A_ = A.toString(); // cast once → avoids bigint-literal overflow
-  const B_ = B.toString();
-  const WAD_ = WAD.toString();
-  const WAD2_ = WAD2.toString();
-
-  await db.sql
-    .update(participant)
-    .set({
-      /**   cashOutValue =
-       *     (A * balance / 1e18)
-       *   + (B * balance^2 / 1e36)
-       */
-      cashOutValue: sql`
-        (${sql.raw(A_)}::numeric * ${participant.balance} / ${sql.raw(WAD_)})
-        + (${sql.raw(B_)}::numeric * ${participant.balance} * ${
-        participant.balance
-      } / ${sql.raw(WAD2_)})
-      `,
-    })
-    .where(
-      and(
-        eq(participant.chainId, chainId),
-        eq(participant.projectId, projectId)
-      )
-    );
-}
-
-/**
- * Recalculate cashOutValue for a single participant after a balance change.
- * Typically called from ERC20 transfer handler when no mint/burn occurs.
- */
-export async function refreshParticipantCashoutValue({
-  db,
-  chainId,
-  projectId,
-  participantAddress,
-}: {
-  db: Context["db"];
-  chainId: number;
-  projectId: number;
-  participantAddress: `0x${string}`;
-}) {
-  // Fetch participant's current balance
-  const participantRow = await db.find(participant, {
-    chainId,
-    projectId,
-    address: participantAddress,
-  });
-
-  if (!participantRow) {
-    throw new Error("Participant not found");
-  }
-
-  // Fetch project's current coefficients A and B
-  const projectRow = await db.find(project, {
-    chainId,
-    projectId,
-  });
-
-  if (
-    !projectRow ||
-    projectRow.cashout__A === undefined ||
-    projectRow.cashout__B === undefined
-  ) {
-    throw new Error("Project coefficients not found");
-  }
-
-  const { cashout__A: A, cashout__B: B } = projectRow;
-  const balance = participantRow.balance;
-
-  // Compute new cashOutValue with proper scaling
-  const cashOutValue = (A * balance) / WAD + (B * balance * balance) / WAD2;
-
-  // Update participant's cashOutValue
-  await db
-    .update(participant, {
-      chainId,
-      projectId,
-      address: participantAddress,
-    })
-    .set({
-      cashOutValue,
-    });
 }
