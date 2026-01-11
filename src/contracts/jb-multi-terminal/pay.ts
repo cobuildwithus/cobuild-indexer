@@ -1,5 +1,11 @@
 import { type Context, type Event, ponder } from "ponder:registry";
-import { activityLog, participant, payEvent, project } from "ponder:schema";
+import {
+  activityLog,
+  participant,
+  payEvent,
+  payEventByTxBeneficiary,
+  project,
+} from "ponder:schema";
 import { refreshProjectCashoutCoefficients } from "../../lib/cashout-coefficients";
 import { formatAmount } from "../../util/format-amount";
 
@@ -49,7 +55,7 @@ async function pay(params: {
     throw new Error("Project has no sucker group id");
   }
 
-  await context.db.insert(payEvent).values({
+  const insertedPayEvent = await context.db.insert(payEvent).values({
     chainId,
     txHash: event.transaction.hash,
     timestamp: Number(event.block.timestamp),
@@ -68,6 +74,20 @@ async function pay(params: {
     metadata,
     suckerGroupId: updatedProject.suckerGroupId,
   });
+
+  await context.db
+    .insert(payEventByTxBeneficiary)
+    .values({
+      chainId,
+      txHash: event.transaction.hash,
+      beneficiary,
+      payEventId: insertedPayEvent.id,
+      payLogIndex: event.log.logIndex,
+    })
+    .onConflictDoUpdate(() => ({
+      payEventId: insertedPayEvent.id,
+      payLogIndex: event.log.logIndex,
+    }));
 
   if (newlyIssuedTokenCount > 0) {
     await context.db.insert(activityLog).values({

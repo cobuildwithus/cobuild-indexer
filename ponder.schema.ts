@@ -387,6 +387,20 @@ export const ERC20ToProjectId = onchainTable(
   })
 );
 
+export const payEventByTxBeneficiary = onchainTable(
+  "_kv_pay_event_by_tx_beneficiary",
+  (t) => ({
+    chainId: t.integer().notNull(),
+    txHash: t.hex().notNull(),
+    beneficiary: t.hex().notNull(),
+    payEventId: t.text().notNull(),
+    payLogIndex: t.integer().notNull(),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.chainId, table.txHash, table.beneficiary] }),
+  })
+);
+
 export const sucker = onchainTable(
   "sucker",
   (t) => ({

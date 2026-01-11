@@ -15,12 +15,12 @@
   "dependencies": {
     "hono": "^4.5.0",
     "juice-sdk-core": "^2.1.2",
-    "ponder": "^0.16.0",
+    "ponder": "^0.16.1",
     "viem": "^2.21.3"
   },
   "devDependencies": {
-    "@wagmi/cli": "^2.5.1",
     "@types/node": "^20.9.0",
+    "@wagmi/cli": "^2.5.1",
     "eslint": "^8.53.0",
     "eslint-config-ponder": "^0.11.4",
     "typescript": "^5.2.2"
