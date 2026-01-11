@@ -5,8 +5,6 @@ import schema from "ponder:schema";
 
 const app = new Hono();
 
-app.use("/sql/*", client({ db, schema }));
-
 app.use("/", graphql({ db, schema }));
 app.use("/graphql", graphql({ db, schema }));
 
