@@ -97,15 +97,5 @@ export default createConfig({
       startBlock: "latest",
       interval: 600 / 2, // Every 10 minutes (base block time is 2s)
     },
-    CheckRulesetEthereum: {
-      chain: "ethereum",
-      startBlock: "latest",
-      interval: 600 / 12, // Every 10 minutes (ethereum block time is ~12s)
-    },
-    CheckRulesetOptimism: {
-      chain: "optimism",
-      startBlock: "latest",
-      interval: 600 / 2, // Every 10 minutes (optimism block time is 2s)
-    },
   },
 });

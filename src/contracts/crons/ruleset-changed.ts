@@ -2,20 +2,10 @@ import { ponder, type Context, type Event } from "ponder:registry";
 import { project, rulesetActivationState } from "ponder:schema";
 
 ponder.on("CheckRulesetBase:block", handleRulesetActivation);
-ponder.on("CheckRulesetEthereum:block", handleRulesetActivation);
-ponder.on("CheckRulesetOptimism:block", handleRulesetActivation);
 
 async function handleRulesetActivation(params: {
-  event: Event<
-    | "CheckRulesetBase:block"
-    | "CheckRulesetEthereum:block"
-    | "CheckRulesetOptimism:block"
-  >;
-  context: Context<
-    | "CheckRulesetBase:block"
-    | "CheckRulesetEthereum:block"
-    | "CheckRulesetOptimism:block"
-  >;
+  event: Event<"CheckRulesetBase:block">;
+  context: Context<"CheckRulesetBase:block">;
 }) {
   const { context, event } = params;
   const chainId = context.chain.id;
