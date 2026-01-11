@@ -189,6 +189,8 @@ export const payEvent = onchainTable("pay_event", (t) => ({
   beneficiary: t.hex().notNull(),
   amount: t.bigint().notNull(),
   newlyIssuedTokenCount: t.bigint().notNull(),
+  buybackTokenCount: t.bigint().notNull().default(BigInt(0)),
+  effectiveTokenCount: t.bigint().notNull().default(BigInt(0)),
   memo: t.text().notNull(),
   metadata: t.hex().notNull(),
   caller: t.hex().notNull(),

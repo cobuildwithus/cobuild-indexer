@@ -37,10 +37,18 @@ async function mintTokens(params: {
         id: mapping.payEventId,
       });
 
-      if (mappedPayEvent && mappedPayEvent.newlyIssuedTokenCount === 0n) {
+      if (
+        mappedPayEvent &&
+        mappedPayEvent.newlyIssuedTokenCount === 0n &&
+        mappedPayEvent.buybackTokenCount === 0n
+      ) {
         await context.db
           .update(payEvent, { id: mapping.payEventId })
-          .set({ newlyIssuedTokenCount: beneficiaryTokenCount });
+          .set({
+            buybackTokenCount: beneficiaryTokenCount,
+            effectiveTokenCount:
+              mappedPayEvent.newlyIssuedTokenCount + beneficiaryTokenCount,
+          });
       }
     }
   }

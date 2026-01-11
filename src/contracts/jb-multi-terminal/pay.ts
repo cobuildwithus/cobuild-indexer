@@ -70,6 +70,8 @@ async function pay(params: {
     beneficiary,
     amount,
     newlyIssuedTokenCount,
+    buybackTokenCount: 0n,
+    effectiveTokenCount: newlyIssuedTokenCount,
     memo,
     metadata,
     suckerGroupId: updatedProject.suckerGroupId,
