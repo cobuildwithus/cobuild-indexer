@@ -31,7 +31,6 @@ async function create(params: {
     createdAt: Number(block.timestamp),
   });
 
-  // Create the project with the suckerGroupId
   await context.db.insert(project).values({
     chainId,
     projectId: projectIdNum,
