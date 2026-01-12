@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   ponder@0.16.1:
-    hash: h5p67zoj5ldu4ckmj5tefjuddm
+    hash: k2lfxhryehms5qooiujocajdpy
     path: patches/ponder@0.16.1.patch
 
 importers:
@@ -21,7 +21,7 @@ importers:
         version: 2.1.2
       ponder:
         specifier: ^0.16.1
-        version: 0.16.1(patch_hash=h5p67zoj5ldu4ckmj5tefjuddm)(@opentelemetry/api@1.9.0)(@types/node@20.19.27)(hono@4.11.3)(typescript@5.9.3)(viem@2.44.0(typescript@5.9.3)(zod@4.3.5))(zod@4.3.5)
+        version: 0.16.1(patch_hash=k2lfxhryehms5qooiujocajdpy)(@opentelemetry/api@1.9.0)(@types/node@20.19.27)(hono@4.11.3)(typescript@5.9.3)(viem@2.44.0(typescript@5.9.3)(zod@4.3.5))(zod@4.3.5)
       viem:
         specifier: ^2.21.3
         version: 2.44.0(typescript@5.9.3)(zod@4.3.5)
@@ -3326,7 +3326,7 @@ snapshots:
       sonic-boom: 3.8.1
       thread-stream: 2.7.0
 
-  ponder@0.16.1(patch_hash=h5p67zoj5ldu4ckmj5tefjuddm)(@opentelemetry/api@1.9.0)(@types/node@20.19.27)(hono@4.11.3)(typescript@5.9.3)(viem@2.44.0(typescript@5.9.3)(zod@4.3.5))(zod@4.3.5):
+  ponder@0.16.1(patch_hash=k2lfxhryehms5qooiujocajdpy)(@opentelemetry/api@1.9.0)(@types/node@20.19.27)(hono@4.11.3)(typescript@5.9.3)(viem@2.44.0(typescript@5.9.3)(zod@4.3.5))(zod@4.3.5):
     dependencies:
       '@babel/code-frame': 7.27.1
       '@commander-js/extra-typings': 12.1.0(commander@12.1.0)
