@@ -15,7 +15,7 @@ import {
 } from "juice-sdk-core";
 
 const BASE_PROJECT_IDS: bigint[] = [6n];
-const BASE_TOKEN_ALLOWLIST = [
+const BASE_JB_PROJECT_TOKEN_ADDRESSES = [
   "0x794FDDbe0609CD704d7920eB3f950a57D4661193",
 ] as const;
 
@@ -77,7 +77,7 @@ export default createConfig({
     },
     ERC20: {
       abi: erc20Abi,
-      address: BASE_TOKEN_ALLOWLIST,
+      address: BASE_JB_PROJECT_TOKEN_ADDRESSES,
       chain: config.ERC20,
     },
     JBMultiTerminal: {
