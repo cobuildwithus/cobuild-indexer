@@ -1,8 +1,8 @@
-import { createConfig } from "ponder";
+import { createConfig, factory } from "ponder";
 import { config, getChainsAndRpcUrls, IndexerConfig } from "./src/lib/config";
 import { cobuildSwapImplAbi } from "./abis";
 import { contracts } from "./addresses";
-import { erc20Abi } from "viem";
+import { erc20Abi, getAbiItem } from "viem";
 import {
   jbControllerAbi,
   jbMultiTerminalAbi,
@@ -28,7 +28,9 @@ export default createConfig({
         ...config.RevDeployer,
         base: {
           ...config.RevDeployer.base,
-          filter: [{ event: "DeployRevnet", args: { revnetId: BASE_PROJECT_IDS } }],
+          filter: [
+            { event: "DeployRevnet", args: { revnetId: BASE_PROJECT_IDS } },
+          ],
         },
       },
       abi: revDeployerAbi,
@@ -149,7 +151,14 @@ export default createConfig({
     },
     TokenBought: {
       abi: erc20Abi,
-      address: BASE_TOKEN_ALLOWLIST,
+      address: factory({
+        address: contracts.CobuildSwap,
+        event: getAbiItem({
+          abi: cobuildSwapImplAbi,
+          name: "BatchReactionSwap",
+        }),
+        parameter: "tokenOut",
+      }),
       filter: {
         event: "Transfer",
         args: { from: contracts.CobuildSwap },
