@@ -1,5 +1,18 @@
 import { createConfig, factory } from "ponder";
-import { parseAbiItem } from "viem";
+import { config, getChainsAndRpcUrls, IndexerConfig } from "./src/lib/config";
+import { cobuildSwapImplAbi } from "./abis";
+import { contracts } from "./addresses";
+import { erc20Abi, getAbiItem, parseAbiItem } from "viem";
+import {
+  jbControllerAbi,
+  jbMultiTerminalAbi,
+  jbProjectsAbi,
+  jbRulesetsAbi,
+  jbSuckerRegistryAbi,
+  jbTokensAbi,
+  revDeployerAbi,
+  revLoansAbi,
+} from "juice-sdk-core";
 
 import { FlowAbi } from "./abis/Flow";
 import { GoalTreasuryAbi } from "./abis/GoalTreasury";
@@ -13,8 +26,14 @@ import { GoalFlowAllocationLedgerPipelineAbi } from "./abis/GoalFlowAllocationLe
 import { GoalRevnetSplitHookAbi } from "./abis/GoalRevnetSplitHook";
 import { SingleAllocatorStrategyAbi } from "./abis/SingleAllocatorStrategy";
 
+const BASE_PROJECT_IDS: bigint[] = [6n];
+const BASE_JB_PROJECT_TOKEN_ADDRESSES = [
+  "0x794FDDbe0609CD704d7920eB3f950a57D4661193",
+] as const;
+
 /**
- * Placeholder deployment addresses (replace with real addresses + start blocks).
+ * Placeholder deployment addresses for scaffold contracts.
+ * Replace with real deployments and start blocks when available.
  */
 const ADDRESSES = {
   GOAL_FLOW: "0x1111111111111111111111111111111111111111",
@@ -29,9 +48,6 @@ const ADDRESSES = {
   SINGLE_ALLOCATOR_STRATEGY: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 } as const;
 
-/**
- * Factory discovery events.
- */
 const FLOW_RECIPIENT_CREATED = parseAbiItem(
   "event FlowRecipientCreated(bytes32 indexed recipientId, address indexed recipient, (address recipient, address distributionPool, uint32 managerRewardPoolFlowRatePercent, address strategy) flowRecipient)"
 );
@@ -41,22 +57,160 @@ const BUDGET_STACK_DEPLOYED = parseAbiItem(
 );
 
 export default createConfig({
-  chains: {
-    base: {
-      id: 8453,
-      rpc: process.env.PONDER_RPC_URL_8453,
-    },
-  },
+  ordering: "omnichain",
+  chains: getChainsAndRpcUrls(),
   contracts: {
-    /** Root / goal flow */
+    REVDeployer: {
+      chain: {
+        ...config.RevDeployer,
+        base: {
+          ...config.RevDeployer.base,
+          filter: [
+            { event: "DeployRevnet", args: { revnetId: BASE_PROJECT_IDS } },
+          ],
+        },
+      },
+      abi: revDeployerAbi,
+      address: contracts.REVDeployer,
+    },
+    JBTokens: {
+      chain: {
+        ...config.JBTokens,
+        base: {
+          ...config.JBTokens.base,
+          filter: [
+            { event: "DeployERC20", args: { projectId: BASE_PROJECT_IDS } },
+            { event: "Mint", args: { projectId: BASE_PROJECT_IDS } },
+            { event: "Burn", args: { projectId: BASE_PROJECT_IDS } },
+          ],
+        },
+      },
+      abi: jbTokensAbi,
+      address: contracts.JBTokens,
+    },
+    JBProjects: {
+      chain: config.JBProjects,
+      abi: jbProjectsAbi,
+      address: contracts.JBProjects,
+    },
+    JBController: {
+      chain: {
+        ...config.JBController,
+        base: {
+          ...config.JBController.base,
+          filter: [
+            { event: "LaunchProject", args: {} },
+            { event: "MintTokens", args: { projectId: BASE_PROJECT_IDS } },
+            {
+              event: "SendReservedTokensToSplits",
+              args: { projectId: BASE_PROJECT_IDS },
+            },
+            { event: "SetUri", args: { projectId: BASE_PROJECT_IDS } },
+          ],
+        },
+      },
+      abi: jbControllerAbi,
+      address: contracts.JBController,
+    },
+    ERC20: {
+      abi: erc20Abi,
+      address: BASE_JB_PROJECT_TOKEN_ADDRESSES,
+      chain: config.ERC20,
+    },
+    JBMultiTerminal: {
+      chain: {
+        ...config.JBMultiTerminal,
+        base: {
+          ...config.JBMultiTerminal.base,
+          filter: [
+            { event: "AddToBalance", args: { projectId: BASE_PROJECT_IDS } },
+            { event: "CashOutTokens", args: { projectId: BASE_PROJECT_IDS } },
+            { event: "Pay", args: { projectId: BASE_PROJECT_IDS } },
+            { event: "SendPayouts", args: { projectId: BASE_PROJECT_IDS } },
+            {
+              event: "SetAccountingContext",
+              args: { projectId: BASE_PROJECT_IDS },
+            },
+            { event: "UseAllowance", args: { projectId: BASE_PROJECT_IDS } },
+          ],
+        },
+      },
+      abi: jbMultiTerminalAbi,
+      address: contracts.JBMultiTerminal,
+    },
+    JBRulesets: {
+      chain: {
+        ...config.JBRulesets,
+        base: {
+          ...config.JBRulesets.base,
+          filter: [
+            { event: "RulesetQueued", args: { projectId: BASE_PROJECT_IDS } },
+            {
+              event: "RulesetInitialized",
+              args: { projectId: BASE_PROJECT_IDS },
+            },
+          ],
+        },
+      },
+      abi: jbRulesetsAbi,
+      address: contracts.JBRulesets,
+    },
+    RevLoans: {
+      chain: {
+        ...config.RevLoans,
+        base: {
+          ...config.RevLoans.base,
+          filter: [
+            { event: "Borrow", args: { revnetId: BASE_PROJECT_IDS } },
+            { event: "Liquidate", args: { revnetId: BASE_PROJECT_IDS } },
+            {
+              event: "ReallocateCollateral",
+              args: { revnetId: BASE_PROJECT_IDS },
+            },
+            { event: "RepayLoan", args: { revnetId: BASE_PROJECT_IDS } },
+            { event: "Transfer", args: {} },
+          ],
+        },
+      },
+      abi: revLoansAbi,
+      address: contracts.REVLoans,
+    },
+    JBSuckersRegistry: {
+      chain: config.JBSuckerRegistry,
+      abi: jbSuckerRegistryAbi,
+      address: contracts.JBSuckerRegistry,
+    },
+    CobuildSwap: {
+      chain: "base",
+      abi: cobuildSwapImplAbi,
+      address: contracts.CobuildSwap,
+      startBlock: IndexerConfig.CobuildSwap.base.startBlock,
+    },
+    TokenBought: {
+      abi: erc20Abi,
+      address: factory({
+        address: contracts.CobuildSwap,
+        event: getAbiItem({
+          abi: cobuildSwapImplAbi,
+          name: "BatchReactionSwap",
+        }),
+        parameter: "tokenOut",
+      }),
+      filter: {
+        event: "Transfer",
+        args: { from: contracts.CobuildSwap },
+      },
+      chain: "base",
+      startBlock: IndexerConfig.CobuildSwap.base.startBlock,
+    },
+
+    // Integrated scaffold stack (goal/budget flows + telemetry)
     GoalFlow: {
       abi: FlowAbi,
       chain: "base",
       address: ADDRESSES.GOAL_FLOW,
       startBlock: 0,
     },
-
-    /** Dynamically discovered child flows (Flow recipients) */
     ChildFlow: {
       abi: FlowAbi,
       chain: "base",
@@ -67,8 +221,6 @@ export default createConfig({
       }),
       startBlock: 0,
     },
-
-    /** Goal stack */
     GoalTreasury: {
       abi: GoalTreasuryAbi,
       chain: "base",
@@ -93,16 +245,12 @@ export default createConfig({
       address: ADDRESSES.GOAL_HOOK,
       startBlock: 0,
     },
-
-    /** Allocation pipeline */
     GoalFlowAllocationLedgerPipeline: {
       abi: GoalFlowAllocationLedgerPipelineAbi,
       chain: "base",
       address: ADDRESSES.ALLOCATION_PIPELINE,
       startBlock: 0,
     },
-
-    /** Budget system */
     BudgetStakeLedger: {
       abi: BudgetStakeLedgerAbi,
       chain: "base",
@@ -121,8 +269,6 @@ export default createConfig({
       address: ADDRESSES.BUDGET_TCR,
       startBlock: 0,
     },
-
-    /** Dynamically discovered budget treasuries + vaults deployed by BudgetTCR */
     BudgetTreasury: {
       abi: BudgetTreasuryAbi,
       chain: "base",
@@ -143,13 +289,18 @@ export default createConfig({
       }),
       startBlock: 0,
     },
-
-    /** Optional: index strategy-level events if you use SingleAllocatorStrategy */
     SingleAllocatorStrategy: {
       abi: SingleAllocatorStrategyAbi,
       chain: "base",
       address: ADDRESSES.SINGLE_ALLOCATOR_STRATEGY,
       startBlock: 0,
+    },
+  },
+  blocks: {
+    CheckRulesetBase: {
+      chain: "base",
+      startBlock: "latest",
+      interval: 600 / 2, // Every 10 minutes (base block time is 2s)
     },
   },
 });

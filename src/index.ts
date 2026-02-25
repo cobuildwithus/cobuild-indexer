@@ -1,7 +1,5 @@
 /**
- * CoBuild Protocol Ponder Indexer.
- *
- * This file imports all event handler modules so they register with `ponder.on`.
+ * Unified CoBuild indexer registry (legacy + scaffold stacks).
  */
 import "./budgets/budget-configured";
 import "./budgets/budget-finalized";
@@ -13,6 +11,33 @@ import "./budgets/success-assertion-cleared";
 import "./budgets/success-assertion-registered";
 import "./budgets/success-resolution-disabled";
 import "./budgets/terminal-side-effect-failed";
+import "./contracts/cobuild-swap/batch-reaction-swap";
+import "./contracts/crons/ruleset-changed";
+import "./contracts/erc20/transfer";
+import "./contracts/jb-controller/launch-project";
+import "./contracts/jb-controller/mint-tokens";
+import "./contracts/jb-controller/send-reserved-tokens-to-splits";
+import "./contracts/jb-controller/set-uri";
+import "./contracts/jb-multi-terminal/add-to-balance";
+import "./contracts/jb-multi-terminal/cash-out-tokens";
+import "./contracts/jb-multi-terminal/pay";
+import "./contracts/jb-multi-terminal/send-payouts";
+import "./contracts/jb-multi-terminal/set-accounting-context";
+import "./contracts/jb-multi-terminal/use-allowance";
+import "./contracts/jb-projects/create";
+import "./contracts/jb-ruleset/ruleset-initialized";
+import "./contracts/jb-ruleset/ruleset-queued";
+import "./contracts/jb-suckers-registry/sucker-deployed-for";
+import "./contracts/jb-tokens/burn";
+import "./contracts/jb-tokens/deploy-erc20";
+import "./contracts/jb-tokens/mint";
+import "./contracts/rev-deployer/deploy-revnet";
+import "./contracts/rev-loans/borrow";
+import "./contracts/rev-loans/liquidate";
+import "./contracts/rev-loans/reallocate";
+import "./contracts/rev-loans/repay";
+import "./contracts/rev-loans/transfer";
+import "./contracts/token-bought/transfer";
 import "./flow/allocation-committed";
 import "./flow/flow-initialized";
 import "./flow/flow-rate-decreased";
