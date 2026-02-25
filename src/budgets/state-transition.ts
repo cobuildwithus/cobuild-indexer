@@ -10,7 +10,7 @@ ponder.on("BudgetTreasury:StateTransition", async ({ event, context }) => {
   await context.db.sql
     .update(budgetTreasury)
     .set({
-      state: Number(event.args.toState),
+      state: Number(event.args.newState),
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })

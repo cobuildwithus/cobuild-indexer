@@ -10,8 +10,9 @@ ponder.on("RewardEscrow:GoalSuperTokenUnwrapped", async ({ event, context }) => 
   await context.db.sql
     .update(rewardEscrow)
     .set({
-      lastUnwrapAmountIn: event.args.amountIn,
-      lastUnwrapAmountOut: event.args.amountOut,
+      lastUnwrapCaller: event.args.caller,
+      lastUnwrapAmountIn: event.args.superTokenAmount,
+      lastUnwrapAmountOut: event.args.rewardTokenAmount,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })

@@ -1,5 +1,4 @@
 import { ponder } from "ponder:registry";
-import { eq } from "drizzle-orm";
 
 import { juror } from "ponder:schema";
 import { insertProtocolEvent } from "../helpers/protocolEvent";

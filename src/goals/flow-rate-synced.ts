@@ -10,8 +10,10 @@ ponder.on("GoalTreasury:FlowRateSynced", async ({ event, context }) => {
   await context.db.sql
     .update(goalTreasury)
     .set({
-      lastSyncedWeight: event.args.weight,
-      lastSyncedFlowRate: event.args.newFlowRate,
+      lastSyncedTargetRate: event.args.targetRate,
+      lastSyncedAppliedRate: event.args.appliedRate,
+      lastSyncedTreasuryBalance: event.args.treasuryBalance,
+      lastSyncedTimeRemaining: event.args.timeRemaining,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })

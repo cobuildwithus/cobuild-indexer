@@ -11,7 +11,7 @@ async function handleTargetOutflowRateUpdated(args: { event: any; context: any; 
   await context.db.sql
     .update(flow)
     .set({
-      targetOutflowRate: event.args.newTargetOutflowRate,
+      targetOutflowRate: event.args.newRate,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })

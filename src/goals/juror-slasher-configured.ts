@@ -10,6 +10,7 @@ ponder.on("GoalTreasury:JurorSlasherConfigured", async ({ event, context }) => {
   await context.db.sql
     .update(goalTreasury)
     .set({
+      jurorSlasherAuthority: event.args.authority,
       jurorSlasher: event.args.slasher,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,

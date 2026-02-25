@@ -10,6 +10,7 @@ ponder.on("GoalTreasury:GoalFinalized", async ({ event, context }) => {
   await context.db.sql
     .update(goalTreasury)
     .set({
+      state: Number(event.args.finalState),
       finalized: true,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,

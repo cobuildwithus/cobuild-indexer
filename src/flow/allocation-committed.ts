@@ -20,8 +20,9 @@ async function handleAllocationCommitted(args: { event: any; context: any; contr
   const flowId: Hex = event.log.address;
   const strategy: Hex = event.args.strategy;
   const allocationKey: bigint = event.args.allocationKey;
-  const newCommitment: Hex = event.args.commitment;
+  const newCommitment: Hex = event.args.commit;
   const newWeight: bigint = event.args.weight;
+  const snapshotVersion = Number(event.args.snapshotVersion);
   const newPackedSnapshot: Hex = event.args.packedSnapshot;
 
   const keyId = allocationKeyStateId(flowId, strategy, allocationKey);
@@ -62,6 +63,7 @@ async function handleAllocationCommitted(args: { event: any; context: any; contr
         allocationKey,
         commitment: newCommitment,
         weight: newWeight,
+        snapshotVersion,
         packedSnapshot: newPackedSnapshot,
         updatedAtBlock: event.block.number,
         updatedAtTimestamp: event.block.timestamp,
@@ -69,6 +71,7 @@ async function handleAllocationCommitted(args: { event: any; context: any; contr
       .onConflictDoUpdate({
           commitment: newCommitment,
           weight: newWeight,
+          snapshotVersion,
           packedSnapshot: newPackedSnapshot,
           updatedAtBlock: event.block.number,
           updatedAtTimestamp: event.block.timestamp,
@@ -150,6 +153,7 @@ async function handleAllocationCommitted(args: { event: any; context: any; contr
       allocationKey,
       commitment: newCommitment,
       weight: newWeight,
+      snapshotVersion,
       packedSnapshot: newPackedSnapshot,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
@@ -157,6 +161,7 @@ async function handleAllocationCommitted(args: { event: any; context: any; contr
     .onConflictDoUpdate({
         commitment: newCommitment,
         weight: newWeight,
+        snapshotVersion,
         packedSnapshot: newPackedSnapshot,
         updatedAtBlock: event.block.number,
         updatedAtTimestamp: event.block.timestamp,

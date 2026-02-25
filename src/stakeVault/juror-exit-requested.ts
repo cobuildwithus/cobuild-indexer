@@ -1,5 +1,4 @@
 import { ponder } from "ponder:registry";
-import { eq } from "drizzle-orm";
 
 import { juror } from "ponder:schema";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
@@ -20,12 +19,12 @@ async function handleJurorExitRequested(args: { event: any; context: any; contra
       vault,
       jurorAddress,
       optedIn: true,
-      exitTime: event.args.exitTime,
+      exitTime: event.args.availableAt,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
-        exitTime: event.args.exitTime,
+        exitTime: event.args.availableAt,
         updatedAtBlock: event.block.number,
         updatedAtTimestamp: event.block.timestamp,
     });

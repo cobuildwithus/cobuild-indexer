@@ -1,6 +1,9 @@
 import { parseAbi } from "viem";
 
-/** Minimal ABI for BudgetTCRFactory (events only). */
+/**
+ * Event ABI for BudgetTCRFactory.
+ * Generated from Foundry artifact in ../protocol/out.
+ */
 export const BudgetTCRFactoryAbi = parseAbi([
-  "event BudgetTCRStackDeployedForGoal(address indexed goalFlow, address indexed goalTreasury, address indexed budgetTCR, address arbitrator, address stackDeployer, address budgetSuccessResolver)",
+  "event BudgetTCRStackDeployedForGoal(address indexed sender, address indexed budgetTCR, address indexed arbitrator, address token, address goalFlow, address goalTreasury)",
 ] as const);

@@ -23,7 +23,7 @@
 ## Flow
 
 - `GoalFlow:*` and `ChildFlow:*` handlers in `src/flow/**`
-  - `FlowInitialized`, `RecipientCreated`, `FlowRecipientCreated`, `RecipientRemoved`, `MetadataSet`
+  - `Initialized`, `FlowInitialized`, `ChildFlowDeployed`, `RecipientCreated`, `FlowRecipientCreated`, `RecipientRemoved`, `MetadataSet`
   - `FlowRateIncreased`, `FlowRateDecreased`, `FlowRateIncreaseNoop`
   - `TargetOutflowRateUpdated`, `TargetOutflowRefreshFailed`
   - `AllocationCommitted`, `SuperTokenSwept`
@@ -31,23 +31,26 @@
 ## Goal Treasury
 
 - `GoalTreasury:*` handlers in `src/goals/**`
-  - `GoalConfigured`, `StateTransition`, `GoalFinalized`
+  - `Initialized`, `GoalConfigured`, `StateTransition`, `GoalFinalized`
   - `SuccessAssertionRegistered`, `SuccessAssertionCleared`, `SuccessRewardsFinalized`
-  - `DonationRecorded`, `FlowRateSynced`, `ResidualSettled`
+  - `DonationRecorded`, `FlowRateSynced`, `FlowRateSyncManualInterventionRequired`, `FlowRateZeroingFailed`, `FlowRateSyncCallFailed`
+  - `ResidualSettled`
   - `HookFundingRecorded`, `HookFundingDeferred`, `HookDeferredFundingSettled`
   - `JurorSlasherConfigured`, `TerminalSideEffectFailed`
 
 ## Budget Treasury
 
 - `BudgetTreasury:*` handlers in `src/budgets/**`
-  - `BudgetConfigured`, `StateTransition`, `BudgetFinalized`
+  - `Initialized`, `BudgetConfigured`, `StateTransition`, `BudgetFinalized`
   - `SuccessAssertionRegistered`, `SuccessAssertionCleared`, `SuccessResolutionDisabled`
-  - `DonationRecorded`, `FlowRateSynced`, `ResidualSettled`, `TerminalSideEffectFailed`
+  - `DonationRecorded`, `FlowRateSynced`, `FlowRateSyncManualInterventionRequired`, `FlowRateZeroingFailed`, `FlowRateSyncCallFailed`
+  - `ReassertGraceActivated`, `ResidualSettled`, `TerminalSideEffectFailed`
 
 ## Stake and Jurors
 
 - `GoalStakeVault:*` + `BudgetStakeVault:*` handlers in `src/stakeVault/**`
   - stake/withdraw totals, goal resolution, juror lifecycle/slashing/delegation
+  - includes `AllocationSyncFailed` telemetry
 - `BudgetStakeLedger:*` handlers in `src/stakeLedger/**`
   - `BudgetRegistered`, `BudgetRemoved`, `AllocationCheckpointed`, `StakeLedgerFinalized`
 
@@ -61,14 +64,19 @@
 
 - `BudgetTCR:*` handlers in `src/tcr/**`
   - deploy/activation/removal/sync telemetry
+  - governance/Kleros telemetry (`Initialized`, `RequestSubmitted`, `RequestEvidenceGroupID`, `MetaEvidence`, `Evidence`, `Dispute`, `Ruling`, `ItemSubmitted`, `ItemStatusChange`)
+  - funding/terminalization telemetry (`SubmissionDepositPaid`, `SubmissionDepositTransferred`, `BudgetTerminalizationStepFailed`)
 - `BudgetTCRFactory:*` handlers in `src/tcrFactory/**`
   - deployment-for-goal telemetry
 
 ## Pipeline and Hook
 
 - `GoalFlowAllocationLedgerPipeline:*` handlers in `src/pipeline/**`
+  - sync attempt/skip telemetry
 - `GoalRevnetSplitHook:*` handlers in `src/hook/**`
-- `SingleAllocatorStrategy:AllocatorChanged` in `src/strategy/**`
+  - `Initialized`, `GoalFundingProcessed`, `GoalSuccessSettlementProcessed`
+- `SingleAllocatorStrategy:*` handlers in `src/strategy/**`
+  - `AllocatorChanged`, `OwnershipTransferred`
 
 ## Common Table Touches
 

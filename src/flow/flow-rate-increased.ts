@@ -11,7 +11,7 @@ async function handleFlowRateIncreased(args: { event: any; context: any; contrac
   await context.db.sql
     .update(flow)
     .set({
-      currentFlowRate: event.args.newFlowRate,
+      currentFlowRate: event.args.newRate,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })

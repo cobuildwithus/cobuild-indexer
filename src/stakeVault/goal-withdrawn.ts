@@ -16,24 +16,24 @@ async function handleGoalWithdrawn(args: { event: any; context: any; kind: "goal
     .values({
       id: vault,
       kind,
-      goalTotalWithdrawn: event.args.totalWithdrawn,
+      goalTotalWithdrawn: event.args.amount,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
         kind,
-        goalTotalWithdrawn: event.args.totalWithdrawn,
+        goalTotalWithdrawn: sql`${stakeVault.goalTotalWithdrawn} + ${event.args.amount}`,
         updatedAtBlock: event.block.number,
         updatedAtTimestamp: event.block.timestamp,
     });
 
-  const posId = stakePositionId(vault, event.args.account, "goal");
+  const posId = stakePositionId(vault, event.args.user, "goal");
   await context.db
     .insert(stakePosition)
     .values({
       id: posId,
       vault,
-      account: event.args.account,
+      account: event.args.user,
       tokenKind: "goal",
       staked: 0n,
       withdrawn: event.args.amount,

@@ -19,12 +19,12 @@ async function handleJurorSlashed(args: { event: any; context: any; contractName
       id,
       vault,
       jurorAddress,
-      slashedTotal: event.args.penalty,
+      slashedTotal: event.args.appliedWeight,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
-        slashedTotal: sql`${juror.slashedTotal} + ${event.args.penalty}`,
+        slashedTotal: sql`${juror.slashedTotal} + ${event.args.appliedWeight}`,
         updatedAtBlock: event.block.number,
         updatedAtTimestamp: event.block.timestamp,
     });

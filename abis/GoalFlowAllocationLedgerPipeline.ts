@@ -1,8 +1,11 @@
 import { parseAbi } from "viem";
 
-/** Minimal ABI for GoalFlowAllocationLedgerPipeline (events only). */
+/**
+ * Event ABI for GoalFlowAllocationLedgerPipeline.
+ * Generated from Foundry artifact in ../protocol/out.
+ */
 export const GoalFlowAllocationLedgerPipelineAbi = parseAbi([
-  "event ChildAllocationSyncAttempted(bytes32 indexed childRecipientId, address indexed childFlow, bytes32 parentRecipientId, address parentFlow, address indexed parentStrategy, uint256 parentAllocationKey, bytes32 commitment, uint256 weight, uint256 childAllocationKey, bool success)",
-  "event ChildAllocationSyncSkipped(bytes32 indexed childRecipientId, address indexed childFlow, bytes32 parentRecipientId, address parentFlow, address indexed parentStrategy, uint256 parentAllocationKey, uint8 reason)",
-  "event BudgetTreasurySyncAttempted(bytes32 indexed parentRecipientId, address indexed budgetTreasury, address parentFlow, address indexed parentStrategy, uint256 parentAllocationKey, bool success)",
+  "event BudgetTreasurySyncAttempted(address indexed budgetTreasury, address parentFlow, address parentStrategy, uint256 parentAllocationKey, bool success)",
+  "event ChildAllocationSyncAttempted(address indexed budgetTreasury, address indexed childFlow, address indexed strategy, uint256 allocationKey, address parentFlow, address parentStrategy, uint256 parentAllocationKey, bool success)",
+  "event ChildAllocationSyncSkipped(address indexed budgetTreasury, address indexed childFlow, address parentFlow, address parentStrategy, uint256 parentAllocationKey, bytes32 reason)",
 ] as const);

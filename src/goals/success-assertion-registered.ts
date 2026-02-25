@@ -11,6 +11,7 @@ ponder.on("GoalTreasury:SuccessAssertionRegistered", async ({ event, context }) 
     .update(goalTreasury)
     .set({
       successAssertionId: event.args.assertionId,
+      successAssertionRegisteredAt: event.args.assertedAt,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })

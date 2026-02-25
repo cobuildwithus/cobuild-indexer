@@ -10,9 +10,10 @@ ponder.on("BudgetStakeLedger:BudgetRegistered", async ({ event, context }) => {
   await context.db.sql
     .update(budgetStack)
     .set({
+      budgetTreasury: event.args.budget,
       status: "ACTIVE",
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
-    .where(eq(budgetStack.id, event.args.budgetId));
+    .where(eq(budgetStack.id, event.args.recipientId));
 });

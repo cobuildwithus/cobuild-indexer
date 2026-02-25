@@ -1,17 +1,21 @@
 import { parseAbi } from "viem";
 
-/** Minimal ABI for GoalStakeVault (events only). */
+/**
+ * Event ABI for GoalStakeVault.
+ * Generated from Foundry artifact in ../protocol/out.
+ */
 export const GoalStakeVaultAbi = parseAbi([
-  "event GoalStaked(address indexed account, uint256 amount, uint256 totalStaked)",
-  "event CobuildStaked(address indexed account, uint256 amount, uint256 totalStaked)",
-  "event GoalWithdrawn(address indexed account, uint256 amount, uint256 totalWithdrawn)",
-  "event CobuildWithdrawn(address indexed account, uint256 amount, uint256 totalWithdrawn)",
-  "event RentPaid(address indexed payer, uint256 amount, uint64 startTime, uint64 endTime)",
+  "event AllocationSyncFailed(address indexed account, address indexed target, bytes4 indexed selector, bytes reason)",
+  "event CobuildStaked(address indexed user, uint256 amount, uint256 weightDelta)",
+  "event CobuildWithdrawn(address indexed user, address indexed to, uint256 amount)",
   "event GoalResolved()",
-  "event JurorOptedIn(address indexed juror)",
-  "event JurorExitRequested(address indexed juror, uint64 exitTime)",
-  "event JurorExitFinalized(address indexed juror)",
+  "event GoalStaked(address indexed user, uint256 amount, uint256 weightDelta)",
+  "event GoalWithdrawn(address indexed user, address indexed to, uint256 amount)",
   "event JurorDelegateSet(address indexed juror, address indexed delegate)",
+  "event JurorExitFinalized(address indexed juror, uint256 goalAmount, uint256 cobuildAmount, uint256 weightDelta)",
+  "event JurorExitRequested(address indexed juror, uint256 goalAmount, uint256 cobuildAmount, uint64 requestedAt, uint64 availableAt)",
+  "event JurorOptedIn(address indexed juror, uint256 goalAmount, uint256 cobuildAmount, uint256 weightDelta, address indexed delegate)",
+  "event JurorSlashed(address indexed juror, uint256 requestedWeight, uint256 appliedWeight, uint256 goalAmount, uint256 cobuildAmount, address indexed recipient)",
   "event JurorSlasherSet(address indexed slasher)",
-  "event JurorSlashed(address indexed juror, uint256 penalty, address indexed beneficiary)",
+  "event RentPaid(address indexed user, address indexed token, uint256 amount)",
 ] as const);

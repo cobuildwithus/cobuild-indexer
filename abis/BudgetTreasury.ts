@@ -1,15 +1,23 @@
 import { parseAbi } from "viem";
 
-/** Minimal ABI for BudgetTreasury (events only). */
+/**
+ * Event ABI for BudgetTreasury.
+ * Generated from Foundry artifact in ../protocol/out.
+ */
 export const BudgetTreasuryAbi = parseAbi([
-  "event BudgetConfigured(bytes32 indexed recipientId, address childFlow, address indexed budgetOwner, address goalToken, address cobuildToken, address indexed stakeVault, address strategy, uint64 budgetStart, uint64 budgetDuration)",
-  "event DonationRecorded(address indexed donor, uint256 amount, address indexed token, bytes32 memo, bytes metadata)",
-  "event FlowRateSynced(uint256 weight, int96 oldFlowRate, int96 newFlowRate, address caller)",
-  "event StateTransition(uint8 indexed fromState, uint8 indexed toState)",
-  "event BudgetFinalized()",
-  "event TerminalSideEffectFailed(bytes4 selector, bytes reason)",
-  "event ResidualSettled(uint256 amount, address indexed token, address indexed beneficiary)",
-  "event SuccessAssertionRegistered(bytes32 indexed itemID, bytes32 assertionId)",
-  "event SuccessAssertionCleared(bytes32 indexed itemID, bytes32 assertionId)",
+  "event BudgetConfigured(address indexed controller, address flow, address stakeVault, uint64 fundingDeadline, uint64 executionDuration, uint256 activationThreshold, uint256 runwayCap)",
+  "event BudgetFinalized(uint8 finalState)",
+  "event DonationRecorded(address indexed donor, address indexed sourceToken, uint256 sourceAmount, uint256 superTokenAmount)",
+  "event FlowRateSyncCallFailed(address indexed flow, bytes4 indexed selector, int96 attemptedRate, bytes reason)",
+  "event FlowRateSyncManualInterventionRequired(address indexed flow, int96 targetRate, int96 fallbackRate, int96 currentRate)",
+  "event FlowRateSynced(int96 targetRate, int96 appliedRate, uint256 treasuryBalance, uint256 timeRemaining)",
+  "event FlowRateZeroingFailed(address indexed flow, bytes reason)",
+  "event Initialized(uint64 version)",
+  "event ReassertGraceActivated(bytes32 indexed clearedAssertionId, uint64 indexed graceDeadline)",
+  "event ResidualSettled(address indexed destination, uint256 amount)",
+  "event StateTransition(uint8 previousState, uint8 newState)",
+  "event SuccessAssertionCleared(bytes32 indexed assertionId)",
+  "event SuccessAssertionRegistered(bytes32 indexed assertionId, uint64 indexed assertedAt)",
   "event SuccessResolutionDisabled()",
+  "event TerminalSideEffectFailed(uint8 indexed operation, bytes reason)",
 ] as const);

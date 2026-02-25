@@ -17,25 +17,25 @@ async function handleGoalStaked(args: { event: any; context: any; kind: "goal" |
     .values({
       id: vault,
       kind,
-      goalTotalStaked: event.args.totalStaked,
+      goalTotalStaked: event.args.amount,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
         kind,
-        goalTotalStaked: event.args.totalStaked,
+        goalTotalStaked: sql`${stakeVault.goalTotalStaked} + ${event.args.amount}`,
         updatedAtBlock: event.block.number,
         updatedAtTimestamp: event.block.timestamp,
     });
 
   // Upsert per-account position (increment staked).
-  const posId = stakePositionId(vault, event.args.account, "goal");
+  const posId = stakePositionId(vault, event.args.user, "goal");
   await context.db
     .insert(stakePosition)
     .values({
       id: posId,
       vault,
-      account: event.args.account,
+      account: event.args.user,
       tokenKind: "goal",
       staked: event.args.amount,
       withdrawn: 0n,

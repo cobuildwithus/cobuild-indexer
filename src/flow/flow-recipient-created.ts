@@ -14,16 +14,13 @@ async function handleFlowRecipientCreated(args: { event: any; context: any; cont
   const recipientId: Hex = event.args.recipientId;
   const childFlowAddress: Hex = event.args.recipient;
 
-  const fr = event.args.flowRecipient;
-
   // 1) Mark the (already-created) recipient row as a flow-recipient.
   await context.db.sql
     .update(flowRecipient)
     .set({
       isFlowRecipient: true,
-      childDistributionPool: fr.distributionPool,
-      childStrategy: fr.strategy,
-      childManagerRewardPoolFlowRatePercent: Number(fr.managerRewardPoolFlowRatePercent),
+      childDistributionPool: event.args.distributionPool,
+      childManagerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
@@ -36,9 +33,9 @@ async function handleFlowRecipientCreated(args: { event: any; context: any; cont
       id: childFlowAddress,
       kind: "child",
       parentFlow: parentFlowId,
-      distributionPool: fr.distributionPool,
-      managerRewardPoolFlowRatePercent: Number(fr.managerRewardPoolFlowRatePercent),
-      strategy: fr.strategy,
+      distributionPool: event.args.distributionPool,
+      managerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
+      strategy: null,
       currentFlowRate: 0n,
       targetOutflowRate: 0n,
       createdAtBlock: event.block.number,
@@ -49,9 +46,8 @@ async function handleFlowRecipientCreated(args: { event: any; context: any; cont
     .onConflictDoUpdate({
         kind: "child",
         parentFlow: parentFlowId,
-        distributionPool: fr.distributionPool,
-        managerRewardPoolFlowRatePercent: Number(fr.managerRewardPoolFlowRatePercent),
-        strategy: fr.strategy,
+        distributionPool: event.args.distributionPool,
+        managerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
         updatedAtBlock: event.block.number,
         updatedAtTimestamp: event.block.timestamp,
     });

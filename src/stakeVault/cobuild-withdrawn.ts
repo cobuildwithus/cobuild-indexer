@@ -16,24 +16,24 @@ async function handleCobuildWithdrawn(args: { event: any; context: any; kind: "g
     .values({
       id: vault,
       kind,
-      cobuildTotalWithdrawn: event.args.totalWithdrawn,
+      cobuildTotalWithdrawn: event.args.amount,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
         kind,
-        cobuildTotalWithdrawn: event.args.totalWithdrawn,
+        cobuildTotalWithdrawn: sql`${stakeVault.cobuildTotalWithdrawn} + ${event.args.amount}`,
         updatedAtBlock: event.block.number,
         updatedAtTimestamp: event.block.timestamp,
     });
 
-  const posId = stakePositionId(vault, event.args.account, "cobuild");
+  const posId = stakePositionId(vault, event.args.user, "cobuild");
   await context.db
     .insert(stakePosition)
     .values({
       id: posId,
       vault,
-      account: event.args.account,
+      account: event.args.user,
       tokenKind: "cobuild",
       staked: 0n,
       withdrawn: event.args.amount,

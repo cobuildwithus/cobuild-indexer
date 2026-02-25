@@ -1,5 +1,5 @@
 import { ponder } from "ponder:registry";
-import { budgetStack, budgetTreasury, stakeVault } from "ponder:schema";
+import { budgetTreasury, stakeVault } from "ponder:schema";
 
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
@@ -13,15 +13,13 @@ ponder.on("BudgetTreasury:BudgetConfigured", async ({ event, context }) => {
     .insert(budgetTreasury)
     .values({
       id: treasury,
-      recipientId: event.args.recipientId,
-      childFlow: event.args.childFlow,
-      budgetOwner: event.args.budgetOwner,
-      goalToken: event.args.goalToken,
-      cobuildToken: event.args.cobuildToken,
+      controller: event.args.controller,
+      childFlow: event.args.flow,
       stakeVault: event.args.stakeVault,
-      strategy: event.args.strategy,
-      budgetStart: event.args.budgetStart,
-      budgetDuration: event.args.budgetDuration,
+      fundingDeadline: event.args.fundingDeadline,
+      executionDuration: event.args.executionDuration,
+      activationThreshold: event.args.activationThreshold,
+      runwayCap: event.args.runwayCap,
       state: null,
       finalized: false,
       createdAtBlock: event.block.number,
@@ -30,40 +28,13 @@ ponder.on("BudgetTreasury:BudgetConfigured", async ({ event, context }) => {
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
-        recipientId: event.args.recipientId,
-        childFlow: event.args.childFlow,
-        budgetOwner: event.args.budgetOwner,
-        goalToken: event.args.goalToken,
-        cobuildToken: event.args.cobuildToken,
+        controller: event.args.controller,
+        childFlow: event.args.flow,
         stakeVault: event.args.stakeVault,
-        strategy: event.args.strategy,
-        budgetStart: event.args.budgetStart,
-        budgetDuration: event.args.budgetDuration,
-        updatedAtBlock: event.block.number,
-        updatedAtTimestamp: event.block.timestamp,
-    });
-
-  // Upsert budget stack by itemID/recipientId.
-  await context.db
-    .insert(budgetStack)
-    .values({
-      id: event.args.recipientId,
-      childFlow: event.args.childFlow,
-      budgetTreasury: treasury,
-      stakeVault: event.args.stakeVault,
-      strategy: event.args.strategy,
-      status: "CONFIGURED",
-      deployedAtBlock: event.block.number,
-      deployedAtTimestamp: event.block.timestamp,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
-    })
-    .onConflictDoUpdate({
-        childFlow: event.args.childFlow,
-        budgetTreasury: treasury,
-        stakeVault: event.args.stakeVault,
-        strategy: event.args.strategy,
-        status: "CONFIGURED",
+        fundingDeadline: event.args.fundingDeadline,
+        executionDuration: event.args.executionDuration,
+        activationThreshold: event.args.activationThreshold,
+        runwayCap: event.args.runwayCap,
         updatedAtBlock: event.block.number,
         updatedAtTimestamp: event.block.timestamp,
     });

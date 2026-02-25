@@ -10,10 +10,8 @@ ponder.on("GoalTreasury:SuccessRewardsFinalized", async ({ event, context }) => 
   await context.db.sql
     .update(goalTreasury)
     .set({
-      successGoalAmount: event.args.goalAmount,
-      successCobuildAmount: event.args.cobuildAmount,
-      successTotalGoalStaked: event.args.totalGoalStaked,
-      successTotalCobuildStaked: event.args.totalCobuildStaked,
+      successAt: event.args.successAt,
+      successFinalizedAt: event.args.finalizedAt,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })

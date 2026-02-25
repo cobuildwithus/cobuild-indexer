@@ -11,6 +11,7 @@ ponder.on("BudgetTreasury:SuccessAssertionRegistered", async ({ event, context }
     .update(budgetTreasury)
     .set({
       successAssertionId: event.args.assertionId,
+      successAssertionRegisteredAt: event.args.assertedAt,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })

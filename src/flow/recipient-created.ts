@@ -11,9 +11,8 @@ async function handleRecipientCreated(args: { event: any; context: any; contract
 
   const flowId = event.log.address;
   const recipientId = event.args.recipientId;
-  const recipientAddress = event.args.recipient;
-
-  const info = event.args.recipientInfo;
+  const info = event.args.recipient;
+  const recipientAddress = info.recipient;
   const recipientIndex = Number(info.recipientIndexPlusOne) - 1;
 
   const metadata = info.metadata ?? {};
@@ -30,6 +29,7 @@ async function handleRecipientCreated(args: { event: any; context: any; contract
       flowId,
       recipientId,
       recipient: recipientAddress,
+      approvedBy: event.args.approvedBy,
       recipientIndex,
       recipientType: Number(info.recipientType),
       isRemoved: Boolean(info.isRemoved),

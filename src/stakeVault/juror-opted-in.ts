@@ -19,7 +19,7 @@ async function handleJurorOptedIn(args: { event: any; context: any; contractName
       jurorAddress,
       optedIn: true,
       exitTime: null,
-      delegate: null,
+      delegate: event.args.delegate,
       slasher: null,
       slashedTotal: 0n,
       updatedAtBlock: event.block.number,
@@ -28,6 +28,7 @@ async function handleJurorOptedIn(args: { event: any; context: any; contractName
     .onConflictDoUpdate({
         optedIn: true,
         exitTime: null,
+        delegate: event.args.delegate,
         updatedAtBlock: event.block.number,
         updatedAtTimestamp: event.block.timestamp,
     });

@@ -11,7 +11,6 @@ async function handleFlowRateIncreaseNoop(args: { event: any; context: any; cont
   await context.db.sql
     .update(flow)
     .set({
-      currentFlowRate: event.args.oldFlowRate,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })

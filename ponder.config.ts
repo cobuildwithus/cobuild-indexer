@@ -49,7 +49,7 @@ const ADDRESSES = {
 } as const;
 
 const FLOW_RECIPIENT_CREATED = parseAbiItem(
-  "event FlowRecipientCreated(bytes32 indexed recipientId, address indexed recipient, (address recipient, address distributionPool, uint32 managerRewardPoolFlowRatePercent, address strategy) flowRecipient)"
+  "event FlowRecipientCreated(bytes32 indexed recipientId, address indexed recipient, address distributionPool, uint32 managerRewardPoolFlowRatePpm)"
 );
 
 const BUDGET_STACK_DEPLOYED = parseAbiItem(
