@@ -21,6 +21,11 @@
     // Skip type checking for node modules
     "skipLibCheck": true
   },
-  "include": ["./**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "*.ts",
+    "ponder.config.ts",
+    "ponder.schema.ts",
+    "src/**/*.ts",
+    "ponder-env.d.ts"
+  ]
 }
