@@ -26,7 +26,7 @@
   - `Initialized`, `FlowInitialized`, `ChildFlowDeployed`, `RecipientCreated`, `FlowRecipientCreated`, `RecipientRemoved`, `MetadataSet`
   - `FlowRateIncreased`, `FlowRateDecreased`, `FlowRateIncreaseNoop`
   - `TargetOutflowRateUpdated`, `TargetOutflowRefreshFailed`
-  - `AllocationCommitted`, `SuperTokenSwept`
+  - `AllocationCommitted`, `AllocationSnapshotUpdated`, `SuperTokenSwept`
 
 ## Goal Treasury
 

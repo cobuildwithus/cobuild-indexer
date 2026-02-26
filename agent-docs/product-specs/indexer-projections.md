@@ -5,7 +5,7 @@
 - All indexed events write deterministic state transitions.
 - Legacy REV/JB projections and scaffold flow/treasury projections are both active in one runtime.
 - `protocol_event` captures scaffold event payloads with bigint-safe argument serialization.
-- Allocation commits are applied incrementally using decoded packed snapshots and per-key deltas.
+- Allocation state is applied incrementally using `AllocationCommitted` (commit/weight) plus `AllocationSnapshotUpdated` (snapshot bytes when commit changes), preserving deterministic per-key deltas.
 
 ## Consumer Expectations
 
