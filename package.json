@@ -25,7 +25,7 @@
     "viem": "^2.0.0"
   },
   "devDependencies": {
-    "@cobuild/review-gpt": "^0.2.2",
+    "@cobuild/review-gpt": "^0.2.3",
     "@types/node": "^20.9.0",
     "@wagmi/cli": "^2.5.1",
     "eslint": "^8.53.0",
