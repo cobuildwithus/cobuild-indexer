@@ -7,6 +7,7 @@
     "dev": "ponder dev",
     "start": "ponder start",
     "db": "ponder db",
+    "prepare": "husky",
     "wagmi": "wagmi generate",
     "codegen": "ponder codegen",
     "lint": "eslint \"**/*.{ts,tsx}\"",
@@ -25,11 +26,12 @@
     "viem": "^2.0.0"
   },
   "devDependencies": {
-    "@cobuild/review-gpt": "^0.2.3",
+    "@cobuild/review-gpt": "^0.2.6",
     "@types/node": "^20.9.0",
     "@wagmi/cli": "^2.5.1",
     "eslint": "^8.53.0",
     "eslint-config-ponder": "^0.11.4",
+    "husky": "^9.1.7",
     "typescript": "^5.2.2"
   },
   "engines": {
