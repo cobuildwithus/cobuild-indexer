@@ -24,7 +24,6 @@
 
 - `GoalFlow:*` and `ChildFlow:*` handlers in `src/flow/**`
   - `Initialized`, `FlowInitialized`, `ChildFlowDeployed`, `RecipientCreated`, `FlowRecipientCreated`, `RecipientRemoved`, `MetadataSet`
-  - `FlowRateIncreased`, `FlowRateDecreased`, `FlowRateIncreaseNoop`
   - `TargetOutflowRateUpdated`, `TargetOutflowRefreshFailed`
   - `AllocationCommitted`, `AllocationSnapshotUpdated`, `SuperTokenSwept`
 
@@ -32,38 +31,39 @@
 
 - `GoalTreasury:*` handlers in `src/goals/**`
   - `Initialized`, `GoalConfigured`, `StateTransition`, `GoalFinalized`
-  - `SuccessAssertionRegistered`, `SuccessAssertionCleared`, `SuccessRewardsFinalized`
+  - `SuccessAssertionRegistered`, `SuccessAssertionCleared`, `SuccessAssertionResolutionFailClosed`
   - `DonationRecorded`, `FlowRateSynced`, `FlowRateSyncManualInterventionRequired`, `FlowRateZeroingFailed`, `FlowRateSyncCallFailed`
-  - `ResidualSettled`
+  - `ReassertGraceActivated`, `ResidualSettled`
   - `HookFundingRecorded`, `HookFundingDeferred`, `HookDeferredFundingSettled`
-  - `JurorSlasherConfigured`, `TerminalSideEffectFailed`
+  - `JurorSlasherConfigured`, `UnderwriterSlasherConfigured`, `TerminalSideEffectFailed`
 
 ## Budget Treasury
 
 - `BudgetTreasury:*` handlers in `src/budgets/**`
   - `Initialized`, `BudgetConfigured`, `StateTransition`, `BudgetFinalized`
-  - `SuccessAssertionRegistered`, `SuccessAssertionCleared`, `SuccessResolutionDisabled`
+  - `SuccessAssertionRegistered`, `SuccessAssertionCleared`, `SuccessAssertionResolutionFailClosed`, `SuccessResolutionDisabled`
   - `DonationRecorded`, `FlowRateSynced`, `FlowRateSyncManualInterventionRequired`, `FlowRateZeroingFailed`, `FlowRateSyncCallFailed`
   - `ReassertGraceActivated`, `ResidualSettled`, `TerminalSideEffectFailed`
 
 ## Stake and Jurors
 
-- `GoalStakeVault:*` + `BudgetStakeVault:*` handlers in `src/stakeVault/**`
-  - stake/withdraw totals, goal resolution, juror lifecycle/slashing/delegation
+- `GoalStakeVault:*` handlers in `src/stakeVault/**`
+  - stake/withdraw totals, goal resolution, juror lifecycle/slashing/delegation, underwriter slashing telemetry
   - includes `AllocationSyncFailed` telemetry
 - `BudgetStakeLedger:*` handlers in `src/stakeLedger/**`
-  - `BudgetRegistered`, `BudgetRemoved`, `AllocationCheckpointed`, `StakeLedgerFinalized`
+  - `BudgetRegistered`, `BudgetRemoved`, `AllocationCheckpointed`
 
-## Reward Escrow
+## Premium Escrow
 
-- `RewardEscrow:*` handlers in `src/rewardEscrow/**`
-  - `RewardEscrowFinalized`, `Claimed`, `GoalSuperTokenUnwrapped`
-  - `FailedRewardsSwept`, `FailedCobuildRewardsSwept`
+- `PremiumEscrow:*` handlers in `src/premiumEscrow/**`
+  - `Initialized`, `ManagerRewardPoolConnected`, `PremiumIndexed`, `AccountCheckpointed`, `Claimed`, `Closed`
+  - `UnderwriterSlashed`, `UnderwriterSlashCalculated`, `UnclaimablePremiumSwept`, `OrphanPremiumRecycled`
 
 ## TCR and Factory
 
 - `BudgetTCR:*` handlers in `src/tcr/**`
   - deploy/activation/removal/sync telemetry
+  - allocation mechanism/credit cap/terminal recipient telemetry
   - governance/Kleros telemetry (`Initialized`, `RequestSubmitted`, `RequestEvidenceGroupID`, `MetaEvidence`, `Evidence`, `Dispute`, `Ruling`, `ItemSubmitted`, `ItemStatusChange`)
   - funding/terminalization telemetry (`SubmissionDepositPaid`, `SubmissionDepositTransferred`, `BudgetTerminalizationStepFailed`)
 - `BudgetTCRFactory:*` handlers in `src/tcrFactory/**`
@@ -72,11 +72,9 @@
 ## Pipeline and Hook
 
 - `GoalFlowAllocationLedgerPipeline:*` handlers in `src/pipeline/**`
-  - sync attempt/skip telemetry
+  - child allocation sync attempt/skip telemetry
 - `GoalRevnetSplitHook:*` handlers in `src/hook/**`
   - `Initialized`, `GoalFundingProcessed`, `GoalSuccessSettlementProcessed`
-- `SingleAllocatorStrategy:*` handlers in `src/strategy/**`
-  - `AllocatorChanged`, `OwnershipTransferred`
 
 ## Common Table Touches
 

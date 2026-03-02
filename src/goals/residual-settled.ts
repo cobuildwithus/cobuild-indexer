@@ -11,7 +11,6 @@ ponder.on("GoalTreasury:ResidualSettled", async ({ event, context }) => {
     .set({
       lastResidualFinalState: Number(event.args.finalState),
       lastResidualSettledAmount: event.args.totalSettled,
-      lastResidualRewardEscrowAmount: event.args.rewardEscrowAmount,
       lastResidualControllerBurnAmount: event.args.controllerBurnAmount,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,

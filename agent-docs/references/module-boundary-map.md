@@ -21,11 +21,10 @@
   - `src/budgets/**`: budget treasury state and lifecycle.
   - `src/stakeVault/**`: stake/juror lifecycle and aggregate accounting.
   - `src/stakeLedger/**`: budget registration/removal + checkpoints.
-  - `src/rewardEscrow/**`: reward finalization/claims/unwrap telemetry.
+  - `src/premiumEscrow/**`: premium index/checkpoint/claim/slash telemetry.
   - `src/tcr/**` + `src/tcrFactory/**`: budget stack orchestration telemetry.
   - `src/pipeline/**`: allocation ledger sync telemetry.
   - `src/hook/**`: revnet split hook processing telemetry.
-  - `src/strategy/**`: strategy config telemetry.
 
 ## Dependency Direction
 

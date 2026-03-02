@@ -2,16 +2,13 @@ import { parseAbi } from "viem";
 
 /**
  * Event ABI for Flow.
- * Generated from Foundry artifact in ../protocol/out.
+ * Generated from Foundry artifact in ../v1-core/out.
  */
 export const FlowAbi = parseAbi([
   "event AllocationCommitted(address indexed strategy, uint256 indexed allocationKey, bytes32 commit, uint256 weight)",
   "event AllocationSnapshotUpdated(address indexed strategy, uint256 indexed allocationKey, bytes32 commit, uint256 weight, uint8 snapshotVersion, bytes packedSnapshot)",
   "event ChildFlowDeployed(bytes32 indexed recipientId, address indexed recipient, address indexed strategy, address recipientAdmin, address flowOperator, address sweeper, address managerRewardPool)",
-  "event FlowInitialized(address indexed recipientAdmin, address indexed superToken, address indexed flowImplementation, address flowOperator, address sweeper, address connectPoolAdmin, address managerRewardPool, address allocationPipeline, address parent, address distributionPool, uint32 managerRewardPoolFlowRatePpm, address strategy)",
-  "event FlowRateDecreased(address indexed caller, int96 oldRate, int96 newRate)",
-  "event FlowRateIncreaseNoop(address indexed caller, int96 requestedAmount, uint8 reason)",
-  "event FlowRateIncreased(address indexed caller, int96 oldRate, int96 newRate, uint256 amountPulled)",
+  "event FlowInitialized(address indexed recipientAdmin, address indexed superToken, address indexed flowImplementation, address flowOperator, address sweeper, address managerRewardPool, address allocationPipeline, address parent, address distributionPool, uint32 managerRewardPoolFlowRatePpm, address strategy)",
   "event FlowRecipientCreated(bytes32 indexed recipientId, address indexed recipient, address distributionPool, uint32 managerRewardPoolFlowRatePpm)",
   "event Initialized(uint64 version)",
   "event MetadataSet((string title, string description, string image, string tagline, string url) metadata)",

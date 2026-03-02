@@ -14,7 +14,6 @@ ponder.on("GoalTreasury:HookDeferredFundingSettled", async ({ event, context }) 
       kind: "SETTLED",
       amount: event.args.superTokenAmount,
       superTokenAmount: event.args.superTokenAmount,
-      rewardEscrowAmount: event.args.rewardEscrowAmount,
       controllerBurnAmount: event.args.controllerBurnAmount,
       finalState: Number(event.args.finalState),
       txHash: event.transaction.hash,

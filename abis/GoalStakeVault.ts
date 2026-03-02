@@ -2,7 +2,7 @@ import { parseAbi } from "viem";
 
 /**
  * Event ABI for GoalStakeVault.
- * Generated from Foundry artifact in ../protocol/out.
+ * Generated from Foundry artifact in ../v1-core/out.
  */
 export const GoalStakeVaultAbi = parseAbi([
   "event AllocationSyncFailed(address indexed account, address indexed target, bytes4 indexed selector, bytes reason)",
@@ -17,5 +17,7 @@ export const GoalStakeVaultAbi = parseAbi([
   "event JurorOptedIn(address indexed juror, uint256 goalAmount, uint256 cobuildAmount, uint256 weightDelta, address indexed delegate)",
   "event JurorSlashed(address indexed juror, uint256 requestedWeight, uint256 appliedWeight, uint256 goalAmount, uint256 cobuildAmount, address indexed recipient)",
   "event JurorSlasherSet(address indexed slasher)",
-  "event RentPaid(address indexed user, address indexed token, uint256 amount)",
+  "event UnderwriterSlashed(address indexed underwriter, uint256 requestedWeight, uint256 appliedWeight, uint256 goalAmount, uint256 cobuildAmount, address indexed recipient)",
+  "event UnderwriterSlasherSet(address indexed slasher)",
+  "event UnderwriterWithdrawalPrepared(address indexed underwriter, uint256 nextBudgetIndex, uint256 budgetCount, bool complete)",
 ] as const);

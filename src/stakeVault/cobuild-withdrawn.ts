@@ -1,33 +1,37 @@
+import { eq, sql } from "drizzle-orm";
 import { ponder } from "ponder:registry";
-import { sql } from "drizzle-orm";
 
 import { stakePosition, stakeVault } from "ponder:schema";
-import { insertProtocolEvent } from "../helpers/protocolEvent";
 import { stakePositionId } from "../helpers/ids";
+import { insertProtocolEvent } from "../helpers/protocolEvent";
 
-async function handleCobuildWithdrawn(args: { event: any; context: any; kind: "goal" | "budget"; contractName: string }) {
-  const { event, context, kind, contractName } = args;
-  await insertProtocolEvent({ context, event, contractName });
+ponder.on("GoalStakeVault:CobuildWithdrawn", async ({ event, context }) => {
+  await insertProtocolEvent({ context, event, contractName: "GoalStakeVault" });
 
   const vault = event.log.address;
+  const posId = stakePositionId(vault, event.args.user, "cobuild");
 
   await context.db
     .insert(stakeVault)
     .values({
       id: vault,
-      kind,
-      cobuildTotalWithdrawn: event.args.amount,
+      kind: "goal",
+      cobuildTotalWithdrawn: 0n,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
-    .onConflictDoUpdate({
-        kind,
-        cobuildTotalWithdrawn: sql`${stakeVault.cobuildTotalWithdrawn} + ${event.args.amount}`,
-        updatedAtBlock: event.block.number,
-        updatedAtTimestamp: event.block.timestamp,
-    });
+    .onConflictDoNothing();
 
-  const posId = stakePositionId(vault, event.args.user, "cobuild");
+  await context.db.sql
+    .update(stakeVault)
+    .set({
+      kind: "goal",
+      cobuildTotalWithdrawn: sql`${stakeVault.cobuildTotalWithdrawn} + ${event.args.amount}`,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    })
+    .where(eq(stakeVault.id, vault));
+
   await context.db
     .insert(stakePosition)
     .values({
@@ -36,21 +40,18 @@ async function handleCobuildWithdrawn(args: { event: any; context: any; kind: "g
       account: event.args.user,
       tokenKind: "cobuild",
       staked: 0n,
-      withdrawn: event.args.amount,
+      withdrawn: 0n,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
-    .onConflictDoUpdate({
-        withdrawn: sql`${stakePosition.withdrawn} + ${event.args.amount}`,
-        updatedAtBlock: event.block.number,
-        updatedAtTimestamp: event.block.timestamp,
-    });
-}
+    .onConflictDoNothing();
 
-ponder.on("GoalStakeVault:CobuildWithdrawn", async ({ event, context }) => {
-  await handleCobuildWithdrawn({ event, context, kind: "goal", contractName: "GoalStakeVault" });
-});
-
-ponder.on("BudgetStakeVault:CobuildWithdrawn", async ({ event, context }) => {
-  await handleCobuildWithdrawn({ event, context, kind: "budget", contractName: "BudgetStakeVault" });
+  await context.db.sql
+    .update(stakePosition)
+    .set({
+      withdrawn: sql`${stakePosition.withdrawn} + ${event.args.amount}`,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    })
+    .where(eq(stakePosition.id, posId));
 });

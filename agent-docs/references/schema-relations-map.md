@@ -22,8 +22,8 @@
   - Goal/budget stack lifecycle and treasury snapshots.
 - `stake_vault`, `stake_position`, `juror`
   - Stake totals, per-account positions, juror lifecycle.
-- `reward_escrow`, `reward_claim`
-  - Reward finalization aggregate + per-claim rows.
+- `premium_escrow`, `premium_account`, `premium_claim`
+  - Premium escrow aggregate + per-account checkpoint + per-claim rows.
 - `donation`
   - Normalized donation events across goal/budget treasuries.
 - `hook_funding`, `pipeline_sync`, `hook_process`, `allocation_checkpoint`
@@ -47,5 +47,5 @@
 - `flow_recipient.flowId` -> `flow.id`
 - `allocation_* .flowId` -> `flow.id`
 - `stake_position.vault` and `juror.vault` -> `stake_vault.id`
-- `reward_claim.escrow` -> `reward_escrow.id`
+- `premium_account.escrow` and `premium_claim.escrow` -> `premium_escrow.id`
 - `goal_treasury`/`budget_treasury` reference stack/vault/flow addresses as foreign identifiers.

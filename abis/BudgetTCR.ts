@@ -2,14 +2,17 @@ import { parseAbi } from "viem";
 
 /**
  * Event ABI for BudgetTCR.
- * Generated from Foundry artifact in ../protocol/out.
+ * Generated from Foundry artifact in ../v1-core/out.
  */
 export const BudgetTCRAbi = parseAbi([
+  "event BudgetAllocationMechanismDeployed(bytes32 indexed itemID, address indexed allocationMechanism, address indexed allocationMechanismArbitrator, address roundFactory)",
+  "event BudgetCreditCapEnforcementFailed(bytes32 indexed itemID, address indexed budgetTreasury, bytes4 indexed selector, bytes reason)",
   "event BudgetStackActivationQueued(bytes32 indexed itemID)",
-  "event BudgetStackDeployed(bytes32 indexed itemID, address indexed childFlow, address indexed budgetTreasury, address stakeVault, address strategy)",
+  "event BudgetStackDeployed(bytes32 indexed itemID, address indexed childFlow, address indexed budgetTreasury, address strategy)",
   "event BudgetStackRemovalHandled(bytes32 indexed itemID, address indexed childFlow, address indexed budgetTreasury, bool removedFromParent, bool terminallyResolved)",
   "event BudgetStackRemovalQueued(bytes32 indexed itemID)",
   "event BudgetStackTerminalizationRetried(bytes32 indexed itemID, address indexed budgetTreasury, bool terminallyResolved)",
+  "event BudgetTerminalRecipientPruned(bytes32 indexed itemID, address indexed childFlow, address indexed budgetTreasury, bool removedFromParent, bool goalSynced)",
   "event BudgetTerminalizationStepFailed(bytes32 indexed itemID, address indexed budgetTreasury, bytes4 indexed selector, bytes reason)",
   "event BudgetTreasuryBatchSyncAttempted(bytes32 indexed itemID, address indexed budgetTreasury, bool success)",
   "event BudgetTreasuryBatchSyncSkipped(bytes32 indexed itemID, address indexed budgetTreasury, bytes32 reason)",

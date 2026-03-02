@@ -24,3 +24,7 @@ export function stakePositionId(vault: Hex, account: Hex, tokenKind: "goal" | "c
 export function jurorId(vault: Hex, juror: Hex): string {
   return `${vault.toLowerCase()}:${juror.toLowerCase()}`;
 }
+
+export function premiumAccountId(escrow: Hex, account: Hex): string {
+  return `${escrow.toLowerCase()}:${account.toLowerCase()}`;
+}

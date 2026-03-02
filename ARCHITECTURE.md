@@ -1,6 +1,6 @@
 # CoBuild Indexer Architecture
 
-Last updated: 2026-02-25
+Last updated: 2026-03-02
 
 ## Runtime Shape
 
@@ -11,7 +11,7 @@ Last updated: 2026-02-25
   - Handler registry: `src/index.ts`
 - Contract/event handlers are organized in one integrated runtime:
   - Legacy stack: `src/contracts/**` (REV/JB/Cobuild swap/token-bought + cron handlers).
-  - Scaffold stack: `src/flow/**`, `src/goals/**`, `src/budgets/**`, `src/stakeVault/**`, `src/stakeLedger/**`, `src/rewardEscrow/**`, `src/tcr/**`, `src/tcrFactory/**`, `src/pipeline/**`, `src/hook/**`, `src/strategy/**`.
+  - Scaffold stack: `src/flow/**`, `src/goals/**`, `src/budgets/**`, `src/stakeVault/**`, `src/stakeLedger/**`, `src/premiumEscrow/**`, `src/tcr/**`, `src/tcrFactory/**`, `src/pipeline/**`, `src/hook/**`.
 - Shared runtime modules:
   - `src/lib/**` for chain/RPC/config/runtime helpers.
   - `src/util/**` for formatting and identifier utilities.
@@ -23,7 +23,8 @@ Last updated: 2026-02-25
 - Scaffold root contracts in `ponder.config.ts` currently use placeholder addresses/start blocks until deployment coordinates are provided.
 - Dynamic discovery:
   - `ChildFlow` addresses are factory-discovered from `GoalFlow:FlowRecipientCreated(recipient)`.
-  - `BudgetTreasury` and `BudgetStakeVault` addresses are factory-discovered from `BudgetTCR:BudgetStackDeployed`.
+  - `PremiumEscrow` addresses are factory-discovered from `GoalFlow:ChildFlowDeployed(managerRewardPool)`.
+  - `BudgetTreasury` addresses are factory-discovered from `BudgetTCR:BudgetStackDeployed`.
 
 ## Data Model
 
@@ -37,7 +38,7 @@ Last updated: 2026-02-25
   - `flow`, `flow_recipient`, `allocation_key_state`, `allocation_entry_state`
   - `goal_treasury`, `budget_treasury`, `budget_stack`
   - `stake_vault`, `stake_position`, `juror`
-  - `reward_escrow`, `reward_claim`
+  - `premium_escrow`, `premium_account`, `premium_claim`
   - `donation`, `hook_funding`, `pipeline_sync`, `hook_process`, `allocation_checkpoint`
 
 ## Invariants

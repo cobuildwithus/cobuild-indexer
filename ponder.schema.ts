@@ -559,7 +559,6 @@ export const flow = onchainTable("flow", (t) => ({
   allocationPipeline: t.hex(),
   flowOperator: t.hex(),
   sweeper: t.hex(),
-  connectPoolAdmin: t.hex(),
   strategy: t.hex(),
   metadataTitle: t.text(),
   metadataDescription: t.text(),
@@ -669,7 +668,7 @@ export const budgetStack = onchainTable("budget_stack", (t) => ({
 
   childFlow: t.hex(),
   budgetTreasury: t.hex(),
-  stakeVault: t.hex(),
+  premiumEscrow: t.hex(),
   strategy: t.hex(),
 
   status: t.text(), // "DEPLOYED" | "ACTIVE" | "REMOVAL_QUEUED" | "REMOVED" etc.
@@ -689,10 +688,8 @@ export const budgetTreasury = onchainTable("budget_treasury", (t) => ({
   controller: t.hex(),
   recipientId: t.hex(), // bytes32 (budgetId)
   childFlow: t.hex(),
+  premiumEscrow: t.hex(),
   budgetOwner: t.hex(),
-  goalToken: t.hex(),
-  cobuildToken: t.hex(),
-  stakeVault: t.hex(),
   strategy: t.hex(),
 
   budgetStart: t.bigint(),
@@ -736,10 +733,10 @@ export const goalTreasury = onchainTable("goal_treasury", (t) => ({
   owner: t.hex(),
   flowAddress: t.hex(),
   recipientId: t.hex(),
+  budgetStakeLedger: t.hex(),
   goalToken: t.hex(),
   cobuildToken: t.hex(),
   stakeVault: t.hex(),
-  rewardEscrow: t.hex(),
   hook: t.hex(),
   goalRulesets: t.hex(),
   goalRevnetId: t.bigint(),
@@ -752,18 +749,14 @@ export const goalTreasury = onchainTable("goal_treasury", (t) => ({
   state: t.integer(),
   finalized: t.boolean().notNull().default(false),
 
-  // Latest finalized success rewards (if any)
-  successGoalAmount: t.bigint().notNull().default(0n),
-  successCobuildAmount: t.bigint().notNull().default(0n),
-  successTotalGoalStaked: t.bigint().notNull().default(0n),
-  successTotalCobuildStaked: t.bigint().notNull().default(0n),
-
   successAssertionId: t.hex(),
   successAssertionRegisteredAt: t.bigint(),
+  reassertGraceDeadline: t.bigint(),
   jurorSlasher: t.hex(),
   jurorSlasherAuthority: t.hex(),
+  underwriterSlasher: t.hex(),
+  underwriterSlasherAuthority: t.hex(),
   successAt: t.bigint(),
-  successFinalizedAt: t.bigint(),
 
   lastSyncedTargetRate: t.bigint(),
   lastSyncedAppliedRate: t.bigint(),
@@ -775,7 +768,6 @@ export const goalTreasury = onchainTable("goal_treasury", (t) => ({
   lastSyncAlertCurrentRate: t.bigint(),
   lastResidualFinalState: t.integer(),
   lastResidualSettledAmount: t.bigint(),
-  lastResidualRewardEscrowAmount: t.bigint(),
   lastResidualControllerBurnAmount: t.bigint(),
 
   createdAtBlock: t.bigint(),
@@ -840,51 +832,57 @@ export const juror = onchainTable("juror", (t) => ({
   updatedAtTimestamp: t.bigint().notNull(),
 }));
 
-/**
- * Reward escrow aggregate state.
- */
-export const rewardEscrow = onchainTable("reward_escrow", (t) => ({
+export const premiumEscrow = onchainTable("premium_escrow", (t) => ({
   id: t.hex().primaryKey(),
 
+  budgetStackId: t.hex(),
+  childFlow: t.hex(),
+  budgetTreasury: t.hex(),
+  managerRewardPool: t.hex(),
+  baselineReceived: t.bigint().notNull().default(0n),
+
+  latestDistributedPremium: t.bigint(),
+  latestTotalCoverage: t.bigint(),
+  latestPremiumIndex: t.bigint(),
+  lastIndexedAtBlock: t.bigint(),
+  lastIndexedAtTimestamp: t.bigint(),
+
+  closed: t.boolean().notNull().default(false),
   finalState: t.integer(),
-  rewardPoolSnapshot: t.bigint().notNull().default(0n),
-  cobuildPoolSnapshot: t.bigint().notNull().default(0n),
-  totalPointsSnapshot: t.bigint().notNull().default(0n),
-  goalFinalizedAt: t.bigint(),
-
-  goalReward: t.bigint().notNull().default(0n),
-  cobuildReward: t.bigint().notNull().default(0n),
-  totalGoalStaked: t.bigint().notNull().default(0n),
-  totalCobuildStaked: t.bigint().notNull().default(0n),
-
-  goalToken: t.hex(),
-  cobuildToken: t.hex(),
-
-  finalized: t.boolean().notNull().default(false),
-
-  lastUnwrapCaller: t.hex(),
-  lastUnwrapAmountIn: t.bigint().notNull().default(0n),
-  lastUnwrapAmountOut: t.bigint().notNull().default(0n),
+  activatedAt: t.bigint(),
+  closedAt: t.bigint(),
 
   updatedAtBlock: t.bigint(),
   updatedAtTimestamp: t.bigint(),
 }));
 
-/**
- * Reward claim event rows.
- */
-export const rewardClaim = onchainTable("reward_claim", (t) => ({
+export const premiumAccount = onchainTable("premium_account", (t) => ({
+  id: t.text().primaryKey(), // `${escrow}:${account}`
+
+  escrow: t.hex().notNull(),
+  account: t.hex().notNull(),
+
+  currentCoverage: t.bigint().notNull().default(0n),
+  claimableAmount: t.bigint().notNull().default(0n),
+  exposureIntegral: t.bigint().notNull().default(0n),
+
+  slashed: t.boolean().notNull().default(false),
+  lastSlashWeight: t.bigint(),
+  lastSlashDuration: t.bigint(),
+
+  lastCheckpointBlock: t.bigint(),
+  lastCheckpointTimestamp: t.bigint(),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
+export const premiumClaim = onchainTable("premium_claim", (t) => ({
   id: t.text().primaryKey(), // event.id
 
   escrow: t.hex().notNull(),
   account: t.hex().notNull(),
-  to: t.hex(),
-  rewardAmount: t.bigint().notNull().default(0n),
-  cobuildAmount: t.bigint().notNull().default(0n),
-  goalRentAmount: t.bigint().notNull().default(0n),
-  cobuildRentAmount: t.bigint().notNull().default(0n),
-  amount: t.bigint().notNull().default(0n),
-  isGoalToken: t.boolean().notNull().default(false),
+  to: t.hex().notNull(),
+  amount: t.bigint().notNull(),
 
   txHash: t.hex().notNull(),
   blockNumber: t.bigint().notNull(),
@@ -927,7 +925,6 @@ export const hookFunding = onchainTable("hook_funding", (t) => ({
   superTokenAmount: t.bigint(),
   totalRaised: t.bigint(),
   deferredSuperTokenAmount: t.bigint(),
-  rewardEscrowAmount: t.bigint(),
   controllerBurnAmount: t.bigint(),
   finalState: t.integer(),
   beneficiary: t.hex(), // only for SETTLED
@@ -998,7 +995,6 @@ export const hookProcess = onchainTable("hook_process", (t) => ({
   superTokenAmount: t.bigint(),
   accepted: t.boolean(),
   action: t.integer(),
-  rewardEscrowAmount: t.bigint(),
   burnAmount: t.bigint(),
   recipientId: t.hex(),
   caller: t.hex(),

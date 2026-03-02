@@ -1,13 +1,12 @@
+import { eq, sql } from "drizzle-orm";
 import { ponder } from "ponder:registry";
-import { sql } from "drizzle-orm";
 
 import { juror } from "ponder:schema";
-import { insertProtocolEvent } from "../helpers/protocolEvent";
 import { jurorId } from "../helpers/ids";
+import { insertProtocolEvent } from "../helpers/protocolEvent";
 
-async function handleJurorSlashed(args: { event: any; context: any; contractName: string }) {
-  const { event, context, contractName } = args;
-  await insertProtocolEvent({ context, event, contractName });
+ponder.on("GoalStakeVault:JurorSlashed", async ({ event, context }) => {
+  await insertProtocolEvent({ context, event, contractName: "GoalStakeVault" });
 
   const vault = event.log.address;
   const jurorAddress = event.args.juror;
@@ -19,21 +18,18 @@ async function handleJurorSlashed(args: { event: any; context: any; contractName
       id,
       vault,
       jurorAddress,
-      slashedTotal: event.args.appliedWeight,
+      slashedTotal: 0n,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
-    .onConflictDoUpdate({
-        slashedTotal: sql`${juror.slashedTotal} + ${event.args.appliedWeight}`,
-        updatedAtBlock: event.block.number,
-        updatedAtTimestamp: event.block.timestamp,
-    });
-}
+    .onConflictDoNothing();
 
-ponder.on("GoalStakeVault:JurorSlashed", async ({ event, context }) => {
-  await handleJurorSlashed({ event, context, contractName: "GoalStakeVault" });
-});
-
-ponder.on("BudgetStakeVault:JurorSlashed", async ({ event, context }) => {
-  await handleJurorSlashed({ event, context, contractName: "BudgetStakeVault" });
+  await context.db.sql
+    .update(juror)
+    .set({
+      slashedTotal: sql`${juror.slashedTotal} + ${event.args.appliedWeight}`,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    })
+    .where(eq(juror.id, id));
 });

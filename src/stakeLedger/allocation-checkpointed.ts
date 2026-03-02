@@ -13,7 +13,7 @@ ponder.on("BudgetStakeLedger:AllocationCheckpointed", async ({ event, context })
       account: event.args.account,
       budget: event.args.budget,
       allocatedStake: event.args.allocatedStake,
-      checkpointTimestamp: event.args.timestamp,
+      checkpointTimestamp: event.args.checkpointTime,
       txHash: event.transaction.hash,
       blockNumber: event.block.number,
       timestamp: event.block.timestamp,

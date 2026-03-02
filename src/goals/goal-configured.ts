@@ -1,5 +1,5 @@
 import { ponder } from "ponder:registry";
-import { goalTreasury, rewardEscrow, stakeVault } from "ponder:schema";
+import { goalTreasury, stakeVault } from "ponder:schema";
 
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
@@ -15,7 +15,7 @@ ponder.on("GoalTreasury:GoalConfigured", async ({ event, context }) => {
       owner: event.args.owner,
       flowAddress: event.args.flow,
       stakeVault: event.args.stakeVault,
-      rewardEscrow: event.args.rewardEscrow,
+      budgetStakeLedger: event.args.budgetStakeLedger,
       hook: event.args.hook,
       goalRulesets: event.args.goalRulesets,
       goalRevnetId: event.args.goalRevnetId,
@@ -30,21 +30,20 @@ ponder.on("GoalTreasury:GoalConfigured", async ({ event, context }) => {
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
-        owner: event.args.owner,
-        flowAddress: event.args.flow,
-        stakeVault: event.args.stakeVault,
-        rewardEscrow: event.args.rewardEscrow,
-        hook: event.args.hook,
-        goalRulesets: event.args.goalRulesets,
-        goalRevnetId: event.args.goalRevnetId,
-        minRaiseDeadline: event.args.minRaiseDeadline,
-        deadline: event.args.deadline,
-        minRaise: event.args.minRaise,
-        updatedAtBlock: event.block.number,
-        updatedAtTimestamp: event.block.timestamp,
+      owner: event.args.owner,
+      flowAddress: event.args.flow,
+      stakeVault: event.args.stakeVault,
+      budgetStakeLedger: event.args.budgetStakeLedger,
+      hook: event.args.hook,
+      goalRulesets: event.args.goalRulesets,
+      goalRevnetId: event.args.goalRevnetId,
+      minRaiseDeadline: event.args.minRaiseDeadline,
+      deadline: event.args.deadline,
+      minRaise: event.args.minRaise,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
     });
 
-  // Ensure related aggregates exist.
   await context.db
     .insert(stakeVault)
     .values({
@@ -55,18 +54,9 @@ ponder.on("GoalTreasury:GoalConfigured", async ({ event, context }) => {
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
-        kind: "goal",
-        treasury,
-        updatedAtBlock: event.block.number,
-        updatedAtTimestamp: event.block.timestamp,
-    });
-
-  await context.db
-    .insert(rewardEscrow)
-    .values({
-      id: event.args.rewardEscrow,
+      kind: "goal",
+      treasury,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
-    })
-    .onConflictDoNothing();
+    });
 });

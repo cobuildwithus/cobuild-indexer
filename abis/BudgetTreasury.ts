@@ -2,10 +2,10 @@ import { parseAbi } from "viem";
 
 /**
  * Event ABI for BudgetTreasury.
- * Generated from Foundry artifact in ../protocol/out.
+ * Generated from Foundry artifact in ../v1-core/out.
  */
 export const BudgetTreasuryAbi = parseAbi([
-  "event BudgetConfigured(address indexed controller, address flow, address stakeVault, uint64 fundingDeadline, uint64 executionDuration, uint256 activationThreshold, uint256 runwayCap)",
+  "event BudgetConfigured(address indexed controller, address flow, uint64 fundingDeadline, uint64 executionDuration, uint256 activationThreshold, uint256 runwayCap)",
   "event BudgetFinalized(uint8 finalState)",
   "event DonationRecorded(address indexed donor, address indexed sourceToken, uint256 sourceAmount, uint256 superTokenAmount)",
   "event FlowRateSyncCallFailed(address indexed flow, bytes4 indexed selector, int96 attemptedRate, bytes reason)",
@@ -18,6 +18,7 @@ export const BudgetTreasuryAbi = parseAbi([
   "event StateTransition(uint8 previousState, uint8 newState)",
   "event SuccessAssertionCleared(bytes32 indexed assertionId)",
   "event SuccessAssertionRegistered(bytes32 indexed assertionId, uint64 indexed assertedAt)",
+  "event SuccessAssertionResolutionFailClosed(bytes32 indexed assertionId, uint8 indexed reason)",
   "event SuccessResolutionDisabled()",
   "event TerminalSideEffectFailed(uint8 indexed operation, bytes reason)",
 ] as const);
