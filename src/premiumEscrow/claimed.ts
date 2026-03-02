@@ -49,7 +49,13 @@ ponder.on("PremiumEscrow:Claimed", async ({ event, context }) => {
   await context.db.sql
     .update(premiumAccount)
     .set({
-      claimableAmount: sql`GREATEST(${premiumAccount.claimableAmount} - ${event.args.amount}, 0)`,
+      claimableAmount: sql`
+        CASE
+          WHEN ${premiumAccount.claimableAmount} > ${event.args.amount}
+          THEN ${premiumAccount.claimableAmount} - ${event.args.amount}
+          ELSE 0
+        END
+      `,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })

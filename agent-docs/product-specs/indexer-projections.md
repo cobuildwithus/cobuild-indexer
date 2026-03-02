@@ -16,7 +16,7 @@
 
 ## Dynamic Discovery
 
-- Child flows are discovered from `GoalFlow:FlowRecipientCreated`.
+- Child flows are discovered from `GoalFlow:ChildFlowDeployed(recipient)`.
 - Premium escrows are discovered from `GoalFlow:ChildFlowDeployed(managerRewardPool)`.
 - Budget treasuries are discovered from `BudgetTCR:BudgetStackDeployed`.
 

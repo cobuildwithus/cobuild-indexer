@@ -22,7 +22,7 @@ Last updated: 2026-03-02
 - Legacy surfaces are configured from `src/lib/config.ts`, `addresses.ts`, and `IndexerConfig` with project-scoped event filters for Base project ids.
 - Scaffold root contracts in `ponder.config.ts` currently use placeholder addresses/start blocks until deployment coordinates are provided.
 - Dynamic discovery:
-  - `ChildFlow` addresses are factory-discovered from `GoalFlow:FlowRecipientCreated(recipient)`.
+  - `ChildFlow` addresses are factory-discovered from `GoalFlow:ChildFlowDeployed(recipient)`.
   - `PremiumEscrow` addresses are factory-discovered from `GoalFlow:ChildFlowDeployed(managerRewardPool)`.
   - `BudgetTreasury` addresses are factory-discovered from `BudgetTCR:BudgetStackDeployed`.
 

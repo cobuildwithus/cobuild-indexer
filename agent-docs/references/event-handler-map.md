@@ -26,6 +26,9 @@
   - `Initialized`, `FlowInitialized`, `ChildFlowDeployed`, `RecipientCreated`, `FlowRecipientCreated`, `RecipientRemoved`, `MetadataSet`
   - `TargetOutflowRateUpdated`, `TargetOutflowRefreshFailed`
   - `AllocationCommitted`, `AllocationSnapshotUpdated`, `SuperTokenSwept`
+- Dynamic factory discovery in `ponder.config.ts`
+  - `ChildFlow` addresses: `GoalFlow:ChildFlowDeployed(recipient)`
+  - `PremiumEscrow` addresses: `GoalFlow:ChildFlowDeployed(managerRewardPool)`
 
 ## Goal Treasury
 

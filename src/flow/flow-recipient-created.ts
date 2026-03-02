@@ -2,7 +2,7 @@ import { ponder } from "ponder:registry";
 import { and, eq } from "drizzle-orm";
 import type { Hex } from "viem";
 
-import { flow, flowRecipient } from "ponder:schema";
+import { budgetStack, flow, flowRecipient } from "ponder:schema";
 
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
@@ -13,6 +13,11 @@ async function handleFlowRecipientCreated(args: { event: any; context: any; cont
   const parentFlowId: Hex = event.log.address;
   const recipientId: Hex = event.args.recipientId;
   const childFlowAddress: Hex = event.args.recipient;
+  const [stack] = await context.db.sql
+    .select({ strategy: budgetStack.strategy })
+    .from(budgetStack)
+    .where(eq(budgetStack.id, recipientId))
+    .limit(1);
 
   // 1) Mark the (already-created) recipient row as a flow-recipient.
   await context.db.sql
@@ -21,6 +26,7 @@ async function handleFlowRecipientCreated(args: { event: any; context: any; cont
       isFlowRecipient: true,
       childDistributionPool: event.args.distributionPool,
       childManagerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
+      childStrategy: stack?.strategy ?? null,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
@@ -44,12 +50,12 @@ async function handleFlowRecipientCreated(args: { event: any; context: any; cont
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
-        kind: "child",
-        parentFlow: parentFlowId,
-        distributionPool: event.args.distributionPool,
-        managerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
-        updatedAtBlock: event.block.number,
-        updatedAtTimestamp: event.block.timestamp,
+      kind: "child",
+      parentFlow: parentFlowId,
+      distributionPool: event.args.distributionPool,
+      managerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
     });
 }
 

@@ -45,10 +45,6 @@ const ADDRESSES = {
   GOAL_HOOK: "0x9999999999999999999999999999999999999999",
 } as const;
 
-const FLOW_RECIPIENT_CREATED = parseAbiItem(
-  "event FlowRecipientCreated(bytes32 indexed recipientId, address indexed recipient, address distributionPool, uint32 managerRewardPoolFlowRatePpm)"
-);
-
 const CHILD_FLOW_DEPLOYED = parseAbiItem(
   "event ChildFlowDeployed(bytes32 indexed recipientId, address indexed recipient, address indexed strategy, address recipientAdmin, address flowOperator, address sweeper, address managerRewardPool)"
 );
@@ -217,7 +213,7 @@ export default createConfig({
       chain: "base",
       address: factory({
         address: ADDRESSES.GOAL_FLOW,
-        event: FLOW_RECIPIENT_CREATED,
+        event: CHILD_FLOW_DEPLOYED,
         parameter: "recipient",
       }),
       startBlock: 0,
