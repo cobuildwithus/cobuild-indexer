@@ -6,7 +6,7 @@ import { parseAbi } from "viem";
  */
 export const BudgetTCRAbi = parseAbi([
   "event BudgetAllocationMechanismDeployed(bytes32 indexed itemID, address indexed allocationMechanism, address indexed allocationMechanismArbitrator, address roundFactory)",
-  "event BudgetCreditCapEnforcementFailed(bytes32 indexed itemID, address indexed budgetTreasury, bytes4 indexed selector, bytes reason)",
+  "event BudgetCreditCapEnforcementFailed(bytes32 indexed itemID, address indexed budgetTreasury, address callTarget, bytes4 indexed selector, bytes reason)",
   "event BudgetStackActivationQueued(bytes32 indexed itemID)",
   "event BudgetStackDeployed(bytes32 indexed itemID, address indexed childFlow, address indexed budgetTreasury, address strategy)",
   "event BudgetStackRemovalHandled(bytes32 indexed itemID, address indexed childFlow, address indexed budgetTreasury, bool removedFromParent, bool terminallyResolved)",
