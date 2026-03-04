@@ -605,6 +605,7 @@ export const flowRecipient = onchainTable("flow_recipient", (t) => ({
   childDistributionPool: t.hex(),
   childStrategy: t.hex(),
   childManagerRewardPoolFlowRatePercent: t.integer(),
+  budgetTreasury: t.hex(), // explicit budget_treasury.id linkage for this recipient
 
   // Pool units bookkeeping
   allocationUnitsSum: t.bigint().notNull().default(0n), // sum of computed units across allocation keys
@@ -725,55 +726,124 @@ export const budgetTreasury = onchainTable("budget_treasury", (t) => ({
 }));
 
 /**
+ * Deterministic recipient -> budget treasury lookup keyed by recipientId (bytes32).
+ */
+export const budgetTreasuryByRecipient = onchainTable("budget_treasury_by_recipient", (t) => ({
+  id: t.hex().primaryKey(), // recipientId
+  budgetTreasury: t.hex().notNull(),
+  childFlow: t.hex(),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
+/**
+ * Deterministic child-flow -> budget treasury lookup keyed by childFlow.
+ */
+export const budgetTreasuryByChildFlow = onchainTable("budget_treasury_by_child_flow", (t) => ({
+  id: t.hex().primaryKey(), // childFlow
+  budgetTreasury: t.hex().notNull(),
+  recipientId: t.hex(),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
+/**
  * Goal treasury state (1 row per GoalTreasury address).
  */
-export const goalTreasury = onchainTable("goal_treasury", (t) => ({
-  id: t.hex().primaryKey(),
+export const goalTreasury = onchainTable(
+  "goal_treasury",
+  (t) => ({
+    id: t.hex().primaryKey(),
 
-  owner: t.hex(),
-  flowAddress: t.hex(),
-  recipientId: t.hex(),
-  budgetStakeLedger: t.hex(),
-  goalToken: t.hex(),
-  cobuildToken: t.hex(),
-  stakeVault: t.hex(),
-  hook: t.hex(),
-  goalRulesets: t.hex(),
-  goalRevnetId: t.bigint(),
-  minRaiseDeadline: t.bigint(),
-  deadline: t.bigint(),
-  minRaise: t.bigint(),
-  strategy: t.hex(),
-  parentFlow: t.hex(),
+    owner: t.hex(),
+    flowAddress: t.hex(),
+    recipientId: t.hex(),
+    budgetStakeLedger: t.hex(),
+    goalToken: t.hex(),
+    cobuildToken: t.hex(),
+    stakeVault: t.hex(),
+    hook: t.hex(),
+    goalRulesets: t.hex(),
+    goalRevnetId: t.bigint(),
+    canonicalProjectChainId: t.integer(),
+    canonicalProjectId: t.integer(),
+    canonicalRouteSlug: t.text(),
+    canonicalRouteDomain: t.text(),
+    minRaiseDeadline: t.bigint(),
+    deadline: t.bigint(),
+    minRaise: t.bigint(),
+    strategy: t.hex(),
+    parentFlow: t.hex(),
 
-  state: t.integer(),
-  finalized: t.boolean().notNull().default(false),
+    state: t.integer(),
+    finalized: t.boolean().notNull().default(false),
 
-  successAssertionId: t.hex(),
-  successAssertionRegisteredAt: t.bigint(),
-  reassertGraceDeadline: t.bigint(),
-  jurorSlasher: t.hex(),
-  jurorSlasherAuthority: t.hex(),
-  underwriterSlasher: t.hex(),
-  underwriterSlasherAuthority: t.hex(),
-  successAt: t.bigint(),
+    successAssertionId: t.hex(),
+    successAssertionRegisteredAt: t.bigint(),
+    reassertGraceDeadline: t.bigint(),
+    jurorSlasher: t.hex(),
+    jurorSlasherAuthority: t.hex(),
+    underwriterSlasher: t.hex(),
+    underwriterSlasherAuthority: t.hex(),
+    successAt: t.bigint(),
 
-  lastSyncedTargetRate: t.bigint(),
-  lastSyncedAppliedRate: t.bigint(),
-  lastSyncedTreasuryBalance: t.bigint(),
-  lastSyncedTimeRemaining: t.bigint(),
-  lastSyncAlertFlow: t.hex(),
-  lastSyncAlertTargetRate: t.bigint(),
-  lastSyncAlertFallbackRate: t.bigint(),
-  lastSyncAlertCurrentRate: t.bigint(),
-  lastResidualFinalState: t.integer(),
-  lastResidualSettledAmount: t.bigint(),
-  lastResidualControllerBurnAmount: t.bigint(),
+    lastSyncedTargetRate: t.bigint(),
+    lastSyncedAppliedRate: t.bigint(),
+    lastSyncedTreasuryBalance: t.bigint(),
+    lastSyncedTimeRemaining: t.bigint(),
+    lastSyncAlertFlow: t.hex(),
+    lastSyncAlertTargetRate: t.bigint(),
+    lastSyncAlertFallbackRate: t.bigint(),
+    lastSyncAlertCurrentRate: t.bigint(),
+    lastResidualFinalState: t.integer(),
+    lastResidualSettledAmount: t.bigint(),
+    lastResidualControllerBurnAmount: t.bigint(),
 
-  createdAtBlock: t.bigint(),
-  createdAtTimestamp: t.bigint(),
-  updatedAtBlock: t.bigint(),
-  updatedAtTimestamp: t.bigint(),
+    createdAtBlock: t.bigint(),
+    createdAtTimestamp: t.bigint(),
+    updatedAtBlock: t.bigint(),
+    updatedAtTimestamp: t.bigint(),
+  }),
+  (t) => ({
+    canonicalProjectIdx: index().on(t.canonicalProjectChainId, t.canonicalProjectId),
+    canonicalRouteSlugIdx: index().on(t.canonicalRouteSlug),
+    canonicalRouteDomainIdx: index().on(t.canonicalRouteDomain),
+  })
+);
+
+/**
+ * Precomputed goal-treasury series points.
+ * Each row stores net movement and resulting balance for a treasury snapshot event.
+ */
+export const goalTreasurySeries = onchainTable(
+  "goal_treasury_series",
+  (t) => ({
+    id: t.text().primaryKey(), // event.id
+    goalTreasury: t.hex().notNull(),
+    sourceEventName: t.text().notNull(),
+    inflow: t.bigint().notNull().default(0n),
+    outflow: t.bigint().notNull().default(0n),
+    balance: t.bigint().notNull(),
+    txHash: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    goalTreasuryTimestampIdx: index().on(t.goalTreasury, t.timestamp),
+  })
+);
+
+/**
+ * Per-goal cursor to compute deterministic deltas for goal_treasury_series.
+ */
+export const goalTreasurySeriesCursor = onchainTable("goal_treasury_series_cursor", (t) => ({
+  id: t.hex().primaryKey(), // goalTreasury
+  lastSeriesId: t.text().notNull(),
+  lastBalance: t.bigint().notNull(),
+  lastBlockNumber: t.bigint().notNull(),
+  lastTimestamp: t.bigint().notNull(),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
 }));
 
 /**

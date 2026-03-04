@@ -39,6 +39,8 @@
   - `ReassertGraceActivated`, `ResidualSettled`
   - `HookFundingRecorded`, `HookFundingDeferred`, `HookDeferredFundingSettled`
   - `JurorSlasherConfigured`, `UnderwriterSlasherConfigured`, `TerminalSideEffectFailed`
+  - `GoalConfigured` also writes canonical project + canonical route linkage fields on `goal_treasury`.
+  - `FlowRateSynced` also writes `goal_treasury_series` + `goal_treasury_series_cursor`.
 
 ## Budget Treasury
 
@@ -69,6 +71,7 @@
   - allocation mechanism/credit cap/terminal recipient telemetry
   - governance/Kleros telemetry (`Initialized`, `RequestSubmitted`, `RequestEvidenceGroupID`, `MetaEvidence`, `Evidence`, `Dispute`, `Ruling`, `ItemSubmitted`, `ItemStatusChange`)
   - funding/terminalization telemetry (`SubmissionDepositPaid`, `SubmissionDepositTransferred`, `BudgetTerminalizationStepFailed`)
+  - `BudgetStackDeployed` maintains deterministic recipient/childFlow -> budget treasury lookup KV tables and recipient FK linkage.
 - `BudgetTCRFactory:*` handlers in `src/tcrFactory/**`
   - deployment-for-goal telemetry
 
@@ -84,3 +87,4 @@
 - Raw event audit table: `protocol_event` (scaffold handlers via helper).
 - Legacy handlers update legacy projection tables (`project`, `ruleset`, `loan`, payment/swap telemetry, and related maps).
 - Domain tables are mapped in `ponder.schema.ts` and updated by same-domain handlers.
+- Deterministic lookup/cursor tables (`budget_treasury_by_*`, `goal_treasury_series_cursor`) are maintained in handler write paths to avoid non-PK SQL lookups.

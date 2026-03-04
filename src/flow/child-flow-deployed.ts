@@ -1,8 +1,16 @@
-import { and, eq } from "drizzle-orm";
 import { ponder } from "ponder:registry";
 import type { Hex } from "viem";
 
-import { budgetStack, budgetTreasury, flow, flowRecipient, premiumEscrow } from "ponder:schema";
+import {
+  budgetStack,
+  budgetTreasury,
+  budgetTreasuryByChildFlow,
+  budgetTreasuryByRecipient,
+  flow,
+  flowRecipient,
+  premiumEscrow,
+} from "ponder:schema";
+import { flowRecipientKey } from "../helpers/ids";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
 ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
@@ -12,16 +20,19 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
   const childFlowId = event.args.recipient as Hex;
   const recipientId = event.args.recipientId as Hex;
   const escrowId = event.args.managerRewardPool as Hex;
+  const recipientRowId = flowRecipientKey(parentFlowId, recipientId);
 
-  await context.db.sql
-    .update(flowRecipient)
-    .set({
-      isFlowRecipient: true,
-      childStrategy: event.args.strategy,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
-    })
-    .where(and(eq(flowRecipient.flowId, parentFlowId), eq(flowRecipient.recipientId, recipientId)));
+  const recipientBudgetLink = await context.db.find(budgetTreasuryByRecipient, { id: recipientId });
+  const childFlowBudgetLink = await context.db.find(budgetTreasuryByChildFlow, { id: childFlowId });
+  const treasuryId = recipientBudgetLink?.budgetTreasury ?? childFlowBudgetLink?.budgetTreasury ?? null;
+
+  await context.db.update(flowRecipient, { id: recipientRowId }).set({
+    isFlowRecipient: true,
+    childStrategy: event.args.strategy,
+    ...(treasuryId ? { budgetTreasury: treasuryId } : {}),
+    updatedAtBlock: event.block.number,
+    updatedAtTimestamp: event.block.timestamp,
+  });
 
   await context.db
     .insert(flow)
@@ -77,59 +88,56 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
       id: escrowId,
       budgetStackId: recipientId,
       childFlow: childFlowId,
+      ...(treasuryId ? { budgetTreasury: treasuryId } : {}),
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
       budgetStackId: recipientId,
+      childFlow: childFlowId,
+      ...(treasuryId ? { budgetTreasury: treasuryId } : {}),
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    });
+
+  if (!treasuryId) return;
+
+  await context.db.update(budgetTreasury, { id: treasuryId }).set({
+    recipientId,
+    childFlow: childFlowId,
+    premiumEscrow: escrowId,
+    updatedAtBlock: event.block.number,
+    updatedAtTimestamp: event.block.timestamp,
+  });
+
+  await context.db
+    .insert(budgetTreasuryByRecipient)
+    .values({
+      id: recipientId,
+      budgetTreasury: treasuryId,
+      childFlow: childFlowId,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    })
+    .onConflictDoUpdate({
+      budgetTreasury: treasuryId,
       childFlow: childFlowId,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     });
 
-  const [recipientTreasury] = await context.db.sql
-    .select({ id: budgetTreasury.id })
-    .from(budgetTreasury)
-    .where(eq(budgetTreasury.recipientId, recipientId))
-    .limit(1);
-
-  let treasuryId = recipientTreasury?.id ?? null;
-  if (!treasuryId) {
-    const [childFlowTreasury] = await context.db.sql
-      .select({ id: budgetTreasury.id })
-      .from(budgetTreasury)
-      .where(eq(budgetTreasury.childFlow, childFlowId))
-      .limit(1);
-    treasuryId = childFlowTreasury?.id ?? null;
-  }
-
-  if (!treasuryId) return;
-
-  await context.db.sql
-    .update(budgetTreasury)
-    .set({
-      recipientId,
-      childFlow: childFlowId,
-      premiumEscrow: escrowId,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
-    })
-    .where(eq(budgetTreasury.id, treasuryId));
-
   await context.db
-    .insert(premiumEscrow)
+    .insert(budgetTreasuryByChildFlow)
     .values({
-      id: escrowId,
-      budgetStackId: recipientId,
-      childFlow: childFlowId,
+      id: childFlowId,
       budgetTreasury: treasuryId,
+      recipientId,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
-      budgetStackId: recipientId,
-      childFlow: childFlowId,
       budgetTreasury: treasuryId,
+      recipientId,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     });
