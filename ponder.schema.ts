@@ -690,11 +690,8 @@ export const budgetTreasury = onchainTable("budget_treasury", (t) => ({
   recipientId: t.hex(), // bytes32 (budgetId)
   childFlow: t.hex(),
   premiumEscrow: t.hex(),
-  budgetOwner: t.hex(),
   strategy: t.hex(),
 
-  budgetStart: t.bigint(),
-  budgetDuration: t.bigint(),
   fundingDeadline: t.bigint(),
   executionDuration: t.bigint(),
   activationThreshold: t.bigint(),
@@ -782,9 +779,7 @@ export const goalTreasury = onchainTable(
     successAssertionRegisteredAt: t.bigint(),
     reassertGraceDeadline: t.bigint(),
     jurorSlasher: t.hex(),
-    jurorSlasherAuthority: t.hex(),
     underwriterSlasher: t.hex(),
-    underwriterSlasherAuthority: t.hex(),
     successAt: t.bigint(),
 
     lastSyncedTargetRate: t.bigint(),
@@ -845,6 +840,34 @@ export const goalTreasurySeriesCursor = onchainTable("goal_treasury_series_curso
   updatedAtBlock: t.bigint().notNull(),
   updatedAtTimestamp: t.bigint().notNull(),
 }));
+
+/**
+ * Pre-aggregated per-goal contributor totals used by interface holdings surfaces.
+ * Semantics intentionally mirror holdings query behavior:
+ * - only pay events with newly issued tokens contribute
+ * - contributions roll up by goal treasury across the canonical project's sucker group
+ */
+export const goalContributorAggregate = onchainTable(
+  "goal_contributor_aggregate",
+  (t) => ({
+    id: t.text().primaryKey(), // `${goalTreasury}:${contributor}`
+    goalTreasury: t.hex().notNull(),
+    contributor: t.hex().notNull(),
+    totalContributed: t.bigint().notNull().default(0n),
+    contributionCount: t.integer().notNull().default(0),
+    firstContributedAt: t.integer().notNull(),
+    lastContributedAt: t.integer().notNull(),
+    firstContributionTxHash: t.hex().notNull(),
+    lastContributionTxHash: t.hex().notNull(),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    goalContributorIdx: index().on(t.goalTreasury, t.contributor),
+    contributorIdx: index().on(t.contributor),
+    goalTreasuryIdx: index().on(t.goalTreasury),
+  })
+);
 
 /**
  * Stake vault aggregate state (GoalStakeVault instances, both goal and budget vaults).
