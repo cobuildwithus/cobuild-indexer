@@ -17,17 +17,14 @@ async function handleFlowRecipientCreated(args: { event: any; context: any; cont
   const flowRecipientId = flowRecipientKey(parentFlowId, recipientId);
 
   // 1) Mark the (already-created) recipient row as a flow-recipient.
-  const existingRecipient = await context.db.find(flowRecipient, { id: flowRecipientId });
-  if (existingRecipient) {
-    await context.db.update(flowRecipient, { id: flowRecipientId }).set({
-      isFlowRecipient: true,
-      childDistributionPool: event.args.distributionPool,
-      childManagerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
-      childStrategy: stack?.strategy ?? null,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
-    });
-  }
+  await context.db.update(flowRecipient, { id: flowRecipientId }).set({
+    isFlowRecipient: true,
+    childDistributionPool: event.args.distributionPool,
+    childManagerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
+    childStrategy: stack?.strategy ?? null,
+    updatedAtBlock: event.block.number,
+    updatedAtTimestamp: event.block.timestamp,
+  });
 
   // 2) Ensure the child flow entity exists and is linked to its parent.
   await context.db

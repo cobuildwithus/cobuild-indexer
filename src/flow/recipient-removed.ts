@@ -11,8 +11,6 @@ async function handleRecipientRemoved(args: { event: any; context: any; contract
   const flowId = event.log.address;
   const recipientId = event.args.recipientId;
   const flowRecipientId = flowRecipientKey(flowId, recipientId);
-  const existingRecipient = await context.db.find(flowRecipient, { id: flowRecipientId });
-  if (!existingRecipient) return;
 
   await context.db
     .update(flowRecipient, { id: flowRecipientId })

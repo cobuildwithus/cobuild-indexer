@@ -9,8 +9,6 @@ async function handleMetadataSet(args: { event: any; context: any; contractName:
 
   const flowId = event.log.address;
   const md = event.args.metadata;
-  const existingFlow = await context.db.find(flow, { id: flowId });
-  if (!existingFlow) return;
 
   await context.db
     .update(flow, { id: flowId })

@@ -7,8 +7,6 @@ async function handleTargetOutflowRateUpdated(args: { event: any; context: any; 
   const { event, context, contractName } = args;
   await insertProtocolEvent({ context, event, contractName });
   const flowId = event.log.address;
-  const existingFlow = await context.db.find(flow, { id: flowId });
-  if (!existingFlow) return;
 
   await context.db
     .update(flow, { id: flowId })

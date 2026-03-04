@@ -5,10 +5,6 @@ import { insertProtocolEvent } from "../helpers/protocolEvent";
 
 ponder.on("BudgetTreasury:FlowRateSyncManualInterventionRequired", async ({ event, context }) => {
   await insertProtocolEvent({ context, event, contractName: "BudgetTreasury" });
-
-  const existingBudgetTreasury = await context.db.find(budgetTreasury, { id: event.log.address });
-  if (!existingBudgetTreasury) return;
-
   await context.db
     .update(budgetTreasury, { id: event.log.address })
     .set({
