@@ -16,24 +16,27 @@ If instructions still conflict after applying this order, ask the user before ac
 
 ## Read Order
 
-1. `agent-docs/index.md`
-2. `ARCHITECTURE.md`
-3. `agent-docs/product-specs/indexer-projections.md`
-4. `agent-docs/RELIABILITY.md`
-5. `agent-docs/SECURITY.md`
-6. `agent-docs/references/module-boundary-map.md`
-7. `agent-docs/references/event-handler-map.md`
-8. `agent-docs/references/schema-relations-map.md`
-9. `agent-docs/references/rpc-chain-config-map.md`
-10. `agent-docs/references/testing-ci-map.md`
-11. `agent-docs/operations/verification-and-runtime.md`
-12. `agent-docs/operations/completion-workflow.md`
-13. `AGENT_NOTES.md` (historical context when needed)
+1. `ponder_considerations` (mandatory pre-read before any implementation work)
+2. `agent-docs/index.md`
+3. `ARCHITECTURE.md`
+4. `agent-docs/product-specs/indexer-projections.md`
+5. `agent-docs/RELIABILITY.md`
+6. `agent-docs/SECURITY.md`
+7. `agent-docs/references/module-boundary-map.md`
+8. `agent-docs/references/event-handler-map.md`
+9. `agent-docs/references/schema-relations-map.md`
+10. `agent-docs/references/rpc-chain-config-map.md`
+11. `agent-docs/references/testing-ci-map.md`
+12. `agent-docs/operations/verification-and-runtime.md`
+13. `agent-docs/operations/completion-workflow.md`
+14. `AGENT_NOTES.md` (historical context when needed)
 
 ## Hard Rules (Non-Negotiable)
 
 - Never access `.env` or `.env*` files.
 - Keep event handlers replay-safe: do not introduce wall-clock or random behavior in projection decisions.
+- Do not use `context.db.sql` by default. Prefer primary-key-based `context.db.find/insert/update`; when non-PK relationships are needed, prefer deterministic mapping tables.
+- If `context.db.sql` is absolutely required, stop and discuss trade-offs with the user first, then document the exception in the active coordination/execution notes.
 - If adding/changing indexed events, update all coupled surfaces together:
   - `ponder.config.ts` filters/contracts,
   - `src/contracts/**` handlers,
@@ -42,14 +45,15 @@ If instructions still conflict after applying this order, ask the user before ac
 - Treat handler `readContract` calls as deterministic boundaries: pin reads to event context when possible, or mark them best-effort metadata.
 - Default to additive integration with existing indexer services; do not perform hard cutovers or remove legacy surfaces unless the user explicitly requests it.
 - Historical plan docs under `agent-docs/exec-plans/completed/` are immutable snapshots.
-- Always keep `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` current for every coding task (single-agent and multi-agent): claim scope before first edit, list planned symbol add/rename/delete work, and remove your entry when done.
-- Any spawned subagent that may review or edit code must read `COORDINATION_LEDGER.md` first and must not touch files/symbols owned by another active entry.
+- COORDINATION_LEDGER hard gate for every coding task (single-agent and multi-agent): before any code change, add or update your active entry in `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` with scope and planned symbol add/rename/delete work; do not edit code, generate code, or apply patches until that entry exists; if you cannot update the ledger first, stop and escalate; keep the entry current as scope changes, and remove your entry when done.
+- Any spawned subagent that may review or edit code must read `COORDINATION_LEDGER.md`, follow the same hard gate before making code changes, and must not touch files/symbols owned by another active entry.
 - Run completion workflow audit passes (`simplify`, `test-coverage-audit`, `task-finish-review`) for every non-doc change that touches production code or tests; skip only when the user explicitly says to skip for that turn.
 - Docs/process-only changes skip completion workflow audit passes unless the user explicitly asks to run them.
 - Keep this file short and route-oriented; keep durable detail in `agent-docs/`.
 
 ## How To Work
 
+- Before any implementation work, read `ponder_considerations`.
 - Before implementation, run a quick assumptions check: ask for clarification only when ambiguity is high-impact (scope, security invariants, chain/runtime behavior).
 - Continue working in the current tree when unrelated dirty changes appear.
 - Do not pause solely because the worktree is dirty; treat out-of-scope changes as context unless a hard rule is at risk.

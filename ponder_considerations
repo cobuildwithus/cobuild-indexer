@@ -1,0 +1,18 @@
+# Ponder Considerations
+
+Read this file before doing any implementation work in this repository.
+
+## `context.db.sql` Policy
+
+- Do not use `context.db.sql` for handler reads/writes by default.
+- Prefer `context.db.find`, `context.db.insert`, and `context.db.update` using stable primary keys.
+- If a relationship is not addressable by primary key, add/maintain deterministic mapping tables (KV-style lookup tables) instead of relying on non-PK scans/joins.
+- If `context.db.sql` is still unavoidable for correctness or runtime constraints:
+  - stop and discuss trade-offs with the user first, and
+  - record the exception and rationale in `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` and handoff notes.
+
+## Modeling Defaults
+
+- Favor deterministic IDs for projection rows (contract addresses, event ids, composite IDs generated from event args).
+- Keep replay behavior idempotent (`insert ... onConflict...` or explicit existence checks by PK).
+- Keep expensive cross-table lookups off hot paths by precomputing/indexing via projection tables.
