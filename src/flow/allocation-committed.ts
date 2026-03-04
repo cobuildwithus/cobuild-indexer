@@ -1,10 +1,18 @@
 import { ponder } from "ponder:registry";
-import { and, eq, inArray } from "drizzle-orm";
 import type { Hex } from "viem";
 
-import { allocationEntryState, allocationKeyState, flowRecipient } from "ponder:schema";
+import {
+  allocationEntryState,
+  allocationKeyState,
+  flowRecipient,
+  flowRecipientByIndex,
+} from "ponder:schema";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
-import { allocationEntryStateId, allocationKeyStateId } from "../helpers/ids";
+import {
+  allocationEntryStateId,
+  allocationKeyStateId,
+  flowRecipientByIndexKey,
+} from "../helpers/ids";
 import {
   DEFAULT_DISTRIBUTION_UNITS,
   computedUnitsFromScaledAllocation,
@@ -19,11 +27,6 @@ function scaledAllocationsByIndex(packedSnapshot: Hex) {
     byIndex.set(entry.recipientIndex, entry.allocationScaled);
   }
   return byIndex;
-}
-
-async function loadAllocationKeyState(args: { context: any; keyId: string }) {
-  const { context, keyId } = args;
-  return context.db.find(allocationKeyState, { id: keyId });
 }
 
 async function upsertAllocationKeyState(args: {
@@ -119,25 +122,31 @@ async function applyAllocationStateTransition(args: {
 
   const oldByIndex = scaledAllocationsByIndex(oldPackedSnapshot);
   const newByIndex = scaledAllocationsByIndex(newPackedSnapshot);
-  const indices = Array.from(new Set([...oldByIndex.keys(), ...newByIndex.keys()]));
+  const indices = [...new Set([...oldByIndex.keys(), ...newByIndex.keys()])];
   if (indices.length === 0) {
     await upsertAllocationKeyState(keyStateUpsertArgs);
     return;
   }
 
-  // Fetch recipient rows for all indices in old/new snapshots.
-  const recipients = await context.db.sql
-    .select()
-    .from(flowRecipient)
-    .where(and(eq(flowRecipient.flowId, flowId), inArray(flowRecipient.recipientIndex, indices)));
-
-  const recipientByIndex = new Map<number, (typeof recipients)[number]>();
-  for (const recipientRow of recipients) recipientByIndex.set(recipientRow.recipientIndex, recipientRow);
-
   // For each recipient affected by this allocationKey, compute delta-units and persist state.
   for (const idx of indices) {
-    const recipientRow = recipientByIndex.get(idx);
-    if (!recipientRow) continue; // missing mapping (likely startBlock misconfig)
+    const indexLookup = await context.db.find(flowRecipientByIndex, {
+      id: flowRecipientByIndexKey(flowId, idx),
+    });
+    if (!indexLookup) {
+      throw new Error(
+        `[AllocationStateTransition] Missing flowRecipientByIndex mapping for flow=${flowId} recipientIndex=${idx} strategy=${strategy} allocationKey=${allocationKey.toString()}`
+      );
+    }
+
+    const recipientRow = await context.db.find(flowRecipient, {
+      id: indexLookup.flowRecipientId,
+    });
+    if (!recipientRow) {
+      throw new Error(
+        `[AllocationStateTransition] Missing flowRecipient row for flowRecipientId=${indexLookup.flowRecipientId} flow=${flowId} recipientIndex=${idx} strategy=${strategy} allocationKey=${allocationKey.toString()}`
+      );
+    }
 
     // On-chain, removed recipients are skipped entirely by FlowAllocations.
     if (recipientRow.isRemoved) continue;
@@ -200,7 +209,7 @@ async function handleAllocationCommitted(args: { event: any; context: any; contr
   const keyId = allocationKeyStateId(flowId, strategy, allocationKey);
 
   // Weight-only updates keep the same commit hash. Commit changes are applied by AllocationSnapshotUpdated.
-  const prev = await loadAllocationKeyState({ context, keyId });
+  const prev = await context.db.find(allocationKeyState, { id: keyId });
   if (!prev) return;
   if ((prev.commitment as Hex) !== newCommitment) return;
 
@@ -233,7 +242,7 @@ async function handleAllocationSnapshotUpdated(args: { event: any; context: any;
   const snapshotVersion = Number(event.args.snapshotVersion);
   const newPackedSnapshot: Hex = event.args.packedSnapshot;
   const keyId = allocationKeyStateId(flowId, strategy, allocationKey);
-  const prev = await loadAllocationKeyState({ context, keyId });
+  const prev = await context.db.find(allocationKeyState, { id: keyId });
   const oldWeight: bigint = prev?.weight ?? 0n;
   const oldPackedSnapshot: Hex = (prev?.packedSnapshot as Hex) ?? EMPTY_HEX;
 

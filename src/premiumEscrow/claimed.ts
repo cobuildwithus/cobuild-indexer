@@ -1,4 +1,3 @@
-import { eq, sql } from "drizzle-orm";
 import { ponder } from "ponder:registry";
 
 import { premiumAccount, premiumClaim } from "ponder:schema";
@@ -10,13 +9,12 @@ ponder.on("PremiumEscrow:Claimed", async ({ event, context }) => {
 
   const escrow = event.log.address;
   const account = event.args.account;
+  const amount = event.args.amount;
+  const blockNumber = event.block.number;
+  const blockTimestamp = event.block.timestamp;
   const id = premiumAccountId(escrow, account);
 
-  const [existingClaim] = await context.db.sql
-    .select({ id: premiumClaim.id })
-    .from(premiumClaim)
-    .where(eq(premiumClaim.id, event.id))
-    .limit(1);
+  const existingClaim = await context.db.find(premiumClaim, { id: event.id });
 
   if (existingClaim) return;
 
@@ -27,10 +25,10 @@ ponder.on("PremiumEscrow:Claimed", async ({ event, context }) => {
       account,
       id: event.id,
       to: event.args.to,
-      amount: event.args.amount,
+      amount,
       txHash: event.transaction.hash,
-      blockNumber: event.block.number,
-      timestamp: event.block.timestamp,
+      blockNumber,
+      timestamp: blockTimestamp,
     })
     .onConflictDoNothing();
 
@@ -41,23 +39,16 @@ ponder.on("PremiumEscrow:Claimed", async ({ event, context }) => {
       escrow,
       account,
       claimableAmount: 0n,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      updatedAtBlock: blockNumber,
+      updatedAtTimestamp: blockTimestamp,
     })
     .onConflictDoNothing();
 
-  await context.db.sql
-    .update(premiumAccount)
-    .set({
-      claimableAmount: sql`
-        CASE
-          WHEN ${premiumAccount.claimableAmount} > ${event.args.amount}
-          THEN ${premiumAccount.claimableAmount} - ${event.args.amount}
-          ELSE 0
-        END
-      `,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
-    })
-    .where(eq(premiumAccount.id, id));
+  await context.db
+    .update(premiumAccount, { id })
+    .set((row) => ({
+      claimableAmount: row.claimableAmount > amount ? row.claimableAmount - amount : 0n,
+      updatedAtBlock: blockNumber,
+      updatedAtTimestamp: blockTimestamp,
+    }));
 });

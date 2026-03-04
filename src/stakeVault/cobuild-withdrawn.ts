@@ -1,4 +1,3 @@
-import { eq, sql } from "drizzle-orm";
 import { ponder } from "ponder:registry";
 
 import { stakePosition, stakeVault } from "ponder:schema";
@@ -9,6 +8,9 @@ ponder.on("GoalStakeVault:CobuildWithdrawn", async ({ event, context }) => {
   await insertProtocolEvent({ context, event, contractName: "GoalStakeVault" });
 
   const vault = event.log.address;
+  const amount = event.args.amount;
+  const blockNumber = event.block.number;
+  const blockTimestamp = event.block.timestamp;
   const posId = stakePositionId(vault, event.args.user, "cobuild");
 
   await context.db
@@ -17,20 +19,19 @@ ponder.on("GoalStakeVault:CobuildWithdrawn", async ({ event, context }) => {
       id: vault,
       kind: "goal",
       cobuildTotalWithdrawn: 0n,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      updatedAtBlock: blockNumber,
+      updatedAtTimestamp: blockTimestamp,
     })
     .onConflictDoNothing();
 
-  await context.db.sql
-    .update(stakeVault)
-    .set({
+  await context.db
+    .update(stakeVault, { id: vault })
+    .set((row) => ({
       kind: "goal",
-      cobuildTotalWithdrawn: sql`${stakeVault.cobuildTotalWithdrawn} + ${event.args.amount}`,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
-    })
-    .where(eq(stakeVault.id, vault));
+      cobuildTotalWithdrawn: row.cobuildTotalWithdrawn + amount,
+      updatedAtBlock: blockNumber,
+      updatedAtTimestamp: blockTimestamp,
+    }));
 
   await context.db
     .insert(stakePosition)
@@ -41,17 +42,16 @@ ponder.on("GoalStakeVault:CobuildWithdrawn", async ({ event, context }) => {
       tokenKind: "cobuild",
       staked: 0n,
       withdrawn: 0n,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      updatedAtBlock: blockNumber,
+      updatedAtTimestamp: blockTimestamp,
     })
     .onConflictDoNothing();
 
-  await context.db.sql
-    .update(stakePosition)
-    .set({
-      withdrawn: sql`${stakePosition.withdrawn} + ${event.args.amount}`,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
-    })
-    .where(eq(stakePosition.id, posId));
+  await context.db
+    .update(stakePosition, { id: posId })
+    .set((row) => ({
+      withdrawn: row.withdrawn + amount,
+      updatedAtBlock: blockNumber,
+      updatedAtTimestamp: blockTimestamp,
+    }));
 });

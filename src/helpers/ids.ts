@@ -4,6 +4,10 @@ export function flowRecipientKey(flow: Hex, recipientId: Hex): string {
   return `${flow.toLowerCase()}:${recipientId.toLowerCase()}`;
 }
 
+export function flowRecipientByIndexKey(flow: Hex, recipientIndex: number): string {
+  return `${flow.toLowerCase()}:${recipientIndex}`;
+}
+
 export function allocationKeyStateId(flow: Hex, strategy: Hex, allocationKey: bigint): string {
   return `${flow.toLowerCase()}:${strategy.toLowerCase()}:${allocationKey.toString()}`;
 }

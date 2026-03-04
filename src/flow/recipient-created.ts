@@ -1,8 +1,8 @@
 import { ponder } from "ponder:registry";
-import { flowRecipient } from "ponder:schema";
+import { flowRecipient, flowRecipientByIndex } from "ponder:schema";
 
 import { insertProtocolEvent } from "../helpers/protocolEvent";
-import { flowRecipientKey } from "../helpers/ids";
+import { flowRecipientByIndexKey, flowRecipientKey } from "../helpers/ids";
 import { DEFAULT_DISTRIBUTION_UNITS } from "../helpers/allocationSnapshot";
 
 async function handleRecipientCreated(args: { event: any; context: any; contractName: string }) {
@@ -12,8 +12,10 @@ async function handleRecipientCreated(args: { event: any; context: any; contract
   const flowId = event.log.address;
   const recipientId = event.args.recipientId;
   const info = event.args.recipient;
-  const recipientAddress = info.recipient;
   const recipientIndex = Number(info.recipientIndexPlusOne) - 1;
+  const isRemoved = Boolean(info.isRemoved);
+  const blockNumber = event.block.number;
+  const blockTimestamp = event.block.timestamp;
 
   const metadata = info.metadata ?? {};
   const title = metadata.title ?? null;
@@ -21,18 +23,19 @@ async function handleRecipientCreated(args: { event: any; context: any; contract
   const image = metadata.image ?? null;
   const tagline = metadata.tagline ?? null;
   const url = metadata.url ?? null;
+  const flowRecipientId = flowRecipientKey(flowId, recipientId);
 
   await context.db
     .insert(flowRecipient)
     .values({
-      id: flowRecipientKey(flowId, recipientId),
+      id: flowRecipientId,
       flowId,
       recipientId,
-      recipient: recipientAddress,
+      recipient: info.recipient,
       approvedBy: event.args.approvedBy,
       recipientIndex,
       recipientType: Number(info.recipientType),
-      isRemoved: Boolean(info.isRemoved),
+      isRemoved,
 
       title,
       description,
@@ -43,14 +46,32 @@ async function handleRecipientCreated(args: { event: any; context: any; contract
       isFlowRecipient: false,
 
       allocationUnitsSum: 0n,
-      distributionUnits: Boolean(info.isRemoved) ? 0n : DEFAULT_DISTRIBUTION_UNITS,
+      distributionUnits: isRemoved ? 0n : DEFAULT_DISTRIBUTION_UNITS,
 
-      createdAtBlock: event.block.number,
-      createdAtTimestamp: event.block.timestamp,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      createdAtBlock: blockNumber,
+      createdAtTimestamp: blockTimestamp,
+      updatedAtBlock: blockNumber,
+      updatedAtTimestamp: blockTimestamp,
     })
     .onConflictDoNothing();
+
+  await context.db
+    .insert(flowRecipientByIndex)
+    .values({
+      id: flowRecipientByIndexKey(flowId, recipientIndex),
+      flowId,
+      recipientIndex,
+      flowRecipientId,
+      recipientId,
+      updatedAtBlock: blockNumber,
+      updatedAtTimestamp: blockTimestamp,
+    })
+    .onConflictDoUpdate({
+      flowRecipientId,
+      recipientId,
+      updatedAtBlock: blockNumber,
+      updatedAtTimestamp: blockTimestamp,
+    });
 }
 
 // Root flow recipients
