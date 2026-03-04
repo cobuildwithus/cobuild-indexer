@@ -64,8 +64,13 @@ function hexArraysEqual(a: Hex[], b: Hex[]): boolean {
   return true;
 }
 
-ponder.on("GoalTreasury:GoalConfigured", async ({ event, context }) => {
-  await insertProtocolEvent({ context, event, contractName: "GoalTreasury" });
+async function handleGoalConfigured(args: {
+  event: any;
+  context: any;
+  contractName: "GoalTreasury";
+}) {
+  const { event, context, contractName } = args;
+  await insertProtocolEvent({ context, event, contractName });
 
   const treasury = event.log.address as Hex;
   const existingGoalTreasury = await context.db.find(goalTreasury, { id: treasury });
@@ -108,6 +113,7 @@ ponder.on("GoalTreasury:GoalConfigured", async ({ event, context }) => {
     cobuildToken: event.args.cobuildToken,
     hook: event.args.hook,
     goalRulesets: event.args.goalRulesets,
+    successResolver: event.args.successResolver,
     goalRevnetId: event.args.goalRevnetId,
     canonicalProjectChainId,
     canonicalProjectId,
@@ -143,7 +149,7 @@ ponder.on("GoalTreasury:GoalConfigured", async ({ event, context }) => {
 
     if (previousMapping) {
       const nextGoalTreasuries = uniqueSortedGoalTreasuries(
-        previousMapping.goalTreasuries.filter((value) => value !== treasury)
+        previousMapping.goalTreasuries.filter((value: Hex) => value !== treasury)
       );
 
       if (!hexArraysEqual(previousMapping.goalTreasuries, nextGoalTreasuries)) {
@@ -199,4 +205,8 @@ ponder.on("GoalTreasury:GoalConfigured", async ({ event, context }) => {
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     });
+}
+
+ponder.on("GoalTreasury:GoalConfigured", async ({ event, context }) => {
+  await handleGoalConfigured({ event, context, contractName: "GoalTreasury" });
 });

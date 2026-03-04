@@ -40,7 +40,7 @@
 
 ## Goal Treasury
 
-- `GoalTreasury:*` and `GoalTreasuryDiscovery:*` handlers in `src/goals/**`
+- `GoalTreasury:*` handlers in `src/goals/**`
   - `Initialized`, `GoalConfigured`, `StateTransition`, `GoalFinalized`
   - `SuccessAssertionRegistered`, `SuccessAssertionCleared`, `SuccessAssertionResolutionFailClosed`
   - `DonationRecorded`, `FlowRateSynced`, `FlowRateSyncManualInterventionRequired`, `FlowRateZeroingFailed`, `FlowRateSyncCallFailed`

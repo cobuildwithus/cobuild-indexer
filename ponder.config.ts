@@ -251,12 +251,6 @@ export default createConfig({
     GoalTreasury: {
       abi: GoalTreasuryAbi,
       chain: "base",
-      address: ADDRESSES.GOAL_TREASURY,
-      startBlock: 0,
-    },
-    GoalTreasuryDiscovery: {
-      abi: GoalTreasuryAbi,
-      chain: "base",
       address: goalFactoryStackAddress("stack.goalTreasury"),
       startBlock: 0,
     },
