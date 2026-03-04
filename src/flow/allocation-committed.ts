@@ -23,12 +23,7 @@ function scaledAllocationsByIndex(packedSnapshot: Hex) {
 
 async function loadAllocationKeyState(args: { context: any; keyId: string }) {
   const { context, keyId } = args;
-  const rows = await context.db.sql
-    .select()
-    .from(allocationKeyState)
-    .where(eq(allocationKeyState.id, keyId))
-    .limit(1);
-  return rows[0];
+  return context.db.find(allocationKeyState, { id: keyId });
 }
 
 async function upsertAllocationKeyState(args: {
@@ -182,15 +177,12 @@ async function applyAllocationStateTransition(args: {
     let nextSum = currentSum + deltaUnits;
     if (nextSum < 0n) nextSum = 0n;
 
-    await context.db.sql
-      .update(flowRecipient)
-      .set({
-        allocationUnitsSum: nextSum,
-        distributionUnits: DEFAULT_DISTRIBUTION_UNITS + nextSum,
-        updatedAtBlock: event.block.number,
-        updatedAtTimestamp: event.block.timestamp,
-      })
-      .where(eq(flowRecipient.id, recipientRow.id));
+    await context.db.update(flowRecipient, { id: recipientRow.id }).set({
+      allocationUnitsSum: nextSum,
+      distributionUnits: DEFAULT_DISTRIBUTION_UNITS + nextSum,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    });
   }
 
   await upsertAllocationKeyState(keyStateUpsertArgs);
