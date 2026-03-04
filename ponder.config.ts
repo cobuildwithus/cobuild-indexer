@@ -1,11 +1,11 @@
 import { createConfig, factory } from "ponder";
 import { config, getChainsAndRpcUrls, IndexerConfig } from "./src/lib/config";
-import { cobuildSwapImplAbi } from "./abis";
 import {
   budgetStakeLedgerAbi as BudgetStakeLedgerAbi,
   budgetTcrAbi as BudgetTCRAbi,
   budgetTcrFactoryAbi as BudgetTCRFactoryAbi,
   budgetTreasuryAbi as BudgetTreasuryAbi,
+  cobuildSwapImplAbi,
   flowAbi as FlowAbi,
   goalFlowAllocationLedgerPipelineAbi as GoalFlowAllocationLedgerPipelineAbi,
   goalRevnetSplitHookAbi as GoalRevnetSplitHookAbi,

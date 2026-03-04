@@ -11,7 +11,8 @@ export default defineConfig(() => {
   }
 
   return {
-    out: "abis.ts",
+    // Indexer consumes ABIs from @cobuild/wire; keep local generation off the old abis.ts path.
+    out: "tmp/wagmi-generated.ts",
     contracts: [],
     plugins: [
       etherscan({
