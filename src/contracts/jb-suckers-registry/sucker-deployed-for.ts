@@ -1,8 +1,26 @@
-import { and, eq, ne, or, sql } from "ponder";
 import { type Context, type Event, ponder } from "ponder:registry";
-import { project, sucker, suckerGroup } from "ponder:schema";
+import { project, sucker, suckerGroup, suckerGroupByAddress } from "ponder:schema";
 
 ponder.on("JBSuckersRegistry:SuckerDeployedFor", suckerDeployedFor);
+
+function makeProjectUniqueId(chainId: number, projectId: number): string {
+  return `${chainId}-${projectId}`;
+}
+
+function parseProjectUniqueId(value: string): { chainId: number; projectId: number } | null {
+  const parts = value.split("-");
+  if (parts.length !== 2) return null;
+
+  const chainId = Number(parts[0]);
+  const projectId = Number(parts[1]);
+  if (Number.isNaN(chainId) || Number.isNaN(projectId)) return null;
+
+  return { chainId, projectId };
+}
+
+function normalizeAddress(value: `0x${string}`): `0x${string}` {
+  return value.toLowerCase() as `0x${string}`;
+}
 
 async function suckerDeployedFor(params: {
   event: Event<"JBSuckersRegistry:SuckerDeployedFor">;
@@ -25,133 +43,83 @@ async function suckerDeployedFor(params: {
   }
 
   // Create unique identifier for this project
-  const thisProjectUniqueId = `${chainId}-${projectId}`;
+  const thisProjectUniqueId = makeProjectUniqueId(chainId, projectId);
 
   // Normalize address to lowercase for consistent comparisons
-  const normalizedAddress = address.toLowerCase() as `0x${string}`;
+  const normalizedAddress = normalizeAddress(address);
+  const candidateGroupIds = new Set<string>([thisProject.suckerGroupId]);
 
-  // Look for overlapping suckers and groups
-  // 1. Check if this address is already used by another project
-  const addressMatchingSucker = await context.db.sql.query.sucker.findFirst({
-    where: eq(sucker.address, normalizedAddress),
-    with: { project: true },
+  // Address lookup table catches cross-project overlap without non-PK scans.
+  const addressLookup = await context.db.find(suckerGroupByAddress, {
+    id: normalizedAddress,
+  });
+  if (addressLookup) candidateGroupIds.add(addressLookup.suckerGroupId);
+
+  const mergedProjects = new Set<string>([thisProjectUniqueId]);
+  const mergedAddresses = new Set<`0x${string}`>([normalizedAddress]);
+  const supersededGroupIds = new Set<string>();
+
+  for (const groupId of candidateGroupIds) {
+    const existingGroup = await context.db.find(suckerGroup, { id: groupId });
+    if (!existingGroup) continue;
+
+    supersededGroupIds.add(existingGroup.id);
+    for (const projectUniqueId of existingGroup.projects) mergedProjects.add(projectUniqueId);
+    for (const existingAddress of existingGroup.addresses) {
+      mergedAddresses.add(normalizeAddress(existingAddress));
+    }
+  }
+
+  const nextProjects = Array.from(mergedProjects).sort();
+  const nextAddresses = Array.from(mergedAddresses).sort();
+  const newSuckerGroup = await context.db.insert(suckerGroup).values({
+    projects: nextProjects,
+    addresses: nextAddresses,
+    createdAt: Number(event.block.timestamp),
   });
 
-  // 2. Find all suckers belonging to this project
-  const projectMatchingSuckers = await context.db.sql.query.sucker.findMany({
-    where: and(eq(sucker.projectId, projectId), eq(sucker.chainId, chainId)),
-    with: { project: true },
-  });
+  // Update all affiliated projects to point to the new merged group.
+  for (const projectUniqueId of nextProjects) {
+    const parsed = parseProjectUniqueId(projectUniqueId);
+    if (!parsed) continue;
 
-  // 3. Find any groups that contain this address or project
-  const matchingGroups = await context.db.sql.query.suckerGroup.findMany({
-    where: sql`${normalizedAddress} = ANY("addresses") OR ${thisProjectUniqueId} = ANY("projects")`,
-  });
-
-  // If we found any overlaps, consolidate into a new group
-  if (
-    addressMatchingSucker ||
-    projectMatchingSuckers.length ||
-    matchingGroups.length
-  ) {
-    // Collect all unique addresses from matching suckers and groups
-    const groupAddresses = [normalizedAddress];
-    for (const s of projectMatchingSuckers) {
-      if (!groupAddresses.includes(s.address)) {
-        groupAddresses.push(s.address);
-      }
-    }
-
-    // Collect all unique projects from matching suckers and groups
-    const groupProjects = [thisProjectUniqueId];
-    if (addressMatchingSucker?.project) {
-      const addressMatchingProjectId = `${addressMatchingSucker.project.chainId}-${addressMatchingSucker.project.projectId}`;
-      if (!groupProjects.includes(addressMatchingProjectId)) {
-        groupProjects.push(addressMatchingProjectId);
-      }
-    }
-    for (const s of projectMatchingSuckers) {
-      const sProjectId = `${s.project.chainId}-${s.project.projectId}`;
-      if (!groupProjects.includes(sProjectId)) {
-        groupProjects.push(sProjectId);
-      }
-    }
-
-    // Add all addresses and projects from matching groups
-    for (const g of matchingGroups) {
-      for (const a of g.addresses) {
-        const lowerA = a.toLowerCase() as `0x${string}`;
-        if (!groupAddresses.includes(lowerA)) {
-          groupAddresses.push(lowerA);
-        }
-      }
-      for (const p of g.projects) {
-        if (!groupProjects.includes(p)) {
-          groupProjects.push(p);
-        }
-      }
-    }
-
-    // Create a new group with all consolidated addresses and projects
-    const newSuckerGroup = await context.db.insert(suckerGroup).values({
-      projects: groupProjects,
-      addresses: groupAddresses as `0x${string}`[],
-      createdAt: Number(event.block.timestamp),
+    const existingProject = await context.db.find(project, {
+      chainId: parsed.chainId,
+      projectId: parsed.projectId,
     });
+    if (!existingProject) continue;
 
-    // Update all affiliated projects to point to the new group
-    for (const projectUniqueId of groupProjects) {
-      const parts = projectUniqueId.split("-");
-      if (parts.length !== 2) continue;
-
-      const pChainId = Number(parts[0]);
-      const pProjectId = Number(parts[1]);
-
-      if (Number.isNaN(pChainId) || Number.isNaN(pProjectId)) continue;
-
-      const _project = await context.db.find(project, {
-        chainId: pChainId,
-        projectId: pProjectId,
+    await context.db
+      .update(project, {
+        chainId: parsed.chainId,
+        projectId: parsed.projectId,
+      })
+      .set({
+        suckerGroupId: newSuckerGroup.id,
       });
+  }
 
-      if (_project) {
-        await context.db
-          .update(project, {
-            chainId: pChainId,
-            projectId: pProjectId,
-          })
-          .set({
-            suckerGroupId: newSuckerGroup.id,
-          });
-      }
-    }
+  // Upsert address lookup rows so future events can resolve group by address via PK.
+  for (const groupAddress of nextAddresses) {
+    await context.db
+      .insert(suckerGroupByAddress)
+      .values({
+        id: groupAddress,
+        suckerGroupId: newSuckerGroup.id,
+        updatedAtBlock: event.block.number,
+        updatedAtTimestamp: event.block.timestamp,
+      })
+      .onConflictDoUpdate({
+        suckerGroupId: newSuckerGroup.id,
+        updatedAtBlock: event.block.number,
+        updatedAtTimestamp: event.block.timestamp,
+      });
+  }
 
-    // Delete old groups that have been consolidated
-    if (matchingGroups.length > 0) {
-      await context.db.sql
-        .delete(suckerGroup)
-        .where(
-          and(
-            ne(suckerGroup.id, newSuckerGroup.id),
-            or(
-              sql`${normalizedAddress} = ANY("addresses")`,
-              sql`${thisProjectUniqueId} = ANY("projects")`
-            )
-          )
-        );
-    }
-  } else {
-    // No overlaps found, create a new group with just this project and address
-    const newSuckerGroup = await context.db.insert(suckerGroup).values({
-      projects: [thisProjectUniqueId],
-      addresses: [normalizedAddress],
-      createdAt: Number(event.block.timestamp),
-    });
-
-    // Update the project to point to the new group
-    await context.db.update(project, thisProject).set({
-      suckerGroupId: newSuckerGroup.id,
-    });
+  // Remove superseded groups by primary key.
+  for (const groupId of supersededGroupIds) {
+    if (groupId === newSuckerGroup.id) continue;
+    await context.db.delete(suckerGroup, { id: groupId });
   }
 
   // Finally, record the sucker itself

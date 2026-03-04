@@ -144,6 +144,17 @@ export const suckerGroup = onchainTable("sucker_group", (t) => ({
   createdAt: t.integer().notNull(),
 }));
 
+/**
+ * Deterministic lookup for resolving sucker group membership by sucker address.
+ * Used to avoid non-PK scans when merging groups on SuckerDeployedFor.
+ */
+export const suckerGroupByAddress = onchainTable("_kv_sucker_group_by_address", (t) => ({
+  id: t.hex().primaryKey(), // normalized lowercase sucker address
+  suckerGroupId: t.text().notNull(),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
 export const projectRelations = relations(project, ({ one, many }) => ({
   suckerGroup: one(suckerGroup, {
     fields: [project.suckerGroupId],
@@ -780,7 +791,6 @@ export const goalTreasury = onchainTable(
 
     owner: t.hex(),
     flowAddress: t.hex(),
-    recipientId: t.hex(),
     budgetStakeLedger: t.hex(),
     goalToken: t.hex(),
     cobuildToken: t.hex(),

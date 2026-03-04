@@ -16,6 +16,7 @@
   - `RulesetQueued`, `RulesetInitialized`
 - `JBProjects:Create` in `src/contracts/jb-projects/create.ts`
 - `JBSuckersRegistry:SuckerDeployedFor` in `src/contracts/jb-suckers-registry/**`
+  - Maintains `sucker_group` membership plus deterministic `_kv_sucker_group_by_address` rows for PK-only address->group resolution.
 - `RevLoans:*` in `src/contracts/rev-loans/**`
   - `Borrow`, `Liquidate`, `ReallocateCollateral`, `RepayLoan`, `Transfer`
 - `ERC20:Transfer` (project token transfers) in `src/contracts/erc20/transfer.ts`
@@ -44,7 +45,7 @@
   - `TerminalSideEffectFailed`
   - `GoalConfigured` also writes canonical project + canonical route linkage fields on `goal_treasury`.
   - `GoalConfigured` also maintains deterministic `goal_treasuries_by_project` KV rows keyed by `${chainId}-${projectId}`.
-  - `GoalConfigured` also snapshots `jurorSlasher` + `underwriterSlasher` from `GoalStakeVault` at event block height.
+  - `GoalConfigured` persists event-provided `jurorSlasher`, `underwriterSlasher`, `goalToken`, and `cobuildToken`, and links `parentFlow`/`strategy` from the existing `flow` row.
   - `FlowRateSynced` also writes `goal_treasury_series` + `goal_treasury_series_cursor`.
 
 ## Budget Treasury
@@ -68,6 +69,7 @@
 - `PremiumEscrow:*` handlers in `src/premiumEscrow/**`
   - `Initialized`, `ManagerRewardPoolConnected`, `PremiumIndexed`, `AccountCheckpointed`, `Claimed`, `Closed`
   - `UnderwriterSlashed`, `UnderwriterSlashCalculated`, `UnclaimablePremiumSwept`, `OrphanPremiumRecycled`
+  - raw telemetry only: `CreditIndexed`, `LateResidualSettlementFailed`
 
 ## TCR and Factory
 
@@ -87,6 +89,7 @@
 
 - `GoalFlowAllocationLedgerPipeline:*` handlers in `src/pipeline/**`
   - child allocation sync attempt/skip telemetry
+  - raw telemetry only: `ChildAllocationSyncFailed`, `ChildSyncDebtOpened`, `ChildSyncDebtCleared`
 - `GoalRevnetSplitHook:*` handlers in `src/hook/**`
   - `Initialized`, `GoalFundingProcessed`, `GoalSuccessSettlementProcessed`
 
@@ -95,4 +98,4 @@
 - Raw event audit table: `protocol_event` (scaffold handlers via helper).
 - Legacy handlers update legacy projection tables (`project`, `ruleset`, `loan`, payment/swap telemetry, and related maps).
 - Domain tables are mapped in `ponder.schema.ts` and updated by same-domain handlers.
-- Deterministic lookup/cursor tables (`budget_treasury_by_*`, `goal_treasuries_by_project`, `flow_recipient_by_index`, `goal_treasury_series_cursor`) are maintained in handler write paths to avoid non-PK SQL lookups.
+- Deterministic lookup/cursor tables (`budget_treasury_by_*`, `goal_treasuries_by_project`, `flow_recipient_by_index`, `sucker_group_by_address`, `goal_treasury_series_cursor`) are maintained in handler write paths to avoid non-PK SQL lookups.

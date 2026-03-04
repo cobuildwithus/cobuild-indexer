@@ -6,7 +6,7 @@
   - `project`, `participant`, `pay_event`
   - `loan`, `borrow_loan_event`, `repay_loan_event`, `liquidate_loan_event`, `reallocate_loan_event`
   - `ruleset`, `ruleset_activation_state`, `erc20_to_project_id`, `pay_event_by_tx_beneficiary`
-  - `sucker_group`, `sucker`, `activity_log`, `cashout_coefficient_snapshot`
+  - `sucker_group`, `sucker`, `sucker_group_by_address`, `activity_log`, `cashout_coefficient_snapshot`
   - `swap_executed`, `batch_reaction_swap`, `transaction_hash_to_batch_reaction_swaps`
 - `protocol_event`
   - Immutable raw log rows (`event.id` keyed).
@@ -49,6 +49,7 @@
 - `flow.id` is the flow address.
 - `flow_recipient.id` is `${flow}:${recipientId}`.
 - `flow_recipient_by_index.id` is `${flow}:${recipientIndex}`.
+- `sucker_group_by_address.id` is the normalized lowercase sucker address.
 - `allocation_key_state.id` is `${flow}:${strategy}:${allocationKey}`.
 - `allocation_entry_state.id` is `${flow}:${strategy}:${allocationKey}:${recipientId}`.
 - `goal_treasuries_by_project.id` is `${chainId}-${projectId}`.
@@ -58,6 +59,7 @@
 
 - `flow_recipient.flowId` -> `flow.id`
 - `flow_recipient_by_index.flowRecipientId` -> `flow_recipient.id`
+- `sucker_group_by_address.suckerGroupId` -> `sucker_group.id`
 - `allocation_* .flowId` -> `flow.id`
 - `flow_recipient.budgetTreasury` -> `budget_treasury.id` (explicit recipient-budget FK).
 - `budget_treasury_by_recipient.id` and `budget_stack.id` share recipientId semantics (`bytes32`).
