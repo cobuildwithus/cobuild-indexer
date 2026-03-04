@@ -30,13 +30,17 @@
   - `TargetOutflowRateUpdated`, `TargetOutflowRefreshFailed`
   - `AllocationCommitted`, `AllocationSnapshotUpdated`, `SuperTokenSwept`
   - `RecipientCreated` maintains deterministic `flow_recipient_by_index` rows (`${flow}:${recipientIndex}` -> `flow_recipient.id`) for compact allocation snapshot lookups.
+- `FlowActualRateRefresh:block` handler in `src/flow/actual-flow-rate-refresh.ts`
+  - deterministic block cron projection refresh for `flow.currentFlowRate` via `IFlow.getActualFlowRate()` on queued flow addresses.
+  - round-robin queue state is maintained in `flow_actual_rate_refresh_state` and enqueue hooks in `FlowInitialized`, `ChildFlowDeployed`, and `FlowRecipientCreated`.
+  - writes freshness/error telemetry fields (`currentFlowRateObservedAt*`, `currentFlowRateStale`, failure count/reason) on `flow`.
 - Dynamic factory discovery in `ponder.config.ts`
   - `ChildFlow` addresses: `GoalFlow:ChildFlowDeployed(recipient)`
   - `PremiumEscrow` addresses: `GoalFlow:ChildFlowDeployed(managerRewardPool)`
 
 ## Goal Treasury
 
-- `GoalTreasury:*` handlers in `src/goals/**`
+- `GoalTreasury:*` and `GoalTreasuryDiscovery:*` handlers in `src/goals/**`
   - `Initialized`, `GoalConfigured`, `StateTransition`, `GoalFinalized`
   - `SuccessAssertionRegistered`, `SuccessAssertionCleared`, `SuccessAssertionResolutionFailClosed`
   - `DonationRecorded`, `FlowRateSynced`, `FlowRateSyncManualInterventionRequired`, `FlowRateZeroingFailed`, `FlowRateSyncCallFailed`
@@ -45,7 +49,7 @@
   - `TerminalSideEffectFailed`
   - `GoalConfigured` also writes canonical project + canonical route linkage fields on `goal_treasury`.
   - `GoalConfigured` also maintains deterministic `goal_treasuries_by_project` KV rows keyed by `${chainId}-${projectId}`.
-  - `GoalConfigured` persists event-provided `jurorSlasher`, `underwriterSlasher`, `goalToken`, and `cobuildToken`, and links `parentFlow`/`strategy` from the existing `flow` row.
+  - `GoalConfigured` persists event-provided `jurorSlasher`, `underwriterSlasher`, `successResolver`, `goalToken`, and `cobuildToken`, and links `parentFlow`/`strategy` from the existing `flow` row.
   - `FlowRateSynced` also writes `goal_treasury_series` + `goal_treasury_series_cursor`.
 
 ## Budget Treasury
@@ -84,6 +88,8 @@
   - `BudgetStackDeployed` maintains deterministic recipient/childFlow -> budget treasury lookup KV tables and recipient FK linkage.
 - `BudgetTCRFactory:*` handlers in `src/tcrFactory/**`
   - deployment-for-goal telemetry
+- `GoalFactory:GoalDeployed` handler in `src/goalFactory/goal-deployed.ts`
+  - writes `goal_factory_deployment` rows keyed by `${chainId}:${goalRevnetId}` with emitted stack addresses (including router/resolver addresses).
 
 ## Pipeline and Hook
 
@@ -92,6 +98,15 @@
   - raw telemetry only: `ChildAllocationSyncFailed`, `ChildSyncDebtOpened`, `ChildSyncDebtCleared`
 - `GoalRevnetSplitHook:*` handlers in `src/hook/**`
   - `Initialized`, `GoalFundingProcessed`, `GoalSuccessSettlementProcessed`
+
+## Resolver and Routers
+
+- `UMATreasurySuccessResolver:*` handlers in `src/umaResolver/**`
+  - raw telemetry only: `SuccessAssertionRequested`, `SuccessAssertionDisputed`, `SuccessAssertionResolved`, `SuccessAssertionFinalized`
+- `JurorSlasherRouter:*` handlers in `src/jurorSlasherRouter/**`
+  - raw telemetry only: `SlasherAuthorizationSet`
+- `UnderwriterSlasherRouter:*` handlers in `src/underwriterSlasherRouter/**`
+  - raw telemetry only: `PremiumEscrowAuthorizationSet`, `CobuildConversionFailed`, `UnderwriterSlashRouted`, `GoalSuperTokenUpgradeFailed`, `GoalSuperTokenForwardingFailed`, `GoalSuperTokenForwardingRetried`
 
 ## Common Table Touches
 

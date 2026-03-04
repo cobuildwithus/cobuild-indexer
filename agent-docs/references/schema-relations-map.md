@@ -11,7 +11,9 @@
 - `protocol_event`
   - Immutable raw log rows (`event.id` keyed).
 - `flow`
-  - One row per flow contract address.
+  - One row per flow contract address, including target/current flow rates plus observed/staleness metadata for cron-refreshed actual-rate reads.
+- `flow_actual_rate_refresh_state`
+  - Per-chain round-robin queue and cursor for flow actual-rate cron refresh scheduling.
 - `flow_recipient`
   - One row per `(flow, recipientId)`.
 - `flow_recipient_by_index`
@@ -22,6 +24,8 @@
   - Per-recipient state for a specific allocation key.
 - `goal_treasury`, `budget_treasury`, `budget_stack`
   - Goal/budget stack lifecycle and treasury snapshots.
+- `goal_factory_deployment`
+  - One row per GoalFactory `GoalDeployed` event keyed by `${chainId}:${goalRevnetId}` with emitted stack addresses.
 - `budget_treasury_by_recipient`, `budget_treasury_by_child_flow`
   - Deterministic lookup KV tables for recipient/childFlow -> budget treasury linkage.
 - `goal_treasuries_by_project`
@@ -58,6 +62,7 @@
 ## Relations (logical)
 
 - `flow_recipient.flowId` -> `flow.id`
+- `flow_actual_rate_refresh_state.flowIds[]` -> `flow.id` (address-level linkage, enforced by enqueue handlers).
 - `flow_recipient_by_index.flowRecipientId` -> `flow_recipient.id`
 - `sucker_group_by_address.suckerGroupId` -> `sucker_group.id`
 - `allocation_* .flowId` -> `flow.id`
@@ -65,6 +70,7 @@
 - `budget_treasury_by_recipient.id` and `budget_stack.id` share recipientId semantics (`bytes32`).
 - `budget_treasury_by_child_flow.id` -> `flow.id` (child flow).
 - `goal_treasury.canonicalProjectChainId/canonicalProjectId` -> `project.chainId/projectId`.
+- `goal_factory_deployment.goalTreasury` -> `goal_treasury.id` (address-level logical linkage when both sides are present).
 - `goal_treasuries_by_project.id` mirrors `goal_treasury.canonicalProjectChainId/canonicalProjectId` composite key semantics and stores `goal_treasury.id` arrays.
 - `stake_position.vault` and `juror.vault` -> `stake_vault.id`
 - `premium_account.escrow` and `premium_claim.escrow` -> `premium_escrow.id`

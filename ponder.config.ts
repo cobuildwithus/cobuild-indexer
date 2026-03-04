@@ -7,11 +7,15 @@ import {
   budgetTreasuryAbi as BudgetTreasuryAbi,
   cobuildSwapImplAbi,
   flowAbi as FlowAbi,
+  goalFactoryAbi as GoalFactoryAbi,
   goalFlowAllocationLedgerPipelineAbi as GoalFlowAllocationLedgerPipelineAbi,
   goalRevnetSplitHookAbi as GoalRevnetSplitHookAbi,
   goalStakeVaultAbi as GoalStakeVaultAbi,
   goalTreasuryAbi as GoalTreasuryAbi,
+  jurorSlasherRouterAbi as JurorSlasherRouterAbi,
   premiumEscrowAbi as PremiumEscrowAbi,
+  umaTreasurySuccessResolverAbi as UmaTreasurySuccessResolverAbi,
+  underwriterSlasherRouterAbi as UnderwriterSlasherRouterAbi,
 } from "@cobuild/wire";
 import { contracts } from "./addresses";
 import { erc20Abi, getAbiItem, parseAbiItem } from "viem";
@@ -36,6 +40,7 @@ const BASE_JB_PROJECT_TOKEN_ADDRESSES = [
  * Replace with real deployments and start blocks when available.
  */
 const ADDRESSES = {
+  GOAL_FACTORY: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   GOAL_FLOW: "0x1111111111111111111111111111111111111111",
   GOAL_TREASURY: "0x2222222222222222222222222222222222222222",
   GOAL_STAKE_VAULT: "0x3333333333333333333333333333333333333333",
@@ -53,6 +58,24 @@ const CHILD_FLOW_DEPLOYED = parseAbiItem(
 const BUDGET_STACK_DEPLOYED = parseAbiItem(
   "event BudgetStackDeployed(bytes32 indexed itemID, address indexed childFlow, address indexed budgetTreasury, address strategy)"
 );
+
+const GOAL_DEPLOYED = getAbiItem({
+  abi: GoalFactoryAbi,
+  name: "GoalDeployed",
+});
+
+type GoalFactoryStackAddressParameter =
+  | "stack.goalTreasury"
+  | "stack.successResolver"
+  | "stack.underwriterSlasherRouter"
+  | "stack.jurorSlasherRouter";
+
+const goalFactoryStackAddress = (parameter: GoalFactoryStackAddressParameter) =>
+  factory({
+    address: ADDRESSES.GOAL_FACTORY,
+    event: GOAL_DEPLOYED,
+    parameter,
+  });
 
 export default createConfig({
   ordering: "omnichain",
@@ -203,6 +226,12 @@ export default createConfig({
     },
 
     // Integrated scaffold stack (goal/budget flows + telemetry)
+    GoalFactory: {
+      abi: GoalFactoryAbi,
+      chain: "base",
+      address: ADDRESSES.GOAL_FACTORY,
+      startBlock: 0,
+    },
     GoalFlow: {
       abi: FlowAbi,
       chain: "base",
@@ -223,6 +252,30 @@ export default createConfig({
       abi: GoalTreasuryAbi,
       chain: "base",
       address: ADDRESSES.GOAL_TREASURY,
+      startBlock: 0,
+    },
+    GoalTreasuryDiscovery: {
+      abi: GoalTreasuryAbi,
+      chain: "base",
+      address: goalFactoryStackAddress("stack.goalTreasury"),
+      startBlock: 0,
+    },
+    UMATreasurySuccessResolver: {
+      abi: UmaTreasurySuccessResolverAbi,
+      chain: "base",
+      address: goalFactoryStackAddress("stack.successResolver"),
+      startBlock: 0,
+    },
+    UnderwriterSlasherRouter: {
+      abi: UnderwriterSlasherRouterAbi,
+      chain: "base",
+      address: goalFactoryStackAddress("stack.underwriterSlasherRouter"),
+      startBlock: 0,
+    },
+    JurorSlasherRouter: {
+      abi: JurorSlasherRouterAbi,
+      chain: "base",
+      address: goalFactoryStackAddress("stack.jurorSlasherRouter"),
       startBlock: 0,
     },
     GoalStakeVault: {
@@ -287,6 +340,11 @@ export default createConfig({
       chain: "base",
       startBlock: "latest",
       interval: 600 / 2, // Every 10 minutes (base block time is 2s)
+    },
+    FlowActualRateRefresh: {
+      chain: "base",
+      startBlock: "latest",
+      interval: 120 / 2, // Every 2 minutes (base block time is 2s)
     },
   },
 });

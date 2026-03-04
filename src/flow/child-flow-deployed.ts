@@ -12,6 +12,7 @@ import {
 } from "ponder:schema";
 import { flowRecipientKey } from "../helpers/ids";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
+import { ensureFlowQueuedForActualRateRefresh } from "../helpers/flowRefresh";
 
 ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
   await insertProtocolEvent({ context, event, contractName: "GoalFlow" });
@@ -63,6 +64,14 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     });
+
+  await ensureFlowQueuedForActualRateRefresh({
+    context,
+    chainId: context.chain.id,
+    flowId: childFlowId,
+    blockNumber: event.block.number,
+    blockTimestamp: event.block.timestamp,
+  });
 
   await context.db
     .insert(budgetStack)

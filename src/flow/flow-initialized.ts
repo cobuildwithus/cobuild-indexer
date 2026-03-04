@@ -1,7 +1,9 @@
 import { ponder } from "ponder:registry";
 import { flow } from "ponder:schema";
+import type { Hex } from "viem";
 
 import { insertProtocolEvent } from "../helpers/protocolEvent";
+import { ensureFlowQueuedForActualRateRefresh } from "../helpers/flowRefresh";
 
 async function handleFlowInitialized(args: {
   event: any;
@@ -56,6 +58,14 @@ async function handleFlowInitialized(args: {
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     });
+
+  await ensureFlowQueuedForActualRateRefresh({
+    context,
+    chainId: context.chain.id,
+    flowId: flowAddress as Hex,
+    blockNumber: event.block.number,
+    blockTimestamp: event.block.timestamp,
+  });
 }
 
 ponder.on("GoalFlow:FlowInitialized", async ({ event, context }) => {

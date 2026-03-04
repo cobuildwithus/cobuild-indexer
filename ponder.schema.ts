@@ -579,10 +579,30 @@ export const flow = onchainTable("flow", (t) => ({
 
   // Dynamic state
   currentFlowRate: t.bigint().notNull().default(0n), // int96 stored as bigint
+  currentFlowRateObservedAtBlock: t.bigint(),
+  currentFlowRateObservedAtTimestamp: t.bigint(),
+  currentFlowRateStale: t.boolean().notNull().default(true),
+  currentFlowRateFailureCount: t.integer().notNull().default(0),
+  currentFlowRateLastFailureAt: t.bigint(),
+  currentFlowRateLastFailureReason: t.text(),
   targetOutflowRate: t.bigint().notNull().default(0n), // int96 stored as bigint
 
   createdAtBlock: t.bigint().notNull(),
   createdAtTimestamp: t.bigint().notNull(),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
+/**
+ * Per-chain round-robin refresh queue for flow actual-rate cron reads.
+ * `flowIds` is append-only in event order and `cursor` advances each cron tick.
+ */
+export const flowActualRateRefreshState = onchainTable("flow_actual_rate_refresh_state", (t) => ({
+  id: t.integer().primaryKey(), // chainId
+
+  flowIds: t.hex().array().notNull().default([]),
+  cursor: t.integer().notNull().default(0),
+
   updatedAtBlock: t.bigint().notNull(),
   updatedAtTimestamp: t.bigint().notNull(),
 }));
@@ -782,6 +802,35 @@ export const goalTreasuriesByProject = onchainTable("goal_treasuries_by_project"
 }));
 
 /**
+ * Goal factory deployment rows keyed by `${chainId}:${goalRevnetId}`.
+ * Captures the emitted core stack addresses from GoalFactory:GoalDeployed.
+ */
+export const goalFactoryDeployment = onchainTable("goal_factory_deployment", (t) => ({
+  id: t.text().primaryKey(),
+  chainId: t.integer().notNull(),
+  goalFactory: t.hex().notNull(),
+  caller: t.hex().notNull(),
+  goalRevnetId: t.bigint().notNull(),
+  goalToken: t.hex().notNull(),
+  goalSuperToken: t.hex().notNull(),
+  goalTreasury: t.hex().notNull(),
+  goalFlow: t.hex().notNull(),
+  stakeVault: t.hex().notNull(),
+  budgetStakeLedger: t.hex().notNull(),
+  splitHook: t.hex().notNull(),
+  jurorSlasherRouter: t.hex().notNull(),
+  underwriterSlasherRouter: t.hex().notNull(),
+  successResolver: t.hex().notNull(),
+  budgetTcr: t.hex().notNull(),
+  arbitrator: t.hex().notNull(),
+  txHash: t.hex().notNull(),
+  blockNumber: t.bigint().notNull(),
+  timestamp: t.bigint().notNull(),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
+/**
  * Goal treasury state (1 row per GoalTreasury address).
  */
 export const goalTreasury = onchainTable(
@@ -797,6 +846,7 @@ export const goalTreasury = onchainTable(
     stakeVault: t.hex(),
     hook: t.hex(),
     goalRulesets: t.hex(),
+    successResolver: t.hex(),
     goalRevnetId: t.bigint(),
     canonicalProjectChainId: t.integer(),
     canonicalProjectId: t.integer(),

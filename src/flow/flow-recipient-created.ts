@@ -3,6 +3,7 @@ import type { Hex } from "viem";
 
 import { budgetStack, flow, flowRecipient } from "ponder:schema";
 import { flowRecipientKey } from "../helpers/ids";
+import { ensureFlowQueuedForActualRateRefresh } from "../helpers/flowRefresh";
 
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
@@ -51,6 +52,14 @@ async function handleFlowRecipientCreated(args: { event: any; context: any; cont
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     });
+
+  await ensureFlowQueuedForActualRateRefresh({
+    context,
+    chainId: context.chain.id,
+    flowId: childFlowAddress,
+    blockNumber: event.block.number,
+    blockTimestamp: event.block.timestamp,
+  });
 }
 
 // Root and child flows can emit FlowRecipientCreated for nested flow graphs.
