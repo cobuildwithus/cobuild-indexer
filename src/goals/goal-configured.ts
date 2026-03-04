@@ -1,6 +1,5 @@
 import { ponder } from "ponder:registry";
-import { goalTreasuriesByProject, goalTreasury, project, stakeVault } from "ponder:schema";
-import { goalStakeVaultAbi } from "@cobuild/wire";
+import { flow, goalTreasuriesByProject, goalTreasury, project, stakeVault } from "ponder:schema";
 import type { Hex } from "viem";
 
 import { insertProtocolEvent } from "../helpers/protocolEvent";
@@ -99,25 +98,14 @@ ponder.on("GoalTreasury:GoalConfigured", async ({ event, context }) => {
   const parsedRoute = parseCanonicalRoute(canonicalProject?.domain);
   const canonicalRouteSlug = parsedRoute.canonicalRouteSlug ?? treasury.toLowerCase();
   const canonicalRouteDomain = parsedRoute.canonicalRouteDomain;
-  const [jurorSlasher, underwriterSlasher] = await Promise.all([
-    context.client.readContract({
-      abi: goalStakeVaultAbi,
-      address: event.args.stakeVault,
-      functionName: "jurorSlasher",
-      blockNumber: event.block.number,
-    }),
-    context.client.readContract({
-      abi: goalStakeVaultAbi,
-      address: event.args.stakeVault,
-      functionName: "underwriterSlasher",
-      blockNumber: event.block.number,
-    }),
-  ]);
+  const configuredFlow = await context.db.find(flow, { id: event.args.flow });
   const goalTreasuryValues = {
     owner: event.args.owner,
     flowAddress: event.args.flow,
     stakeVault: event.args.stakeVault,
     budgetStakeLedger: event.args.budgetStakeLedger,
+    goalToken: event.args.goalToken,
+    cobuildToken: event.args.cobuildToken,
     hook: event.args.hook,
     goalRulesets: event.args.goalRulesets,
     goalRevnetId: event.args.goalRevnetId,
@@ -125,11 +113,13 @@ ponder.on("GoalTreasury:GoalConfigured", async ({ event, context }) => {
     canonicalProjectId,
     canonicalRouteSlug,
     canonicalRouteDomain,
-    jurorSlasher,
-    underwriterSlasher,
+    jurorSlasher: event.args.jurorSlasher,
+    underwriterSlasher: event.args.underwriterSlasher,
     minRaiseDeadline: event.args.minRaiseDeadline,
     deadline: event.args.deadline,
     minRaise: event.args.minRaise,
+    parentFlow: (configuredFlow?.parentFlow ?? null) as Hex | null,
+    strategy: (configuredFlow?.strategy ?? null) as Hex | null,
     updatedAtBlock: event.block.number,
     updatedAtTimestamp: event.block.timestamp,
   };

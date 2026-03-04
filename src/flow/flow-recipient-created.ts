@@ -53,7 +53,11 @@ async function handleFlowRecipientCreated(args: { event: any; context: any; cont
     });
 }
 
-// Only GoalFlow can create flow-recipients (child flows).
+// Root and child flows can emit FlowRecipientCreated for nested flow graphs.
 ponder.on("GoalFlow:FlowRecipientCreated", async ({ event, context }) => {
   await handleFlowRecipientCreated({ event, context, contractName: "GoalFlow" });
+});
+
+ponder.on("ChildFlow:FlowRecipientCreated", async ({ event, context }) => {
+  await handleFlowRecipientCreated({ event, context, contractName: "ChildFlow" });
 });
