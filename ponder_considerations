@@ -14,5 +14,5 @@ Read this file before doing any implementation work in this repository.
 ## Modeling Defaults
 
 - Favor deterministic IDs for projection rows (contract addresses, event ids, composite IDs generated from event args).
-- Keep replay behavior idempotent (`insert ... onConflict...` or explicit existence checks by PK).
+- Keep replay behavior idempotent: prefer `insert ... onConflict...`; only add explicit existence checks when `../v1-core` contract/event ordering shows a real missing-row risk.
 - Keep expensive cross-table lookups off hot paths by precomputing/indexing via projection tables.

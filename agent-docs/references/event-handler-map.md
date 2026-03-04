@@ -10,6 +10,8 @@
   - `LaunchProject`, `MintTokens`, `SendReservedTokensToSplits`, `SetUri`
 - `JBMultiTerminal:*` in `src/contracts/jb-multi-terminal/**`
   - `AddToBalance`, `CashOutTokens`, `Pay`, `SendPayouts`, `SetAccountingContext`, `UseAllowance`
+  - `Pay` also maintains `goal_contributor_aggregate` (per-goal contributor totals for holdings queries) for pay events with `newlyIssuedTokenCount > 0`.
+  - `Pay` resolves goal-treasury targets via `sucker_group.projects` + `goal_treasuries_by_project` KV rows (no non-PK join lookup on the hot path).
 - `JBRulesets:*` in `src/contracts/jb-ruleset/**`
   - `RulesetQueued`, `RulesetInitialized`
 - `JBProjects:Create` in `src/contracts/jb-projects/create.ts`
@@ -38,8 +40,10 @@
   - `DonationRecorded`, `FlowRateSynced`, `FlowRateSyncManualInterventionRequired`, `FlowRateZeroingFailed`, `FlowRateSyncCallFailed`
   - `ReassertGraceActivated`, `ResidualSettled`
   - `HookFundingRecorded`, `HookFundingDeferred`, `HookDeferredFundingSettled`
-  - `JurorSlasherConfigured`, `UnderwriterSlasherConfigured`, `TerminalSideEffectFailed`
+  - `TerminalSideEffectFailed`
   - `GoalConfigured` also writes canonical project + canonical route linkage fields on `goal_treasury`.
+  - `GoalConfigured` also maintains deterministic `goal_treasuries_by_project` KV rows keyed by `${chainId}-${projectId}`.
+  - `GoalConfigured` also snapshots `jurorSlasher` + `underwriterSlasher` from `GoalStakeVault` at event block height.
   - `FlowRateSynced` also writes `goal_treasury_series` + `goal_treasury_series_cursor`.
 
 ## Budget Treasury
@@ -87,4 +91,4 @@
 - Raw event audit table: `protocol_event` (scaffold handlers via helper).
 - Legacy handlers update legacy projection tables (`project`, `ruleset`, `loan`, payment/swap telemetry, and related maps).
 - Domain tables are mapped in `ponder.schema.ts` and updated by same-domain handlers.
-- Deterministic lookup/cursor tables (`budget_treasury_by_*`, `goal_treasury_series_cursor`) are maintained in handler write paths to avoid non-PK SQL lookups.
+- Deterministic lookup/cursor tables (`budget_treasury_by_*`, `goal_treasuries_by_project`, `goal_treasury_series_cursor`) are maintained in handler write paths to avoid non-PK SQL lookups.

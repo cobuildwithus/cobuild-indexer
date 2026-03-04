@@ -1,6 +1,18 @@
 import { createConfig, factory } from "ponder";
 import { config, getChainsAndRpcUrls, IndexerConfig } from "./src/lib/config";
 import { cobuildSwapImplAbi } from "./abis";
+import {
+  budgetStakeLedgerAbi as BudgetStakeLedgerAbi,
+  budgetTcrAbi as BudgetTCRAbi,
+  budgetTcrFactoryAbi as BudgetTCRFactoryAbi,
+  budgetTreasuryAbi as BudgetTreasuryAbi,
+  flowAbi as FlowAbi,
+  goalFlowAllocationLedgerPipelineAbi as GoalFlowAllocationLedgerPipelineAbi,
+  goalRevnetSplitHookAbi as GoalRevnetSplitHookAbi,
+  goalStakeVaultAbi as GoalStakeVaultAbi,
+  goalTreasuryAbi as GoalTreasuryAbi,
+  premiumEscrowAbi as PremiumEscrowAbi,
+} from "@cobuild/wire";
 import { contracts } from "./addresses";
 import { erc20Abi, getAbiItem, parseAbiItem } from "viem";
 import {
@@ -13,17 +25,6 @@ import {
   revDeployerAbi,
   revLoansAbi,
 } from "juice-sdk-core";
-
-import { FlowAbi } from "./abis/Flow";
-import { GoalTreasuryAbi } from "./abis/GoalTreasury";
-import { BudgetTreasuryAbi } from "./abis/BudgetTreasury";
-import { PremiumEscrowAbi } from "./abis/PremiumEscrow";
-import { GoalStakeVaultAbi } from "./abis/GoalStakeVault";
-import { BudgetStakeLedgerAbi } from "./abis/BudgetStakeLedger";
-import { BudgetTCRAbi } from "./abis/BudgetTCR";
-import { BudgetTCRFactoryAbi } from "./abis/BudgetTCRFactory";
-import { GoalFlowAllocationLedgerPipelineAbi } from "./abis/GoalFlowAllocationLedgerPipeline";
-import { GoalRevnetSplitHookAbi } from "./abis/GoalRevnetSplitHook";
 
 const BASE_PROJECT_IDS: bigint[] = [6n];
 const BASE_JB_PROJECT_TOKEN_ADDRESSES = [

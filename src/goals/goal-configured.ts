@@ -1,5 +1,6 @@
 import { ponder } from "ponder:registry";
-import { goalTreasury, project, stakeVault } from "ponder:schema";
+import { goalTreasuriesByProject, goalTreasury, project, stakeVault } from "ponder:schema";
+import { goalStakeVaultAbi } from "@cobuild/wire";
 import type { Hex } from "viem";
 
 import { insertProtocolEvent } from "../helpers/protocolEvent";
@@ -48,12 +49,46 @@ function parseCanonicalRoute(domainValue: string | null | undefined): {
   }
 }
 
+function goalTreasuriesByProjectKey(args: { chainId: number; projectId: number }): string {
+  return `${args.chainId}-${args.projectId}`;
+}
+
+function uniqueSortedGoalTreasuries(values: Hex[]): Hex[] {
+  return Array.from(new Set(values)).sort() as Hex[];
+}
+
+function hexArraysEqual(a: Hex[], b: Hex[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
 ponder.on("GoalTreasury:GoalConfigured", async ({ event, context }) => {
   await insertProtocolEvent({ context, event, contractName: "GoalTreasury" });
 
   const treasury = event.log.address as Hex;
+  const existingGoalTreasury = await context.db.find(goalTreasury, { id: treasury });
   const canonicalProjectId = toCanonicalProjectId(event.args.goalRevnetId);
   const canonicalProjectChainId = canonicalProjectId === null ? null : context.chain.id;
+  const previousProjectKey =
+    existingGoalTreasury?.canonicalProjectChainId !== null &&
+    existingGoalTreasury?.canonicalProjectChainId !== undefined &&
+    existingGoalTreasury?.canonicalProjectId !== null &&
+    existingGoalTreasury?.canonicalProjectId !== undefined
+      ? goalTreasuriesByProjectKey({
+          chainId: existingGoalTreasury.canonicalProjectChainId,
+          projectId: existingGoalTreasury.canonicalProjectId,
+        })
+      : null;
+  const nextProjectKey =
+    canonicalProjectChainId !== null && canonicalProjectId !== null
+      ? goalTreasuriesByProjectKey({
+          chainId: canonicalProjectChainId,
+          projectId: canonicalProjectId,
+        })
+      : null;
   const canonicalProject =
     canonicalProjectId === null
       ? null
@@ -64,50 +99,100 @@ ponder.on("GoalTreasury:GoalConfigured", async ({ event, context }) => {
   const parsedRoute = parseCanonicalRoute(canonicalProject?.domain);
   const canonicalRouteSlug = parsedRoute.canonicalRouteSlug ?? treasury.toLowerCase();
   const canonicalRouteDomain = parsedRoute.canonicalRouteDomain;
+  const [jurorSlasher, underwriterSlasher] = await Promise.all([
+    context.client.readContract({
+      abi: goalStakeVaultAbi,
+      address: event.args.stakeVault,
+      functionName: "jurorSlasher",
+      blockNumber: event.block.number,
+    }),
+    context.client.readContract({
+      abi: goalStakeVaultAbi,
+      address: event.args.stakeVault,
+      functionName: "underwriterSlasher",
+      blockNumber: event.block.number,
+    }),
+  ]);
+  const goalTreasuryValues = {
+    owner: event.args.owner,
+    flowAddress: event.args.flow,
+    stakeVault: event.args.stakeVault,
+    budgetStakeLedger: event.args.budgetStakeLedger,
+    hook: event.args.hook,
+    goalRulesets: event.args.goalRulesets,
+    goalRevnetId: event.args.goalRevnetId,
+    canonicalProjectChainId,
+    canonicalProjectId,
+    canonicalRouteSlug,
+    canonicalRouteDomain,
+    jurorSlasher,
+    underwriterSlasher,
+    minRaiseDeadline: event.args.minRaiseDeadline,
+    deadline: event.args.deadline,
+    minRaise: event.args.minRaise,
+    updatedAtBlock: event.block.number,
+    updatedAtTimestamp: event.block.timestamp,
+  };
 
   await context.db
     .insert(goalTreasury)
     .values({
       id: treasury,
-      owner: event.args.owner,
-      flowAddress: event.args.flow,
-      stakeVault: event.args.stakeVault,
-      budgetStakeLedger: event.args.budgetStakeLedger,
-      hook: event.args.hook,
-      goalRulesets: event.args.goalRulesets,
-      goalRevnetId: event.args.goalRevnetId,
-      canonicalProjectChainId,
-      canonicalProjectId,
-      canonicalRouteSlug,
-      canonicalRouteDomain,
-      minRaiseDeadline: event.args.minRaiseDeadline,
-      deadline: event.args.deadline,
-      minRaise: event.args.minRaise,
+      ...goalTreasuryValues,
       state: null,
       finalized: false,
       createdAtBlock: event.block.number,
       createdAtTimestamp: event.block.timestamp,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
     })
-    .onConflictDoUpdate({
-      owner: event.args.owner,
-      flowAddress: event.args.flow,
-      stakeVault: event.args.stakeVault,
-      budgetStakeLedger: event.args.budgetStakeLedger,
-      hook: event.args.hook,
-      goalRulesets: event.args.goalRulesets,
-      goalRevnetId: event.args.goalRevnetId,
-      canonicalProjectChainId,
-      canonicalProjectId,
-      canonicalRouteSlug,
-      canonicalRouteDomain,
-      minRaiseDeadline: event.args.minRaiseDeadline,
-      deadline: event.args.deadline,
-      minRaise: event.args.minRaise,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+    .onConflictDoUpdate(goalTreasuryValues);
+
+  if (previousProjectKey && previousProjectKey !== nextProjectKey) {
+    const previousMapping = await context.db.find(goalTreasuriesByProject, {
+      id: previousProjectKey,
     });
+
+    if (previousMapping) {
+      const nextGoalTreasuries = uniqueSortedGoalTreasuries(
+        previousMapping.goalTreasuries.filter((value) => value !== treasury)
+      );
+
+      if (!hexArraysEqual(previousMapping.goalTreasuries, nextGoalTreasuries)) {
+        await context.db.update(goalTreasuriesByProject, { id: previousProjectKey }).set({
+          goalTreasuries: nextGoalTreasuries,
+          updatedAtBlock: event.block.number,
+          updatedAtTimestamp: event.block.timestamp,
+        });
+      }
+    }
+  }
+
+  if (nextProjectKey) {
+    const existingMapping = await context.db.find(goalTreasuriesByProject, {
+      id: nextProjectKey,
+    });
+
+    if (!existingMapping) {
+      await context.db.insert(goalTreasuriesByProject).values({
+        id: nextProjectKey,
+        goalTreasuries: [treasury],
+        updatedAtBlock: event.block.number,
+        updatedAtTimestamp: event.block.timestamp,
+      });
+    } else {
+      const nextGoalTreasuries = uniqueSortedGoalTreasuries([
+        ...existingMapping.goalTreasuries,
+        treasury,
+      ]);
+
+      if (!hexArraysEqual(existingMapping.goalTreasuries, nextGoalTreasuries)) {
+        await context.db.update(goalTreasuriesByProject, { id: nextProjectKey }).set({
+          goalTreasuries: nextGoalTreasuries,
+          updatedAtBlock: event.block.number,
+          updatedAtTimestamp: event.block.timestamp,
+        });
+      }
+    }
+  }
 
   await context.db
     .insert(stakeVault)

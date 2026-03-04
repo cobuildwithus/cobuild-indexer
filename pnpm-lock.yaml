@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@cobuild/wire':
+        specifier: file:../wire
+        version: file:../wire(typescript@5.9.3)(zod@4.3.5)
       drizzle-orm:
         specifier: ^0.41.0
         version: 0.41.0(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(kysely@0.26.3)(pg@8.16.3)
@@ -61,6 +64,11 @@ packages:
 
   '@cobuild/review-gpt@0.2.7':
     resolution: {integrity: sha512-KtkyovdaRci2zXwjiSXFEOJa5F5KOdpleIBC+4nL5UapzOlN8AktSKUG8yQ2wdF7mcP3XpezFpba/eMXNTdRcQ==}
+    hasBin: true
+
+  '@cobuild/wire@file:../wire':
+    resolution: {directory: ../wire, type: directory}
+    engines: {node: '>=20'}
     hasBin: true
 
   '@commander-js/extra-typings@12.1.0':
@@ -1632,6 +1640,14 @@ packages:
       typescript:
         optional: true
 
+  ox@0.12.4:
+    resolution: {integrity: sha512-+P+C7QzuwPV8lu79dOwjBKfB2CbnbEXe/hfyyrff1drrO1nOOj3Hc87svHfcW1yneRr3WXaKr6nz11nq+/DF9Q==}
+    peerDependencies:
+      typescript: '>=5.4.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   p-finally@1.0.0:
     resolution: {integrity: sha512-LICb2p9CB7FS+0eR1oqWnHhp0FljGLZCWBE9aix0Uye9W8LTQPwMTYVGWQWIw9RdQiDg4+epXQODwIYJtSJaow==}
     engines: {node: '>=4'}
@@ -2023,6 +2039,14 @@ packages:
       typescript:
         optional: true
 
+  viem@2.46.3:
+    resolution: {integrity: sha512-2LJS+Hyh2sYjHXQtzfv1kU9pZx9dxFzvoU/ZKIcn0FNtOU0HQuIICuYdWtUDFHaGXbAdVo8J1eCvmjkL9JVGwg==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   vite-node@1.0.2:
     resolution: {integrity: sha512-h7BbMJf46fLvFW/9Ygo3snkIBEHFh6fHpB4lge98H5quYrDhPFeI3S0LREz328uqPWSnii2yeJXktQ+Pmqk5BQ==}
     engines: {node: ^18.0.0 || >=20.0.0}
@@ -2154,6 +2178,15 @@ snapshots:
   '@babel/helper-validator-identifier@7.28.5': {}
 
   '@cobuild/review-gpt@0.2.7': {}
+
+  '@cobuild/wire@file:../wire(typescript@5.9.3)(zod@4.3.5)':
+    dependencies:
+      viem: 2.46.3(typescript@5.9.3)(zod@4.3.5)
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - zod
 
   '@commander-js/extra-typings@12.1.0(commander@12.1.0)':
     dependencies:
@@ -3490,6 +3523,21 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
+  ox@0.12.4(typescript@5.9.3)(zod@4.3.5):
+    dependencies:
+      '@adraffy/ens-normalize': 1.11.1
+      '@noble/ciphers': 1.3.0
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.2.3(typescript@5.9.3)(zod@4.3.5)
+      eventemitter3: 5.0.1
+    optionalDependencies:
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - zod
+
   p-finally@1.0.0: {}
 
   p-limit@3.1.0:
@@ -3909,6 +3957,23 @@ snapshots:
       abitype: 1.2.3(typescript@5.9.3)(zod@4.3.5)
       isows: 1.0.7(ws@8.18.3)
       ox: 0.11.3(typescript@5.9.3)(zod@4.3.5)
+      ws: 8.18.3
+    optionalDependencies:
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - zod
+
+  viem@2.46.3(typescript@5.9.3)(zod@4.3.5):
+    dependencies:
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.2.3(typescript@5.9.3)(zod@4.3.5)
+      isows: 1.0.7(ws@8.18.3)
+      ox: 0.12.4(typescript@5.9.3)(zod@4.3.5)
       ws: 8.18.3
     optionalDependencies:
       typescript: 5.9.3

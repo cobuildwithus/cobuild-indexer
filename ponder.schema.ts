@@ -620,6 +620,22 @@ export const flowRecipient = onchainTable("flow_recipient", (t) => ({
 }));
 
 /**
+ * Deterministic flow+index -> flow recipient row lookup.
+ * Used to resolve compact allocation snapshot recipient indices without non-PK scans.
+ */
+export const flowRecipientByIndex = onchainTable("flow_recipient_by_index", (t) => ({
+  id: t.text().primaryKey(), // `${flow}:${recipientIndex}`
+
+  flowId: t.hex().notNull(),
+  recipientIndex: t.integer().notNull(),
+  flowRecipientId: t.text().notNull(), // `${flow}:${recipientId}`
+  recipientId: t.hex().notNull(),
+
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
+/**
  * State for an allocation key (Flow x strategy x allocationKey).
  * Stores the latest commitment/weight/snapshot needed to compute deltas.
  */
@@ -740,6 +756,16 @@ export const budgetTreasuryByChildFlow = onchainTable("budget_treasury_by_child_
   id: t.hex().primaryKey(), // childFlow
   budgetTreasury: t.hex().notNull(),
   recipientId: t.hex(),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
+/**
+ * Deterministic canonical-project -> goal treasuries lookup keyed by `${chainId}-${projectId}`.
+ */
+export const goalTreasuriesByProject = onchainTable("goal_treasuries_by_project", (t) => ({
+  id: t.text().primaryKey(),
+  goalTreasuries: t.hex().array().notNull().default([]),
   updatedAtBlock: t.bigint().notNull(),
   updatedAtTimestamp: t.bigint().notNull(),
 }));
