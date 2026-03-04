@@ -1,6 +1,11 @@
 import type { Hex } from "viem";
 import { flowActualRateRefreshState } from "ponder:schema";
 
+function hasFlowIdIgnoreCase(flowIds: Hex[], candidateFlowId: Hex): boolean {
+  const candidateLower = candidateFlowId.toLowerCase();
+  return flowIds.some((flowId) => flowId.toLowerCase() === candidateLower);
+}
+
 export async function ensureFlowQueuedForActualRateRefresh(args: {
   context: any;
   chainId: number;
@@ -23,13 +28,26 @@ export async function ensureFlowQueuedForActualRateRefresh(args: {
   }
 
   const existingFlowIds = existingState.flowIds as Hex[];
-  const flowIdLower = flowId.toLowerCase();
-  const exists = existingFlowIds.some((existingFlowId) => existingFlowId.toLowerCase() === flowIdLower);
-  if (exists) return;
+  if (hasFlowIdIgnoreCase(existingFlowIds, flowId)) return;
 
   await context.db.update(flowActualRateRefreshState, { id: chainId }).set({
     flowIds: [...existingFlowIds, flowId],
     updatedAtBlock: blockNumber,
     updatedAtTimestamp: blockTimestamp,
+  });
+}
+
+export async function queueFlowForActualRateRefresh(args: {
+  context: any;
+  event: { block: { number: bigint; timestamp: bigint } };
+  flowId: Hex;
+}) {
+  const { context, event, flowId } = args;
+  await ensureFlowQueuedForActualRateRefresh({
+    context,
+    chainId: context.chain.id,
+    flowId,
+    blockNumber: event.block.number,
+    blockTimestamp: event.block.timestamp,
   });
 }

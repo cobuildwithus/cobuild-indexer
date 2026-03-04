@@ -1,9 +1,8 @@
 import { ponder } from "ponder:registry";
 import { flow } from "ponder:schema";
-import type { Hex } from "viem";
 
 import { insertProtocolEvent } from "../helpers/protocolEvent";
-import { ensureFlowQueuedForActualRateRefresh } from "../helpers/flowRefresh";
+import { queueFlowForActualRateRefresh } from "../helpers/flowRefresh";
 
 async function handleFlowInitialized(args: {
   event: any;
@@ -16,55 +15,41 @@ async function handleFlowInitialized(args: {
   await insertProtocolEvent({ context, event, contractName });
 
   const flowAddress = event.log.address;
+  const managerRewardPoolFlowRatePercent = Number(event.args.managerRewardPoolFlowRatePpm);
+  const upsertValues = {
+    kind,
+    initialOwner: event.args.recipientAdmin,
+    initialFlowImpl: event.args.flowImplementation,
+    initialRecipientManager: event.args.recipientAdmin,
+    parentFlow: event.args.parent,
+    superToken: event.args.superToken,
+    distributionPool: event.args.distributionPool,
+    managerRewardPool: event.args.managerRewardPool,
+    allocationPipeline: event.args.allocationPipeline,
+    managerRewardPoolFlowRatePercent,
+    flowOperator: event.args.flowOperator,
+    sweeper: event.args.sweeper,
+    strategy: event.args.strategy,
+    updatedAtBlock: event.block.number,
+    updatedAtTimestamp: event.block.timestamp,
+  };
 
   await context.db
     .insert(flow)
     .values({
       id: flowAddress,
-      kind,
-      initialOwner: event.args.recipientAdmin,
-      initialFlowImpl: event.args.flowImplementation,
-      initialRecipientManager: event.args.recipientAdmin,
-      parentFlow: event.args.parent,
-      superToken: event.args.superToken,
-      distributionPool: event.args.distributionPool,
-      managerRewardPool: event.args.managerRewardPool,
-      allocationPipeline: event.args.allocationPipeline,
-      managerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
-      flowOperator: event.args.flowOperator,
-      sweeper: event.args.sweeper,
-      strategy: event.args.strategy,
+      ...upsertValues,
       currentFlowRate: 0n,
       targetOutflowRate: 0n,
       createdAtBlock: event.block.number,
       createdAtTimestamp: event.block.timestamp,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
     })
-    .onConflictDoUpdate({
-      kind,
-      initialOwner: event.args.recipientAdmin,
-      initialFlowImpl: event.args.flowImplementation,
-      initialRecipientManager: event.args.recipientAdmin,
-      parentFlow: event.args.parent,
-      superToken: event.args.superToken,
-      distributionPool: event.args.distributionPool,
-      managerRewardPool: event.args.managerRewardPool,
-      allocationPipeline: event.args.allocationPipeline,
-      managerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
-      flowOperator: event.args.flowOperator,
-      sweeper: event.args.sweeper,
-      strategy: event.args.strategy,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
-    });
+    .onConflictDoUpdate(upsertValues);
 
-  await ensureFlowQueuedForActualRateRefresh({
+  await queueFlowForActualRateRefresh({
     context,
-    chainId: context.chain.id,
-    flowId: flowAddress as Hex,
-    blockNumber: event.block.number,
-    blockTimestamp: event.block.timestamp,
+    event,
+    flowId: flowAddress,
   });
 }
 

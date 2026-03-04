@@ -21,14 +21,6 @@ type MulticallSuccess = { status: "success"; result: bigint };
 type MulticallFailure = { status: "failure"; error: unknown };
 type MulticallResult = MulticallSuccess | MulticallFailure;
 
-function chunkArray<T>(items: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < items.length; i += size) {
-    chunks.push(items.slice(i, i + size));
-  }
-  return chunks;
-}
-
 function pickRoundRobin(args: { flowIds: Hex[]; cursor: number; maxItems: number }): {
   selectedFlowIds: Hex[];
   nextCursor: number;
@@ -76,6 +68,10 @@ async function refreshChunk(args: {
 }) {
   const { context, blockNumber, blockTimestamp, candidates } = args;
   if (candidates.length === 0) return;
+  const commonUpdateFields = {
+    updatedAtBlock: blockNumber,
+    updatedAtTimestamp: blockTimestamp,
+  };
 
   const contracts = candidates.map((candidate) => ({
     address: candidate.id,
@@ -113,10 +109,9 @@ async function refreshChunk(args: {
   }
 
   const updates: Promise<unknown>[] = [];
-  for (let i = 0; i < candidates.length; i += 1) {
-    const candidate = candidates[i];
+  for (const [i, candidate] of candidates.entries()) {
     const result = results[i];
-    if (!candidate || !result) continue;
+    if (!result) continue;
 
     if (result.status === "success") {
       updates.push(
@@ -128,8 +123,7 @@ async function refreshChunk(args: {
           currentFlowRateFailureCount: 0,
           currentFlowRateLastFailureAt: null,
           currentFlowRateLastFailureReason: null,
-          updatedAtBlock: blockNumber,
-          updatedAtTimestamp: blockTimestamp,
+          ...commonUpdateFields,
         })
       );
       continue;
@@ -141,8 +135,7 @@ async function refreshChunk(args: {
         currentFlowRateFailureCount: candidate.row.currentFlowRateFailureCount + 1,
         currentFlowRateLastFailureAt: blockTimestamp,
         currentFlowRateLastFailureReason: normalizeFailureReason(result.error),
-        updatedAtBlock: blockNumber,
-        updatedAtTimestamp: blockTimestamp,
+        ...commonUpdateFields,
       })
     );
   }
@@ -171,11 +164,15 @@ ponder.on("FlowActualRateRefresh:block", async ({ context, event }) => {
     })
   );
 
-  const refreshCandidates = selectedRows
-    .filter((entry): entry is { id: Hex; row: FlowRow } => entry !== null)
-    .filter((entry) => shouldRefreshFlow({ row: entry.row, currentBlockNumber: event.block.number }));
+  const refreshCandidates: { id: Hex; row: FlowRow }[] = [];
+  for (const entry of selectedRows) {
+    if (!entry) continue;
+    if (!shouldRefreshFlow({ row: entry.row, currentBlockNumber: event.block.number })) continue;
+    refreshCandidates.push(entry);
+  }
 
-  for (const chunk of chunkArray(refreshCandidates, MULTICALL_CHUNK_SIZE)) {
+  for (let i = 0; i < refreshCandidates.length; i += MULTICALL_CHUNK_SIZE) {
+    const chunk = refreshCandidates.slice(i, i + MULTICALL_CHUNK_SIZE);
     await refreshChunk({
       context,
       blockNumber: event.block.number,

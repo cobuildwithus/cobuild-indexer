@@ -3,7 +3,7 @@ import type { Hex } from "viem";
 
 import { budgetStack, flow, flowRecipient } from "ponder:schema";
 import { flowRecipientKey } from "../helpers/ids";
-import { ensureFlowQueuedForActualRateRefresh } from "../helpers/flowRefresh";
+import { queueFlowForActualRateRefresh } from "../helpers/flowRefresh";
 
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
@@ -16,15 +16,26 @@ async function handleFlowRecipientCreated(args: { event: any; context: any; cont
   const childFlowAddress: Hex = event.args.recipient;
   const stack = await context.db.find(budgetStack, { id: recipientId });
   const flowRecipientId = flowRecipientKey(parentFlowId, recipientId);
+  const managerRewardPoolFlowRatePercent = Number(event.args.managerRewardPoolFlowRatePpm);
+  const updatedAt = {
+    updatedAtBlock: event.block.number,
+    updatedAtTimestamp: event.block.timestamp,
+  };
+  const flowUpsertValues = {
+    kind: "child" as const,
+    parentFlow: parentFlowId,
+    distributionPool: event.args.distributionPool,
+    managerRewardPoolFlowRatePercent,
+    ...updatedAt,
+  };
 
   // 1) Mark the (already-created) recipient row as a flow-recipient.
   await context.db.update(flowRecipient, { id: flowRecipientId }).set({
     isFlowRecipient: true,
     childDistributionPool: event.args.distributionPool,
-    childManagerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
+    childManagerRewardPoolFlowRatePercent: managerRewardPoolFlowRatePercent,
     childStrategy: stack?.strategy ?? null,
-    updatedAtBlock: event.block.number,
-    updatedAtTimestamp: event.block.timestamp,
+    ...updatedAt,
   });
 
   // 2) Ensure the child flow entity exists and is linked to its parent.
@@ -32,33 +43,19 @@ async function handleFlowRecipientCreated(args: { event: any; context: any; cont
     .insert(flow)
     .values({
       id: childFlowAddress,
-      kind: "child",
-      parentFlow: parentFlowId,
-      distributionPool: event.args.distributionPool,
-      managerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
+      ...flowUpsertValues,
       strategy: null,
       currentFlowRate: 0n,
       targetOutflowRate: 0n,
       createdAtBlock: event.block.number,
       createdAtTimestamp: event.block.timestamp,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
     })
-    .onConflictDoUpdate({
-      kind: "child",
-      parentFlow: parentFlowId,
-      distributionPool: event.args.distributionPool,
-      managerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
-    });
+    .onConflictDoUpdate(flowUpsertValues);
 
-  await ensureFlowQueuedForActualRateRefresh({
+  await queueFlowForActualRateRefresh({
     context,
-    chainId: context.chain.id,
+    event,
     flowId: childFlowAddress,
-    blockNumber: event.block.number,
-    blockTimestamp: event.block.timestamp,
   });
 }
 

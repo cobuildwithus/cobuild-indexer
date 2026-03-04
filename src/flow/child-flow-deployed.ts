@@ -12,7 +12,7 @@ import {
 } from "ponder:schema";
 import { flowRecipientKey } from "../helpers/ids";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
-import { ensureFlowQueuedForActualRateRefresh } from "../helpers/flowRefresh";
+import { queueFlowForActualRateRefresh } from "../helpers/flowRefresh";
 
 ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
   await insertProtocolEvent({ context, event, contractName: "GoalFlow" });
@@ -22,17 +22,22 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
   const recipientId = event.args.recipientId as Hex;
   const escrowId = event.args.managerRewardPool as Hex;
   const recipientRowId = flowRecipientKey(parentFlowId, recipientId);
+  const updatedAt = {
+    updatedAtBlock: event.block.number,
+    updatedAtTimestamp: event.block.timestamp,
+  };
 
-  const recipientBudgetLink = await context.db.find(budgetTreasuryByRecipient, { id: recipientId });
-  const childFlowBudgetLink = await context.db.find(budgetTreasuryByChildFlow, { id: childFlowId });
+  const [recipientBudgetLink, childFlowBudgetLink] = await Promise.all([
+    context.db.find(budgetTreasuryByRecipient, { id: recipientId }),
+    context.db.find(budgetTreasuryByChildFlow, { id: childFlowId }),
+  ]);
   const treasuryId = recipientBudgetLink?.budgetTreasury ?? childFlowBudgetLink?.budgetTreasury ?? null;
 
   await context.db.update(flowRecipient, { id: recipientRowId }).set({
     isFlowRecipient: true,
     childStrategy: event.args.strategy,
     ...(treasuryId ? { budgetTreasury: treasuryId } : {}),
-    updatedAtBlock: event.block.number,
-    updatedAtTimestamp: event.block.timestamp,
+    ...updatedAt,
   });
 
   await context.db
@@ -50,8 +55,7 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
       targetOutflowRate: 0n,
       createdAtBlock: event.block.number,
       createdAtTimestamp: event.block.timestamp,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      ...updatedAt,
     })
     .onConflictDoUpdate({
       kind: "child",
@@ -61,16 +65,13 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
       sweeper: event.args.sweeper,
       managerRewardPool: escrowId,
       strategy: event.args.strategy,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      ...updatedAt,
     });
 
-  await ensureFlowQueuedForActualRateRefresh({
+  await queueFlowForActualRateRefresh({
     context,
-    chainId: context.chain.id,
+    event,
     flowId: childFlowId,
-    blockNumber: event.block.number,
-    blockTimestamp: event.block.timestamp,
   });
 
   await context.db
@@ -80,15 +81,13 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
       childFlow: childFlowId,
       premiumEscrow: escrowId,
       strategy: event.args.strategy,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      ...updatedAt,
     })
     .onConflictDoUpdate({
       childFlow: childFlowId,
       premiumEscrow: escrowId,
       strategy: event.args.strategy,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      ...updatedAt,
     });
 
   await context.db
@@ -98,15 +97,13 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
       budgetStackId: recipientId,
       childFlow: childFlowId,
       ...(treasuryId ? { budgetTreasury: treasuryId } : {}),
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      ...updatedAt,
     })
     .onConflictDoUpdate({
       budgetStackId: recipientId,
       childFlow: childFlowId,
       ...(treasuryId ? { budgetTreasury: treasuryId } : {}),
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      ...updatedAt,
     });
 
   if (!treasuryId) return;
@@ -115,8 +112,7 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
     recipientId,
     childFlow: childFlowId,
     premiumEscrow: escrowId,
-    updatedAtBlock: event.block.number,
-    updatedAtTimestamp: event.block.timestamp,
+    ...updatedAt,
   });
 
   await context.db
@@ -125,14 +121,12 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
       id: recipientId,
       budgetTreasury: treasuryId,
       childFlow: childFlowId,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      ...updatedAt,
     })
     .onConflictDoUpdate({
       budgetTreasury: treasuryId,
       childFlow: childFlowId,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      ...updatedAt,
     });
 
   await context.db
@@ -141,13 +135,11 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
       id: childFlowId,
       budgetTreasury: treasuryId,
       recipientId,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      ...updatedAt,
     })
     .onConflictDoUpdate({
       budgetTreasury: treasuryId,
       recipientId,
-      updatedAtBlock: event.block.number,
-      updatedAtTimestamp: event.block.timestamp,
+      ...updatedAt,
     });
 });
