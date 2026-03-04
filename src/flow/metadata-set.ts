@@ -1,5 +1,4 @@
 import { ponder } from "ponder:registry";
-import { eq } from "drizzle-orm";
 
 import { flow } from "ponder:schema";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
@@ -10,9 +9,11 @@ async function handleMetadataSet(args: { event: any; context: any; contractName:
 
   const flowId = event.log.address;
   const md = event.args.metadata;
+  const existingFlow = await context.db.find(flow, { id: flowId });
+  if (!existingFlow) return;
 
-  await context.db.sql
-    .update(flow)
+  await context.db
+    .update(flow, { id: flowId })
     .set({
       metadataTitle: md.title ?? null,
       metadataDescription: md.description ?? null,
@@ -21,8 +22,7 @@ async function handleMetadataSet(args: { event: any; context: any; contractName:
       metadataUrl: md.url ?? null,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
-    })
-    .where(eq(flow.id, flowId));
+    });
 }
 
 ponder.on("GoalFlow:MetadataSet", async ({ event, context }) => {

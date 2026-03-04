@@ -1,8 +1,8 @@
 import { ponder } from "ponder:registry";
-import { and, eq } from "drizzle-orm";
 import type { Hex } from "viem";
 
 import { budgetStack, flow, flowRecipient } from "ponder:schema";
+import { flowRecipientKey } from "../helpers/ids";
 
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
@@ -13,24 +13,21 @@ async function handleFlowRecipientCreated(args: { event: any; context: any; cont
   const parentFlowId: Hex = event.log.address;
   const recipientId: Hex = event.args.recipientId;
   const childFlowAddress: Hex = event.args.recipient;
-  const [stack] = await context.db.sql
-    .select({ strategy: budgetStack.strategy })
-    .from(budgetStack)
-    .where(eq(budgetStack.id, recipientId))
-    .limit(1);
+  const stack = await context.db.find(budgetStack, { id: recipientId });
+  const flowRecipientId = flowRecipientKey(parentFlowId, recipientId);
 
   // 1) Mark the (already-created) recipient row as a flow-recipient.
-  await context.db.sql
-    .update(flowRecipient)
-    .set({
+  const existingRecipient = await context.db.find(flowRecipient, { id: flowRecipientId });
+  if (existingRecipient) {
+    await context.db.update(flowRecipient, { id: flowRecipientId }).set({
       isFlowRecipient: true,
       childDistributionPool: event.args.distributionPool,
       childManagerRewardPoolFlowRatePercent: Number(event.args.managerRewardPoolFlowRatePpm),
       childStrategy: stack?.strategy ?? null,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
-    })
-    .where(and(eq(flowRecipient.flowId, parentFlowId), eq(flowRecipient.recipientId, recipientId)));
+    });
+  }
 
   // 2) Ensure the child flow entity exists and is linked to its parent.
   await context.db

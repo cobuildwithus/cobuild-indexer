@@ -1,7 +1,7 @@
 import { ponder } from "ponder:registry";
-import { and, eq } from "drizzle-orm";
 
 import { flowRecipient } from "ponder:schema";
+import { flowRecipientKey } from "../helpers/ids";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
 async function handleRecipientRemoved(args: { event: any; context: any; contractName: string }) {
@@ -10,9 +10,12 @@ async function handleRecipientRemoved(args: { event: any; context: any; contract
 
   const flowId = event.log.address;
   const recipientId = event.args.recipientId;
+  const flowRecipientId = flowRecipientKey(flowId, recipientId);
+  const existingRecipient = await context.db.find(flowRecipient, { id: flowRecipientId });
+  if (!existingRecipient) return;
 
-  await context.db.sql
-    .update(flowRecipient)
+  await context.db
+    .update(flowRecipient, { id: flowRecipientId })
     .set({
       isRemoved: true,
       allocationUnitsSum: 0n,
@@ -21,8 +24,7 @@ async function handleRecipientRemoved(args: { event: any; context: any; contract
       removedAtTimestamp: event.block.timestamp,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
-    })
-    .where(and(eq(flowRecipient.flowId, flowId), eq(flowRecipient.recipientId, recipientId)));
+    });
 }
 
 ponder.on("GoalFlow:RecipientRemoved", async ({ event, context }) => {

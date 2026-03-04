@@ -1,5 +1,4 @@
 import { ponder } from "ponder:registry";
-import { eq } from "drizzle-orm";
 
 import { flow } from "ponder:schema";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
@@ -7,15 +6,17 @@ import { insertProtocolEvent } from "../helpers/protocolEvent";
 async function handleTargetOutflowRateUpdated(args: { event: any; context: any; contractName: string }) {
   const { event, context, contractName } = args;
   await insertProtocolEvent({ context, event, contractName });
+  const flowId = event.log.address;
+  const existingFlow = await context.db.find(flow, { id: flowId });
+  if (!existingFlow) return;
 
-  await context.db.sql
-    .update(flow)
+  await context.db
+    .update(flow, { id: flowId })
     .set({
       targetOutflowRate: event.args.newRate,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
-    })
-    .where(eq(flow.id, event.log.address));
+    });
 }
 
 ponder.on("GoalFlow:TargetOutflowRateUpdated", async ({ event, context }) => {
