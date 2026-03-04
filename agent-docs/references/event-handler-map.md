@@ -76,6 +76,9 @@
   - allocation mechanism/credit cap/terminal recipient telemetry
   - governance/Kleros telemetry (`Initialized`, `RequestSubmitted`, `RequestEvidenceGroupID`, `MetaEvidence`, `Evidence`, `Dispute`, `Ruling`, `ItemSubmitted`, `ItemStatusChange`)
   - funding/terminalization telemetry (`SubmissionDepositPaid`, `SubmissionDepositTransferred`, `BudgetTerminalizationStepFailed`)
+  - lifecycle projection semantics:
+    - `BudgetStackActivationQueued` upserts an `ACTIVATION_QUEUED` stub row for pre-deployment visibility.
+    - `BudgetStackRemovalQueued`, `BudgetStackRemovalHandled`, and `BudgetStackTerminalizationRetried` enforce a strict existing `budget_stack` invariant (missing row is a hard projection error).
   - `BudgetStackDeployed` maintains deterministic recipient/childFlow -> budget treasury lookup KV tables and recipient FK linkage.
 - `BudgetTCRFactory:*` handlers in `src/tcrFactory/**`
   - deployment-for-goal telemetry

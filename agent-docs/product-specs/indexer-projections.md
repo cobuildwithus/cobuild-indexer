@@ -6,6 +6,7 @@
 - Legacy REV/JB projections and scaffold flow/treasury projections are both active in one runtime.
 - `protocol_event` captures scaffold event payloads with bigint-safe argument serialization.
 - Allocation state is applied incrementally using `AllocationCommitted` (commit/weight) plus `AllocationSnapshotUpdated` (snapshot bytes when commit changes), preserving deterministic per-key deltas.
+- `budget_stack` lifecycle handling is phase-aware: `BudgetStackActivationQueued` upserts an `ACTIVATION_QUEUED` stub row pre-deployment; deployed-only lifecycle events (`BudgetStackRemovalQueued`, `BudgetStackRemovalHandled`, `BudgetStackTerminalizationRetried`) fail closed on missing `budget_stack` rows.
 
 ## Consumer Expectations
 
