@@ -28,6 +28,7 @@
   - `Initialized`, `FlowInitialized`, `ChildFlowDeployed`, `RecipientCreated`, `FlowRecipientCreated`, `RecipientRemoved`, `MetadataSet`
   - `TargetOutflowRateUpdated`, `TargetOutflowRefreshFailed`
   - `AllocationCommitted`, `AllocationSnapshotUpdated`, `SuperTokenSwept`
+  - `RecipientCreated` maintains deterministic `flow_recipient_by_index` rows (`${flow}:${recipientIndex}` -> `flow_recipient.id`) for compact allocation snapshot lookups.
 - Dynamic factory discovery in `ponder.config.ts`
   - `ChildFlow` addresses: `GoalFlow:ChildFlowDeployed(recipient)`
   - `PremiumEscrow` addresses: `GoalFlow:ChildFlowDeployed(managerRewardPool)`
@@ -91,4 +92,4 @@
 - Raw event audit table: `protocol_event` (scaffold handlers via helper).
 - Legacy handlers update legacy projection tables (`project`, `ruleset`, `loan`, payment/swap telemetry, and related maps).
 - Domain tables are mapped in `ponder.schema.ts` and updated by same-domain handlers.
-- Deterministic lookup/cursor tables (`budget_treasury_by_*`, `goal_treasuries_by_project`, `goal_treasury_series_cursor`) are maintained in handler write paths to avoid non-PK SQL lookups.
+- Deterministic lookup/cursor tables (`budget_treasury_by_*`, `goal_treasuries_by_project`, `flow_recipient_by_index`, `goal_treasury_series_cursor`) are maintained in handler write paths to avoid non-PK SQL lookups.
