@@ -18,7 +18,7 @@
 
 ## Known Risks
 
-1. Placeholder deployment addresses/start blocks in `ponder.config.ts` must be replaced pre-production.
+1. Factory event signatures in `ponder.config.ts` must stay aligned with deployed `GoalFactory`/`BudgetTCRFactory` bytecode; mismatches stall downstream discovery.
 2. No automated `pnpm test` harness exists yet; regression risk is concentrated in allocation math and lifecycle transitions.
 
 ## Verification Matrix

@@ -1,6 +1,7 @@
 import { createConfig, factory } from "ponder";
 import { config, getChainsAndRpcUrls, IndexerConfig } from "./src/lib/config";
 import {
+  baseEntrypoints,
   budgetStakeLedgerAbi as BudgetStakeLedgerAbi,
   budgetTcrAbi as BudgetTCRAbi,
   budgetTcrFactoryAbi as BudgetTCRFactoryAbi,
@@ -36,45 +37,57 @@ const BASE_JB_PROJECT_TOKEN_ADDRESSES = [
 ] as const;
 
 /**
- * Placeholder deployment addresses for scaffold contracts.
- * Replace with real deployments and start blocks when available.
+ * Canonical scaffold entrypoint addresses from @cobuild/wire (v1-core deploys).
  */
-const ADDRESSES = {
-  GOAL_FACTORY: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  GOAL_FLOW: "0x1111111111111111111111111111111111111111",
-  GOAL_TREASURY: "0x2222222222222222222222222222222222222222",
-  GOAL_STAKE_VAULT: "0x3333333333333333333333333333333333333333",
-  BUDGET_STAKE_LEDGER: "0x5555555555555555555555555555555555555555",
-  BUDGET_TCR: "0x6666666666666666666666666666666666666666",
-  BUDGET_TCR_FACTORY: "0x7777777777777777777777777777777777777777",
-  ALLOCATION_PIPELINE: "0x8888888888888888888888888888888888888888",
-  GOAL_HOOK: "0x9999999999999999999999999999999999999999",
+const ENTRYPOINTS = {
+  GOAL_FACTORY: baseEntrypoints.goalFactory,
+  BUDGET_TCR_FACTORY: baseEntrypoints.budgetTcrFactory,
 } as const;
 
-const CHILD_FLOW_DEPLOYED = parseAbiItem(
-  "event ChildFlowDeployed(bytes32 indexed recipientId, address indexed recipient, address indexed strategy, address recipientAdmin, address flowOperator, address sweeper, address managerRewardPool)"
-);
-
-const BUDGET_STACK_DEPLOYED = parseAbiItem(
-  "event BudgetStackDeployed(bytes32 indexed itemID, address indexed childFlow, address indexed budgetTreasury, address strategy)"
-);
+const SCAFFOLD_START_BLOCK = 42_941_210;
 
 const GOAL_DEPLOYED = getAbiItem({
   abi: GoalFactoryAbi,
   name: "GoalDeployed",
 });
 
+// Factory discovery callbacks landed in v1-core may not be present in the
+// currently published factory ABI surface, so these are pinned explicitly.
+const GOAL_DEPLOYED_WITH_PIPELINE = parseAbiItem(
+  "event GoalDeployed(address indexed caller, uint256 indexed goalRevnetId, (uint256 goalRevnetId,address goalToken,address goalSuperToken,address goalTreasury,address goalFlow,address goalFlowAllocationLedgerPipeline,address stakeVault,address budgetStakeLedger,address splitHook,address jurorSlasherRouter,address underwriterSlasherRouter,address successResolver,address budgetTCR,address arbitrator) stack)"
+);
+
+const BUDGET_TCR_STACK_DEPLOYED_FOR_GOAL = getAbiItem({
+  abi: BudgetTCRFactoryAbi,
+  name: "BudgetTCRStackDeployedForGoal",
+});
+
+const BUDGET_STACK_DEPLOYED_FROM_FACTORY = parseAbiItem(
+  "event BudgetStackDeployed(address indexed budgetTCR, bytes32 indexed itemID, address indexed childFlow, address budgetTreasury, address premiumEscrow, address strategy)"
+);
+
 type GoalFactoryStackAddressParameter =
+  | "stack.goalFlow"
   | "stack.goalTreasury"
+  | "stack.stakeVault"
+  | "stack.budgetStakeLedger"
+  | "stack.splitHook"
   | "stack.successResolver"
   | "stack.underwriterSlasherRouter"
   | "stack.jurorSlasherRouter";
 
 const goalFactoryStackAddress = (parameter: GoalFactoryStackAddressParameter) =>
   factory({
-    address: ADDRESSES.GOAL_FACTORY,
+    address: ENTRYPOINTS.GOAL_FACTORY,
     event: GOAL_DEPLOYED,
     parameter,
+  });
+
+const goalFactoryPipelineAddress = () =>
+  factory({
+    address: ENTRYPOINTS.GOAL_FACTORY,
+    event: GOAL_DEPLOYED_WITH_PIPELINE,
+    parameter: "stack.goalFlowAllocationLedgerPipeline",
   });
 
 export default createConfig({
@@ -229,104 +242,108 @@ export default createConfig({
     GoalFactory: {
       abi: GoalFactoryAbi,
       chain: "base",
-      address: ADDRESSES.GOAL_FACTORY,
-      startBlock: 0,
+      address: ENTRYPOINTS.GOAL_FACTORY,
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     GoalFlow: {
       abi: FlowAbi,
       chain: "base",
-      address: ADDRESSES.GOAL_FLOW,
-      startBlock: 0,
+      address: goalFactoryStackAddress("stack.goalFlow"),
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     ChildFlow: {
       abi: FlowAbi,
       chain: "base",
       address: factory({
-        address: ADDRESSES.GOAL_FLOW,
-        event: CHILD_FLOW_DEPLOYED,
-        parameter: "recipient",
+        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        event: BUDGET_STACK_DEPLOYED_FROM_FACTORY,
+        parameter: "childFlow",
       }),
-      startBlock: 0,
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     GoalTreasury: {
       abi: GoalTreasuryAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.goalTreasury"),
-      startBlock: 0,
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     UMATreasurySuccessResolver: {
       abi: UmaTreasurySuccessResolverAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.successResolver"),
-      startBlock: 0,
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     UnderwriterSlasherRouter: {
       abi: UnderwriterSlasherRouterAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.underwriterSlasherRouter"),
-      startBlock: 0,
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     JurorSlasherRouter: {
       abi: JurorSlasherRouterAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.jurorSlasherRouter"),
-      startBlock: 0,
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     GoalStakeVault: {
       abi: GoalStakeVaultAbi,
       chain: "base",
-      address: ADDRESSES.GOAL_STAKE_VAULT,
-      startBlock: 0,
+      address: goalFactoryStackAddress("stack.stakeVault"),
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     PremiumEscrow: {
       abi: PremiumEscrowAbi,
       chain: "base",
       address: factory({
-        address: ADDRESSES.GOAL_FLOW,
-        event: CHILD_FLOW_DEPLOYED,
-        parameter: "managerRewardPool",
+        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        event: BUDGET_STACK_DEPLOYED_FROM_FACTORY,
+        parameter: "premiumEscrow",
       }),
-      startBlock: 0,
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     GoalRevnetSplitHook: {
       abi: GoalRevnetSplitHookAbi,
       chain: "base",
-      address: ADDRESSES.GOAL_HOOK,
-      startBlock: 0,
+      address: goalFactoryStackAddress("stack.splitHook"),
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     GoalFlowAllocationLedgerPipeline: {
       abi: GoalFlowAllocationLedgerPipelineAbi,
       chain: "base",
-      address: ADDRESSES.ALLOCATION_PIPELINE,
-      startBlock: 0,
+      address: goalFactoryPipelineAddress(),
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     BudgetStakeLedger: {
       abi: BudgetStakeLedgerAbi,
       chain: "base",
-      address: ADDRESSES.BUDGET_STAKE_LEDGER,
-      startBlock: 0,
+      address: goalFactoryStackAddress("stack.budgetStakeLedger"),
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     BudgetTCRFactory: {
       abi: BudgetTCRFactoryAbi,
       chain: "base",
-      address: ADDRESSES.BUDGET_TCR_FACTORY,
-      startBlock: 0,
+      address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     BudgetTCR: {
       abi: BudgetTCRAbi,
       chain: "base",
-      address: ADDRESSES.BUDGET_TCR,
-      startBlock: 0,
+      address: factory({
+        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        event: BUDGET_TCR_STACK_DEPLOYED_FOR_GOAL,
+        parameter: "budgetTCR",
+      }),
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     BudgetTreasury: {
       abi: BudgetTreasuryAbi,
       chain: "base",
       address: factory({
-        address: ADDRESSES.BUDGET_TCR,
-        event: BUDGET_STACK_DEPLOYED,
+        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        event: BUDGET_STACK_DEPLOYED_FROM_FACTORY,
         parameter: "budgetTreasury",
       }),
-      startBlock: 0,
+      startBlock: SCAFFOLD_START_BLOCK,
     },
   },
   blocks: {

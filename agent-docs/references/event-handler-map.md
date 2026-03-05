@@ -35,8 +35,8 @@
   - round-robin queue state is maintained in `flow_actual_rate_refresh_state` and enqueue hooks in `FlowInitialized`, `ChildFlowDeployed`, and `FlowRecipientCreated`.
   - writes freshness/error telemetry fields (`currentFlowRateObservedAt*`, `currentFlowRateStale`, failure count/reason) on `flow`.
 - Dynamic factory discovery in `ponder.config.ts`
-  - `ChildFlow` addresses: `GoalFlow:ChildFlowDeployed(recipient)`
-  - `PremiumEscrow` addresses: `GoalFlow:ChildFlowDeployed(managerRewardPool)`
+  - `ChildFlow` addresses: `BudgetTCRFactory:BudgetStackDeployed(childFlow)`
+  - `PremiumEscrow` addresses: `BudgetTCRFactory:BudgetStackDeployed(premiumEscrow)`
 
 ## Goal Treasury
 
@@ -88,6 +88,11 @@
   - `BudgetStackDeployed` maintains deterministic recipient/childFlow -> budget treasury lookup KV tables and recipient FK linkage.
 - `BudgetTCRFactory:*` handlers in `src/tcrFactory/**`
   - deployment-for-goal telemetry
+  - dynamic discovery source for:
+    - `BudgetTCR` via `BudgetTCRStackDeployedForGoal(budgetTCR)`
+    - `BudgetTreasury` via `BudgetStackDeployed(budgetTreasury)`
+    - `ChildFlow` via `BudgetStackDeployed(childFlow)`
+    - `PremiumEscrow` via `BudgetStackDeployed(premiumEscrow)`
 - `GoalFactory:GoalDeployed` handler in `src/goalFactory/goal-deployed.ts`
   - writes `goal_factory_deployment` rows keyed by `${chainId}:${goalRevnetId}` with emitted stack addresses (including router/resolver addresses).
 

@@ -6,6 +6,7 @@ Address composition:
 - `addresses.revnet.ts`: Juicebox/Revnet contract addresses derived from `juice-sdk-core`.
 - `addresses.cobuild.ts`: Cobuild deployment addresses and related integration constants.
 - `addresses.ts`: merged export used by runtime config and handlers.
+- `@cobuild/wire`: canonical Base entrypoint + implementation address exports (`baseEntrypoints`, ABI symbols) used by scaffold discovery in `ponder.config.ts`.
 
 ABI generation:
 - `wagmi.config.ts` defines ABI generation pipeline.
@@ -17,6 +18,7 @@ ABI generation:
 - Treat `addresses*.ts`, `wagmi.config.ts`, and `abis.ts` as a coupled change set.
 - Never change contract addresses without validating filter targets and handler assumptions.
 - Keep generated `abis.ts` in sync with deployed contract versions.
+- Keep factory event payload assumptions in `ponder.config.ts` (`GoalDeployed`, `BudgetTCRStackDeployedForGoal`, `BudgetStackDeployed`) aligned with deployed `v1-core` emitters.
 
 ## Safe Update Workflow
 

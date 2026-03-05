@@ -1,6 +1,6 @@
 # CoBuild Indexer Architecture
 
-Last updated: 2026-03-02
+Last updated: 2026-03-05
 
 ## Runtime Shape
 
@@ -20,11 +20,13 @@ Last updated: 2026-03-02
 ## Indexing Model
 
 - Legacy surfaces are configured from `src/lib/config.ts`, `addresses.ts`, and `IndexerConfig` with project-scoped event filters for Base project ids.
-- Scaffold root contracts in `ponder.config.ts` currently use placeholder addresses/start blocks until deployment coordinates are provided.
+- Scaffold entrypoints in `ponder.config.ts` use canonical Base addresses exported by `@cobuild/wire` (`baseEntrypoints`).
+- Goal stack contracts are first-hop factory-discovered from `GoalFactory:GoalDeployed` (`goalFlow`, `goalTreasury`, `stakeVault`, `budgetStakeLedger`, `splitHook`, routers, success resolver).
 - Dynamic discovery:
-  - `ChildFlow` addresses are factory-discovered from `GoalFlow:ChildFlowDeployed(recipient)`.
-  - `PremiumEscrow` addresses are factory-discovered from `GoalFlow:ChildFlowDeployed(managerRewardPool)`.
-  - `BudgetTreasury` addresses are factory-discovered from `BudgetTCR:BudgetStackDeployed`.
+  - `BudgetTCR` addresses are discovered from `BudgetTCRFactory:BudgetTCRStackDeployedForGoal`.
+  - `ChildFlow`, `PremiumEscrow`, and `BudgetTreasury` addresses are discovered from `BudgetTCRFactory:BudgetStackDeployed`.
+  - `GoalFlowAllocationLedgerPipeline` addresses are discovered from the pipeline-extended `GoalFactory:GoalDeployed` payload (`stack.goalFlowAllocationLedgerPipeline`).
+  - Factory discovery is rooted only at static entrypoints (`GoalFactory`, `BudgetTCRFactory`), with no manual emitter bootstrap lists or handler-side emitter guards.
 
 ## Data Model
 
@@ -50,4 +52,4 @@ Last updated: 2026-03-02
 3. Legacy and scaffold handlers must remain simultaneously registered in `src/index.ts`.
 4. `protocol_event` rows are immutable and deduplicated by event id.
 5. `keeper_outbox` rows are immutable and deduplicated by deterministic outbox id (`block*1_000_000 + logIndex`).
-5. Placeholder scaffold addresses and `startBlock: 0` are temporary and must be replaced before production indexing.
+6. Entry-point address provenance must stay aligned with `@cobuild/wire` exports, and factory discovery contracts/events must stay aligned with deployed `v1-core` emitters.

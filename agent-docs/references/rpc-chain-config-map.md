@@ -10,7 +10,10 @@
 
 - Several domains are narrowed to `BASE_PROJECT_IDS = [6n]` in `ponder.config.ts`.
 - Cobuild swap tracking is pinned to `chain: "base"` and uses factory indexing for `TokenBought`.
-- Scaffold contracts (`GoalFlow`, treasuries, vaults, hook/pipeline/strategy) are currently configured with placeholder addresses and `startBlock: 0` until deployment coordinates are supplied.
+- Scaffold discovery is rooted at static Base entrypoints from `@cobuild/wire`:
+  - `GoalFactory` and `BudgetTCRFactory` start at block `42941210`.
+  - First-hop stack contracts are discovered from factory events (no manual bootstrap lists).
+  - Second-level stack contracts (`ChildFlow`, `BudgetTreasury`, `PremiumEscrow`) are discovered from `BudgetTCRFactory:BudgetStackDeployed`.
 
 ## RPC Provider Strategy
 
