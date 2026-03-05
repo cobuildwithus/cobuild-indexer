@@ -28,8 +28,8 @@ importers:
         version: 2.44.0(typescript@5.9.3)(zod@4.3.5)
     devDependencies:
       '@cobuild/review-gpt':
-        specifier: ^0.2.9
-        version: 0.2.9
+        specifier: ^0.2.11
+        version: 0.2.11
       '@types/node':
         specifier: ^20.9.0
         version: 20.19.27
@@ -65,8 +65,8 @@ packages:
     resolution: {integrity: sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q==}
     engines: {node: '>=6.9.0'}
 
-  '@cobuild/review-gpt@0.2.9':
-    resolution: {integrity: sha512-FAhqDl7eZJfKjyv750qvnzw0Y9AzY+GomBK2mFnbtH0jjesT5HNRaMe0OLp7XaaWe15zVIGCzzKGgwCMpjlyig==}
+  '@cobuild/review-gpt@0.2.11':
+    resolution: {integrity: sha512-F5nPtRQXpWeijyvKRQQBWDlul1dwADlG4A3A0qcjG0IxZu1r/Zv8WrPT6UrZsYEGKw5M9Del+RzzlpdN8ol5OQ==}
     hasBin: true
 
   '@commander-js/extra-typings@12.1.0':
@@ -2315,7 +2315,7 @@ snapshots:
 
   '@babel/helper-validator-identifier@7.28.5': {}
 
-  '@cobuild/review-gpt@0.2.9': {}
+  '@cobuild/review-gpt@0.2.11': {}
 
   '@commander-js/extra-typings@12.1.0(commander@12.1.0)':
     dependencies:

@@ -15,7 +15,7 @@
 - Plan lifecycle: `scripts/open-exec-plan.sh`, `scripts/close-exec-plan.sh`
 - Active-scope ownership: `agent-docs/exec-plans/active/COORDINATION_LEDGER.md`
 - Selective commits: `scripts/committer`
-- Audit/review packaging: `scripts/package-audit-context.sh`, `scripts/chatgpt-oracle-review.sh`
+- Audit/review packaging: `scripts/package-audit-context.sh`, `pnpm review:gpt`
 
 ## CI Workflow Coverage
 
