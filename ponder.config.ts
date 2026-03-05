@@ -46,14 +46,9 @@ const ENTRYPOINTS = {
 
 const SCAFFOLD_START_BLOCK = 42_941_210;
 
-const GOAL_DEPLOYED = getAbiItem({
-  abi: GoalFactoryAbi,
-  name: "GoalDeployed",
-});
-
 // Factory discovery callbacks landed in v1-core may not be present in the
 // currently published factory ABI surface, so these are pinned explicitly.
-const GOAL_DEPLOYED_WITH_PIPELINE = parseAbiItem(
+const GOAL_DEPLOYED = parseAbiItem(
   "event GoalDeployed(address indexed caller, uint256 indexed goalRevnetId, (uint256 goalRevnetId,address goalToken,address goalSuperToken,address goalTreasury,address goalFlow,address goalFlowAllocationLedgerPipeline,address stakeVault,address budgetStakeLedger,address splitHook,address jurorSlasherRouter,address underwriterSlasherRouter,address successResolver,address budgetTCR,address arbitrator) stack)"
 );
 
@@ -69,6 +64,7 @@ const BUDGET_STACK_DEPLOYED_FROM_FACTORY = parseAbiItem(
 type GoalFactoryStackAddressParameter =
   | "stack.goalFlow"
   | "stack.goalTreasury"
+  | "stack.goalFlowAllocationLedgerPipeline"
   | "stack.stakeVault"
   | "stack.budgetStakeLedger"
   | "stack.splitHook"
@@ -81,13 +77,6 @@ const goalFactoryStackAddress = (parameter: GoalFactoryStackAddressParameter) =>
     address: ENTRYPOINTS.GOAL_FACTORY,
     event: GOAL_DEPLOYED,
     parameter,
-  });
-
-const goalFactoryPipelineAddress = () =>
-  factory({
-    address: ENTRYPOINTS.GOAL_FACTORY,
-    event: GOAL_DEPLOYED_WITH_PIPELINE,
-    parameter: "stack.goalFlowAllocationLedgerPipeline",
   });
 
 export default createConfig({
@@ -310,7 +299,7 @@ export default createConfig({
     GoalFlowAllocationLedgerPipeline: {
       abi: GoalFlowAllocationLedgerPipelineAbi,
       chain: "base",
-      address: goalFactoryPipelineAddress(),
+      address: goalFactoryStackAddress("stack.goalFlowAllocationLedgerPipeline"),
       startBlock: SCAFFOLD_START_BLOCK,
     },
     BudgetStakeLedger: {

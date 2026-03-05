@@ -48,3 +48,4 @@ This index is the table of contents for durable, repository-local context that a
 - Update this index whenever docs are added, removed, or moved.
 - For multi-file/high-risk work, add a plan in `agent-docs/exec-plans/active/`.
 - Keep `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` current for active coding tasks.
+- Active factory-discovery cutover plan: `agent-docs/exec-plans/active/2026-03-05-factory-discovery-cutover.md`.

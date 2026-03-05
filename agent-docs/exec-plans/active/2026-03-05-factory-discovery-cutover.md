@@ -21,6 +21,7 @@ Cut indexer scaffold discovery over to static-factory-rooted event discovery usi
 - Updated scaffold `startBlock` to `42941210`.
 - Rooted contract discovery in factory events (no bootstrap address arrays, no handler-side emitter guards).
 - Removed `discoveryGuards` helper and all consumer imports/checks.
+- Aligned all GoalFactory stack discovery fields to one pipeline-extended `GoalDeployed` event signature (v1-core source of truth).
 - Updated architecture/product/reliability/reference docs + docs index for the new discovery model.
 
 ## Now
