@@ -69,7 +69,9 @@ export async function refreshProjectCashoutCoefficients({
   });
 
   if (!currentProject) {
-    throw new Error(`Project ${projectId} not found on chain ${chainId}`);
+    throw new Error(
+      `Project ${projectId} not found on chain ${chainId}`
+    );
   }
 
   const currentRuleset = await db.find(ruleset, {

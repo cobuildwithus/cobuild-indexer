@@ -10,6 +10,8 @@
   - `swap_executed`, `batch_reaction_swap`, `transaction_hash_to_batch_reaction_swaps`
 - `protocol_event`
   - Immutable raw log rows (`event.id` keyed).
+- `keeper_outbox`
+  - Immutable keeper-consumable outbox rows keyed by deterministic block/log id (`blockNumber*1_000_000 + logIndex`).
 - `flow`
   - One row per flow contract address, including target/current flow rates plus observed/staleness metadata for cron-refreshed actual-rate reads.
 - `flow_actual_rate_refresh_state`

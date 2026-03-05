@@ -1,0 +1,14 @@
+# Viem References (LLM)
+
+Primary docs:
+- https://viem.sh/docs/getting-started
+- https://viem.sh/docs/clients/public
+- https://viem.sh/docs/clients/transports/http
+- https://viem.sh/docs/clients/transports/fallback
+- https://viem.sh/docs/contract/readContract
+- https://viem.sh/docs/chains/introduction
+
+Concepts for this repo:
+- provider fallback behavior and ordering
+- contract-read reliability/error handling in indexer handlers
+- chain/address typing for contract calls

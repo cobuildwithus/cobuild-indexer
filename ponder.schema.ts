@@ -550,6 +550,32 @@ export const protocolEvent = onchainTable("protocol_event", (t) => ({
 }));
 
 /**
+ * Keeper outbox stream consumed by external keeper workers.
+ * Rows are immutable and keyed by deterministic block/log ordering.
+ */
+export const keeperOutbox = onchainTable(
+  "keeper_outbox",
+  (t) => ({
+    id: t.bigint().notNull(), // blockNumber*1_000_000 + logIndex
+    chainId: t.integer().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.bigint().notNull(),
+    txHash: t.hex().notNull(),
+    logIndex: t.integer().notNull(),
+    contractName: t.text().notNull(),
+    contractAddress: t.hex().notNull(),
+    eventName: t.text().notNull(),
+    eventArgs: t.json().notNull(),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.chainId, table.id] }),
+    chainOutboxIdx: index().on(table.chainId, table.id),
+    chainBlockIdx: index().on(table.chainId, table.blockNumber),
+    txLogIdx: index().on(table.txHash, table.logIndex),
+  })
+);
+
+/**
  * Flow entity state (1 row per Flow contract address).
  */
 export const flow = onchainTable("flow", (t) => ({

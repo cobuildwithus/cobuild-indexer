@@ -1,0 +1,9 @@
+# Juice SDK Core References (LLM)
+
+Primary sources:
+- https://www.npmjs.com/package/juice-sdk-core
+- https://github.com/Bananapus/nana-sdks (upstream repository)
+
+Concepts for this repo:
+- ABI/address constants consumed by indexer config and handlers
+- contract event and argument shape assumptions

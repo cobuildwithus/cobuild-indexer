@@ -1,0 +1,14 @@
+# Ponder References (LLM)
+
+Primary docs:
+- https://ponder.sh/docs/get-started
+- https://ponder.sh/docs/config
+- https://ponder.sh/docs/indexing/events
+- https://ponder.sh/docs/indexing/blocks
+- https://ponder.sh/docs/query/schema
+- https://ponder.sh/docs/query/api-routes
+
+Concepts for this repo:
+- Factory contracts/event indexing
+- Replay and deterministic handler behavior
+- Schema key/index design and query ergonomics

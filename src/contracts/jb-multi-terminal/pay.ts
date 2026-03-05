@@ -150,6 +150,7 @@ async function pay(params: {
   if (!updatedProject.suckerGroupId) {
     throw new Error("Project has no sucker group id");
   }
+  const suckerGroupId = updatedProject.suckerGroupId;
 
   const insertedPayEvent = await context.db.insert(payEvent).values({
     chainId,
@@ -170,7 +171,7 @@ async function pay(params: {
     effectiveTokenCount: newlyIssuedTokenCount,
     memo,
     metadata,
-    suckerGroupId: updatedProject.suckerGroupId,
+    suckerGroupId,
   });
 
   await context.db
@@ -193,7 +194,7 @@ async function pay(params: {
       event,
       payer,
       amount,
-      suckerGroupId: updatedProject.suckerGroupId,
+      suckerGroupId,
     });
 
     await context.db.insert(activityLog).values({
@@ -208,7 +209,7 @@ async function pay(params: {
       chainId,
       timestamp: Number(event.block.timestamp),
       txHash: event.transaction.hash,
-      suckerGroupId: updatedProject.suckerGroupId,
+      suckerGroupId,
     });
   }
 

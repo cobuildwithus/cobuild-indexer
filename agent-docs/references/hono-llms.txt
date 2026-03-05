@@ -1,0 +1,10 @@
+# Hono References (LLM)
+
+Primary docs:
+- https://hono.dev/docs/getting-started/basic
+- https://hono.dev/docs/api/routing
+- https://hono.dev/docs/api/middleware
+
+Concepts for this repo:
+- route mounting semantics
+- middleware composition for API boundaries

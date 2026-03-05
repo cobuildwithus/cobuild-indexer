@@ -39,14 +39,14 @@ async function handleRulesetInitialized({
   }
 
   // Verify project exists
-  const _project = await context.db.find(project, {
+  const projectRow = await context.db.find(project, {
     projectId,
     chainId,
   });
-
-  if (!_project) {
+  if (!projectRow) {
     throw new Error(`Missing project ${projectId} on chain ${chainId}`);
   }
+  const projectSuckerGroupId = projectRow.suckerGroupId;
 
   // Create or update the ruleset record with initialization data
   await context.db
@@ -54,7 +54,7 @@ async function handleRulesetInitialized({
     .values({
       chainId,
       projectId,
-      suckerGroupId: _project.suckerGroupId,
+      suckerGroupId: projectSuckerGroupId,
       rulesetId,
       createdAt: Number(event.block.timestamp),
       queuedAt: Number(event.block.timestamp), // Set to same as createdAt for now

@@ -26,6 +26,7 @@
     "ponder.config.ts",
     "ponder.schema.ts",
     "src/**/*.ts",
+    "tests/**/*.ts",
     "ponder-env.d.ts"
   ]
 }

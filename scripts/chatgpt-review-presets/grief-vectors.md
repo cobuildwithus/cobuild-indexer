@@ -1,0 +1,13 @@
+Objective:
+Identify abuse, liveness, and denial-of-service vectors in the indexer where low-cost external inputs can cause outsized operational impact.
+
+Review priorities:
+- Event or API paths that are expensive per input and easy to trigger repeatedly.
+- Missing bounds on enrichment calls, retries, or fallback paths.
+- Cache/state churn patterns that can be forced by adversarial event ordering.
+- Backlog growth paths in block/cron handlers under partial RPC outages.
+- API query patterns that can trigger expensive scans without safeguards.
+- Dynamic source-registration paths that can be abused for unbounded indexing work.
+
+Expected output:
+- Attack path + impact + concrete hardening recommendation for each vector.

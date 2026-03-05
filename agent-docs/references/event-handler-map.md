@@ -111,6 +111,7 @@
 ## Common Table Touches
 
 - Raw event audit table: `protocol_event` (scaffold handlers via helper).
+- Keeper outbox stream: `keeper_outbox` (same helper path as `protocol_event`; replay-safe immutable inserts).
 - Legacy handlers update legacy projection tables (`project`, `ruleset`, `loan`, payment/swap telemetry, and related maps).
 - Domain tables are mapped in `ponder.schema.ts` and updated by same-domain handlers.
 - Deterministic lookup/cursor tables (`budget_treasury_by_*`, `goal_treasuries_by_project`, `flow_recipient_by_index`, `sucker_group_by_address`, `goal_treasury_series_cursor`) are maintained in handler write paths to avoid non-PK SQL lookups.

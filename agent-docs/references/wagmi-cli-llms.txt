@@ -1,0 +1,11 @@
+# Wagmi CLI References (LLM)
+
+Primary docs:
+- https://wagmi.sh/cli/getting-started
+- https://wagmi.sh/cli/api/config
+- https://wagmi.sh/cli/api/plugins/etherscan
+
+Concepts for this repo:
+- ABI generation workflow into `abis.ts`
+- plugin/env configuration requirements
+- keeping generated ABI artifacts in sync with deployments

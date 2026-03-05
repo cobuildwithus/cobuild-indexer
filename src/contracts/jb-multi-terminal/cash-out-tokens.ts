@@ -31,6 +31,7 @@ async function cashOutTokens(params: {
   if (!updatedProject.suckerGroupId) {
     throw new Error("Project has no sucker group id");
   }
+  const suckerGroupId = updatedProject.suckerGroupId;
 
   await context.db.insert(activityLog).values({
     type: "cashout",
@@ -41,7 +42,7 @@ async function cashOutTokens(params: {
     chainId,
     timestamp: Number(event.block.timestamp),
     txHash: event.transaction.hash,
-    suckerGroupId: updatedProject.suckerGroupId,
+    suckerGroupId,
   });
 
   await refreshProjectCashoutCoefficients({

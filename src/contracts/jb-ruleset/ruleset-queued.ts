@@ -40,14 +40,14 @@ async function handleRulesetQueued({
   let weight = _weight;
 
   // Verify project exists
-  const _project = await context.db.find(project, {
+  const projectRow = await context.db.find(project, {
     projectId,
     chainId,
   });
-
-  if (!_project) {
+  if (!projectRow) {
     throw new Error(`Missing project ${projectId} on chain ${chainId}`);
   }
+  const projectSuckerGroupId = projectRow.suckerGroupId;
 
   // Unpack metadata
   const unpackedMetadata = unpackMetadata(_metadata);
@@ -153,7 +153,7 @@ async function handleRulesetQueued({
     .values({
       chainId,
       projectId,
-      suckerGroupId: _project.suckerGroupId,
+      suckerGroupId: projectSuckerGroupId,
       rulesetId,
       createdAt: Number(event.block.timestamp),
       queuedAt: Number(event.block.timestamp),
