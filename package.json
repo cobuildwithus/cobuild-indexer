@@ -21,7 +21,7 @@
     "verify": "pnpm typecheck && pnpm lint && pnpm docs:drift && pnpm docs:gardening"
   },
   "dependencies": {
-    "@cobuild/wire": "link:../wire",
+    "@cobuild/wire": "^0.1.5",
     "drizzle-orm": "^0.41.0",
     "hono": "^4.5.0",
     "juice-sdk-core": "^2.1.2",
@@ -29,7 +29,7 @@
     "viem": "^2.0.0"
   },
   "devDependencies": {
-    "@cobuild/repo-tools": "^0.1.7",
+    "@cobuild/repo-tools": "^0.1.6",
     "@cobuild/review-gpt": "^0.2.13",
     "@types/node": "^20.9.0",
     "@wagmi/cli": "^2.5.1",
