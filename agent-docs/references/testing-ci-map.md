@@ -2,6 +2,7 @@
 
 ## Local Verification Baseline
 
+- `pnpm wire:ensure-published`
 - `pnpm typecheck`
 - `pnpm lint`
 - `pnpm test` (when a `test` script exists)
@@ -19,6 +20,7 @@
 - Plan lifecycle: `scripts/open-exec-plan.sh`, `scripts/close-exec-plan.sh`
 - Active-scope ownership: `agent-docs/exec-plans/active/COORDINATION_LEDGER.md`
 - Selective commits: `scripts/committer`
+- Published dependency guard: `scripts/wire-ensure-published.sh` (must resolve the installed repo-tools binary and reject committed local-link `@cobuild/wire` specs)
 - Audit/review packaging: `scripts/package-audit-context.sh`, `pnpm review:gpt`
 
 ## CI Workflow Coverage
@@ -26,6 +28,7 @@
 - Main CI: `.github/workflows/test.yml`
   - agent-doc drift checks
   - doc gardening fail-fast checks
+  - `pnpm wire:ensure-published`
   - `pnpm typecheck`
   - `pnpm lint`
 - Doc maintenance: `.github/workflows/doc-gardening.yml`

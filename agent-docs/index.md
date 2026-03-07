@@ -1,6 +1,6 @@
 # Cobuild Indexer Agent Docs Index
 
-Last verified: 2026-03-05 (docs-drift simplification)
+Last verified: 2026-03-07 (published wire verification guard)
 
 ## Purpose
 
@@ -17,7 +17,7 @@ This index is the table of contents for durable, repository-local context that a
 | `agent-docs/product-specs/indexer-projections.md` | Projection behavior and consumer contract constraints. | `src/contracts/**`, `ponder.schema.ts`, `src/api/index.ts` | Indexer Maintainers | Per behavior-change PR | High | 2026-03-05 |
 | `agent-docs/PLANS.md` | Plan workflow and storage conventions. | `agent-docs/exec-plans/**` | Indexer Maintainers | Per process change | Medium | 2026-02-25 |
 | `agent-docs/PRODUCT_SENSE.md` | Consumer-facing behavior expectations for indexer outputs. | Downstream data consumers and query usage | Indexer + Product Consumers | Monthly | Medium | 2026-02-25 |
-| `agent-docs/QUALITY_SCORE.md` | Quality posture tracker by subsystem. | Architecture docs + lint/typecheck + audits | Indexer Maintainers | Bi-weekly | Medium | 2026-02-25 |
+| `agent-docs/QUALITY_SCORE.md` | Quality posture tracker by subsystem. | Architecture docs + lint/typecheck + audits | Indexer Maintainers | Bi-weekly | Medium | 2026-03-07 |
 | `agent-docs/RELIABILITY.md` | Replay/determinism guardrails and failure modes. | `src/contracts/**`, `ponder.schema.ts`, config + cron behavior | Indexer Maintainers | Per reliability-affecting PR | High | 2026-03-05 |
 | `agent-docs/SECURITY.md` | Security constraints, trust boundaries, and escalation rules. | RPC/config boundaries, API surface, data exposure paths | Indexer Maintainers | Per security-affecting PR | High | 2026-02-25 |
 | `agent-docs/operations/verification-and-runtime.md` | Required verification matrix, runtime guardrails, and coordination workflow. | `package.json`, `.github/workflows/**`, scripts | Indexer Maintainers | Per process/CI PR | High | 2026-02-25 |
@@ -32,7 +32,7 @@ This index is the table of contents for durable, repository-local context that a
 | `agent-docs/references/rpc-chain-config-map.md` | Chain scope, start-block, and RPC failover model. | `src/lib/config.ts`, `src/lib/rpc-transport.ts`, `ponder.config.ts` | Indexer Maintainers | Per infra/config PR | High | 2026-03-05 |
 | `agent-docs/references/address-abi-provenance.md` | Address and ABI source-of-truth and update workflow. | `addresses*.ts`, `wagmi.config.ts`, `abis.ts` | Indexer Maintainers | Per deployment/ABI PR | High | 2026-03-05 |
 | `agent-docs/references/api-query-surface.md` | GraphQL/API surface, expectations, and caveats. | `src/api/index.ts`, schema/query consumers | Indexer Maintainers | Per API/query-contract PR | High | 2026-02-25 |
-| `agent-docs/references/testing-ci-map.md` | Verification and CI enforcement map. | `.github/workflows/**`, `scripts/**`, package scripts | Indexer Maintainers | Per CI/process PR | Medium | 2026-03-05 |
+| `agent-docs/references/testing-ci-map.md` | Verification and CI enforcement map, including published-wire dependency guards. | `.github/workflows/**`, `scripts/**`, package scripts | Indexer Maintainers | Per CI/process PR | Medium | 2026-03-07 |
 | `agent-docs/references/ponder-llms.txt` | External Ponder reference pack. | Ponder docs | Indexer Maintainers | Quarterly | Low | 2026-02-25 |
 | `agent-docs/references/viem-llms.txt` | External Viem reference pack. | Viem docs | Indexer Maintainers | Quarterly | Low | 2026-02-25 |
 | `agent-docs/references/wagmi-cli-llms.txt` | External Wagmi CLI reference pack. | Wagmi CLI docs | Indexer Maintainers | Quarterly | Low | 2026-02-25 |

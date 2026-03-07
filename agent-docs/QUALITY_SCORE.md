@@ -1,6 +1,6 @@
 # Quality Score
 
-Snapshot date: 2026-02-25
+Snapshot date: 2026-03-07
 
 Scoring rubric:
 - `5`: strong guardrails + tests/docs + enforced CI checks
@@ -17,7 +17,7 @@ Scoring rubric:
 | Ruleset lifecycle correctness | 3 | Ruleset queue/init/cron activation path is explicit and documented. | Add targeted regression checks around cycle/activation edge cases. |
 | Swap and loan attribution quality | 3 | Dedicated handlers and mappings exist for swaps/loans/activity. | Validate multi-swap-per-tx assumptions and strengthen attribution tests. |
 | API/query surface legibility | 3 | GraphQL mounting is simple and explicit in `src/api/index.ts`. | Document deployment access/rate-limit/query-complexity posture. |
-| Verification and CI posture | 4 | Lint/typecheck + doc drift/gardening checks wired in workflows and scripts. | Add automated runtime tests/coverage lane as test suite matures. |
+| Verification and CI posture | 4 | Published-wire guard, lint/typecheck, and doc drift/gardening checks are wired in workflows and scripts. | Add automated runtime tests/coverage lane as test suite matures. |
 | Agent docs coverage and enforceability | 5 | Index + references + operations/prompts + coordination ledger + drift/gardening automation in-repo. | Keep owners/cadence current and review generated reports weekly. |
 
 ## Top Risk Register
