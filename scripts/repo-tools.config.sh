@@ -59,3 +59,42 @@ export COBUILD_DRIFT_CHANGED_COUNT_EXCLUDE_PATTERN='^agent-docs/generated/|^agen
 export COBUILD_DRIFT_ALLOW_RELEASE_ARTIFACTS_ONLY='0'
 export COBUILD_COMMITTER_EXAMPLE='fix(indexer): align event ingestion guards'
 export COBUILD_DOC_GARDENING_EXTRA_TRACKED_PATHS=ARCHITECTURE.md$'\n'
+export COBUILD_AUDIT_CONTEXT_PREFIX='cobuild-indexer-audit'
+export COBUILD_AUDIT_CONTEXT_TITLE='Cobuild Indexer Audit Bundle'
+export COBUILD_AUDIT_CONTEXT_REPO_LABEL='indexer'
+export COBUILD_AUDIT_CONTEXT_SENSITIVE_NOTE='Sensitive files (for example `.env*`, private keys/certs, and credential files) are always excluded.'
+export COBUILD_AUDIT_CONTEXT_EXCLUDE_SENSITIVE='1'
+repo_tools_join_lines COBUILD_AUDIT_CONTEXT_PRUNE_DIR_NAMES \
+  "node_modules" \
+  ".git" \
+  "dist" \
+  "out" \
+  "cache" \
+  "coverage" \
+  "audit-packages" \
+  ".ponder"
+repo_tools_join_lines COBUILD_AUDIT_CONTEXT_ALWAYS_PATHS \
+  "AGENTS.md" \
+  "AGENT_NOTES.md" \
+  "ARCHITECTURE.md" \
+  "README.md" \
+  "package.json" \
+  "pnpm-lock.yaml" \
+  "tsconfig.json" \
+  "ponder.config.ts" \
+  "ponder.schema.ts" \
+  "abis.ts" \
+  "addresses.ts" \
+  "addresses.cobuild.ts" \
+  "addresses.revnet.ts" \
+  "wagmi.config.ts"
+repo_tools_join_lines COBUILD_AUDIT_CONTEXT_SCAN_SPECS \
+  "src" \
+  "scripts"
+repo_tools_join_lines COBUILD_AUDIT_CONTEXT_TEST_SCAN_SPECS \
+  "tests" \
+  "test"
+repo_tools_join_lines COBUILD_AUDIT_CONTEXT_DOC_SCAN_SPECS \
+  "agent-docs:*.md"
+repo_tools_join_lines COBUILD_AUDIT_CONTEXT_CI_SCAN_SPECS \
+  ".github/workflows"
