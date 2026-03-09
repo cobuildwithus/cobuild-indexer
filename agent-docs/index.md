@@ -1,6 +1,6 @@
 # Cobuild Indexer Agent Docs Index
 
-Last verified: 2026-03-07 (published wire verification guard)
+Last verified: 2026-03-09 (treasury terminal failure event sync)
 
 ## Purpose
 
@@ -27,7 +27,7 @@ This index is the table of contents for durable, repository-local context that a
 | `agent-docs/prompts/task-finish-review.md` | Reusable final completion audit prompt for correctness/security review. | Completion workflow | Indexer Maintainers | Per process change | Medium | 2026-02-25 |
 | `agent-docs/references/README.md` | Internal/external reference packs for implementation and review. | `agent-docs/references/**` | Indexer Maintainers | Monthly | Medium | 2026-02-25 |
 | `agent-docs/references/module-boundary-map.md` | Layer ownership and dependency-direction map for indexer surfaces. | `src/**`, `ponder.config.ts`, `ponder.schema.ts`, scripts | Indexer Maintainers | Per architecture-boundary PR | High | 2026-02-25 |
-| `agent-docs/references/event-handler-map.md` | Event/block handler inventory and touched tables. | `src/contracts/**`, `ponder.config.ts` | Indexer Maintainers | Per indexed-event PR | High | 2026-03-05 |
+| `agent-docs/references/event-handler-map.md` | Event/block handler inventory and touched tables. | `src/contracts/**`, `ponder.config.ts` | Indexer Maintainers | Per indexed-event PR | High | 2026-03-09 |
 | `agent-docs/references/schema-relations-map.md` | Table/PK/index/relations map and identifier semantics. | `ponder.schema.ts` | Indexer Maintainers | Per schema PR | High | 2026-02-25 |
 | `agent-docs/references/rpc-chain-config-map.md` | Chain scope, start-block, and RPC failover model. | `src/lib/config.ts`, `src/lib/rpc-transport.ts`, `ponder.config.ts` | Indexer Maintainers | Per infra/config PR | High | 2026-03-05 |
 | `agent-docs/references/address-abi-provenance.md` | Address and ABI source-of-truth and update workflow. | `addresses*.ts`, `wagmi.config.ts`, `abis.ts` | Indexer Maintainers | Per deployment/ABI PR | High | 2026-03-05 |
@@ -48,4 +48,5 @@ This index is the table of contents for durable, repository-local context that a
 - Update this index whenever docs are added, removed, or moved.
 - For multi-file/high-risk work, add a plan in `agent-docs/exec-plans/active/`.
 - Keep `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` current for active coding tasks.
+- Active treasury terminal failure event sync plan: `agent-docs/exec-plans/active/2026-03-09-treasury-terminal-failure-event-sync.md`.
 - Active factory-discovery cutover plan: `agent-docs/exec-plans/active/2026-03-05-factory-discovery-cutover.md`.

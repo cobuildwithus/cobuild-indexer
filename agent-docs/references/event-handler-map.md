@@ -46,7 +46,7 @@
   - `DonationRecorded`, `FlowRateSynced`, `FlowRateSyncManualInterventionRequired`, `FlowRateZeroingFailed`, `FlowRateSyncCallFailed`
   - `ReassertGraceActivated`, `ResidualSettled`
   - `HookFundingRecorded`, `HookFundingDeferred`, `HookDeferredFundingSettled`
-  - `TerminalSideEffectFailed`
+  - `TerminalDeferredHookFundingSettlementFailed`, `TerminalFlowStopFailed`, `TerminalResidualSettlementFailed`, `TerminalStakeVaultResolutionFailed`
   - `GoalConfigured` also writes canonical project + canonical route linkage fields on `goal_treasury`.
   - `GoalConfigured` also maintains deterministic `goal_treasuries_by_project` KV rows keyed by `${chainId}-${projectId}`.
   - `GoalConfigured` persists event-provided `jurorSlasher`, `underwriterSlasher`, `successResolver`, `goalToken`, and `cobuildToken`, and links `parentFlow`/`strategy` from the existing `flow` row.
@@ -58,7 +58,8 @@
   - `Initialized`, `BudgetConfigured`, `StateTransition`, `BudgetFinalized`
   - `SuccessAssertionRegistered`, `SuccessAssertionCleared`, `SuccessAssertionResolutionFailClosed`, `SuccessResolutionDisabled`
   - `DonationRecorded`, `FlowRateSynced`, `FlowRateSyncManualInterventionRequired`, `FlowRateZeroingFailed`, `FlowRateSyncCallFailed`
-  - `ReassertGraceActivated`, `ResidualSettled`, `TerminalSideEffectFailed`
+  - `ReassertGraceActivated`, `ResidualSettled`
+  - `TerminalFlowStopFailed`, `TerminalParentGoalSyncNotApplied`, `TerminalParentPruneFailed`, `TerminalPremiumEscrowCloseFailed`, `TerminalResidualSettlementToParentFailed`
 
 ## Stake and Jurors
 

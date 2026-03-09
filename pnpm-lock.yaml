@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@cobuild/wire':
-        specifier: ^0.1.5
-        version: 0.1.5(typescript@5.9.3)(zod@4.3.5)
+        specifier: ^0.1.6
+        version: 0.1.6(typescript@5.9.3)(zod@4.3.5)
       drizzle-orm:
         specifier: ^0.41.0
         version: 0.41.0(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(kysely@0.26.3)(pg@8.16.3)
@@ -76,8 +76,8 @@ packages:
     resolution: {integrity: sha512-wxpb5fwLya/DjNlBS1YOzqrccPk73OoEFxViMpMVDmIfI+UjcA16qSzO+hLndwpGAY3Xnzbk2yMvlZvtrlkDbw==}
     hasBin: true
 
-  '@cobuild/wire@0.1.5':
-    resolution: {integrity: sha512-CEd8wEZAkCcNsekmgbMeOJCuMsGFFALM1snYeMGxWDfTezWzytNfXpePaX2IyqiKukgNaTA/ivuIpiUU/PQCeA==}
+  '@cobuild/wire@0.1.6':
+    resolution: {integrity: sha512-6cuKwJNqQ1xNjHK2kaS/wS9ZhNlPJXvpT8shaXaDzZ+f7Zt1n6QL0Eom+nrSsL9B5USPPo8ljE1qs88sM/xMeQ==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -1478,7 +1478,7 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   globals@13.24.0:
     resolution: {integrity: sha512-AhO5QUcj8llrbG09iWhPU2B204J1xnPeL8kQmVorSsy+Sjj1sk8gIyh6cUocGmH4L0UuhAJy+hJMRA4mgA4mFQ==}
@@ -2347,7 +2347,7 @@ snapshots:
 
   '@cobuild/review-gpt@0.2.15': {}
 
-  '@cobuild/wire@0.1.5(typescript@5.9.3)(zod@4.3.5)':
+  '@cobuild/wire@0.1.6(typescript@5.9.3)(zod@4.3.5)':
     dependencies:
       viem: 2.47.0(typescript@5.9.3)(zod@4.3.5)
     transitivePeerDependencies:
