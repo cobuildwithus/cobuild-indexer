@@ -1,8 +1,17 @@
 import { ponder } from "ponder:registry";
 import type { Hex } from "viem";
 
-import { jurorVoteReceipt } from "ponder:schema";
-import { jurorVoteReceiptId } from "../helpers/ids";
+import { arbitratorDispute, jurorVoteReceipt } from "ponder:schema";
+import {
+  arbitratorDisputeId,
+  jurorPhaseReminderSourceId,
+  jurorVoteReceiptId,
+} from "../helpers/ids";
+import {
+  buildGoalNotificationPayload,
+  emitProtocolNotifications,
+  getGoalRow,
+} from "../helpers/protocolNotifications";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
 async function handleVoteRevealed(args: {
@@ -52,6 +61,45 @@ async function handleVoteRevealed(args: {
     revealedAt: event.block.timestamp,
     updatedAtBlock: event.block.number,
     updatedAtTimestamp: event.block.timestamp,
+  });
+
+  const disputeRow = await context.db.find(arbitratorDispute, {
+    id: arbitratorDisputeId(arbitratorAddress, event.args.disputeId),
+  });
+  const goalRow = await getGoalRow({
+    context,
+    goalTreasuryAddress: disputeRow?.goalTreasury ?? null,
+  });
+
+  await emitProtocolNotifications({
+    context,
+    event,
+    notifications: [
+      "juror_vote_deadline_soon",
+      "juror_reveal_deadline_soon",
+    ].map((reason) => ({
+      recipientWalletAddress: event.args.voter,
+      reason,
+      sourceType: "juror_dispute_phase_deadline",
+      sourceId: jurorPhaseReminderSourceId(
+        arbitratorAddress,
+        event.args.disputeId,
+        round,
+        reason
+      ),
+      notificationClass: "cycle" as const,
+      action: "invalidate" as const,
+      payload: buildGoalNotificationPayload({
+        role: "juror",
+        goalRow,
+        reason,
+        itemId: (disputeRow?.itemId ?? null) as `0x${string}` | null,
+        requestIndex: disputeRow?.requestIndex ?? null,
+        budgetTreasury: (disputeRow?.budgetTreasury ?? null) as `0x${string}` | null,
+        arbitrator: arbitratorAddress,
+        disputeId: event.args.disputeId,
+      }),
+    })),
   });
 }
 

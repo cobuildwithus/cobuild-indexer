@@ -6,6 +6,8 @@ import {
   emitProtocolNotifications,
   getGoalRow,
   getGoalStakeholderAccounts,
+  type NotificationAction,
+  type NotificationClass,
 } from "../helpers/protocolNotifications";
 
 type GoalNotificationContext = Parameters<typeof getGoalRow>[0]["context"];
@@ -19,6 +21,35 @@ export async function emitGoalAudienceNotification(args: {
   sourceType: string;
   sourceId: string;
   actorWalletAddress?: Hex | null;
+  notificationClass?: NotificationClass;
+  action?: NotificationAction;
+  schedule?: {
+    deliverAt?: bigint | null;
+    votingStartTime?: bigint | null;
+    votingEndTime?: bigint | null;
+    revealPeriodEndTime?: bigint | null;
+    challengeDeadline?: bigint | null;
+    reassertGraceDeadline?: bigint | null;
+  } | null;
+  labels?: {
+    budgetName?: string | null;
+    mechanismName?: string | null;
+    reminderContextLabel?: string | null;
+  } | null;
+  amounts?: {
+    allocatedStake?: bigint | null;
+    claimable?: bigint | null;
+    claimedAmount?: bigint | null;
+    snapshotWeight?: bigint | null;
+    snapshotVotes?: bigint | null;
+    slashWeight?: bigint | null;
+    claimableReward?: bigint | null;
+    claimableGoalSlashReward?: bigint | null;
+    claimableCobuildSlashReward?: bigint | null;
+    claimedReward?: bigint | null;
+    claimedGoalSlashReward?: bigint | null;
+    claimedCobuildSlashReward?: bigint | null;
+  } | null;
 }): Promise<void> {
   const goalRow = await getGoalRow({
     context: args.context,
@@ -44,12 +75,17 @@ export async function emitGoalAudienceNotification(args: {
       reason: args.reason,
       sourceType: args.sourceType,
       sourceId: args.sourceId,
+      notificationClass: args.notificationClass,
+      action: args.action,
       actorWalletAddress: args.actorWalletAddress ?? null,
       payload: buildGoalNotificationPayload({
         role: recipient.role,
         goalRow,
         reason: args.reason,
         actorWalletAddress: args.actorWalletAddress ?? null,
+        schedule: args.schedule ?? null,
+        labels: args.labels ?? null,
+        amounts: args.amounts ?? null,
       }),
     })),
   });

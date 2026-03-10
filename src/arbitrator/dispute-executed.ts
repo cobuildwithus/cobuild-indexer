@@ -22,6 +22,10 @@ import {
   getGoalRow,
 } from "../helpers/protocolNotifications";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
+import {
+  type RewardNotificationContext,
+  syncJurorRewardClaimableNotification,
+} from "./reward-notifications";
 
 async function handleDisputeExecuted(args: {
   contractName: "ERC20VotesArbitrator" | "MechanismERC20VotesArbitrator";
@@ -32,7 +36,7 @@ async function handleDisputeExecuted(args: {
     };
     log: { address: Hex; logIndex: number };
   };
-  context: Parameters<typeof insertProtocolEvent>[0]["context"];
+  context: RewardNotificationContext;
 }): Promise<void> {
   const { contractName, event, context } = args;
   await insertProtocolEvent({ context, event, contractName });
@@ -166,6 +170,21 @@ async function handleDisputeExecuted(args: {
     event,
     notifications: slashableNotifications,
   });
+
+  await Promise.all(
+    jurorAddresses.map((jurorAddress) =>
+      syncJurorRewardClaimableNotification({
+        context,
+        event,
+        arbitratorAddress,
+        disputeId: event.args.disputeId,
+        round: disputeRow?.currentRound ?? 0n,
+        jurorAddress,
+        disputeRow,
+        goalRow,
+      })
+    )
+  );
 }
 
 ponder.on("ERC20VotesArbitrator:DisputeExecuted", async ({ event, context }) => {

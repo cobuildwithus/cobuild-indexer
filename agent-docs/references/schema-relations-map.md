@@ -14,6 +14,8 @@
   - Immutable keeper-consumable outbox rows keyed by deterministic block/log id (`blockNumber*1_000_000 + logIndex`).
 - `protocol_notification_outbox`
   - Immutable recipient-resolved protocol notification intents keyed by semantic source + recipient identity.
+- `protocol_notification_schedule`
+  - Immutable recipient-resolved scheduled notification intents keyed by semantic source + recipient identity and consumed once `deliverAt` is due.
 - `flow`
   - One row per flow contract address, including target/current flow rates plus observed/staleness metadata for cron-refreshed actual-rate reads.
 - `flow_actual_rate_refresh_state`
@@ -36,6 +38,8 @@
   - Deterministic reverse lookup KV tables for resolving parent goal context from budget governance and stake-ledger events.
 - `tcr_item`, `tcr_request`
   - Budget governance request-cycle projections for lifecycle state, actor attribution, and notification dedupe.
+- `treasury_success_assertion_context`
+  - Deterministic assertionId -> treasury lookup used by resolver events that only carry the assertion id.
 - `goal_treasuries_by_project`
   - Deterministic canonical-project -> goal treasury linkage (`${chainId}-${projectId}` -> `goal_treasury[]`).
 - `goal_treasury_series`, `goal_treasury_series_cursor`
@@ -44,6 +48,8 @@
   - Pre-aggregated per-goal contributor totals used by interface holdings/profile surfaces.
 - `stake_vault`, `stake_position`, `juror`
   - Stake totals, per-account positions, juror lifecycle.
+- `arbitrator_dispute`, `juror_dispute_member`, `juror_vote_receipt`
+  - Juror-dispute topology, per-dispute snapshot membership, and per-round receipt/reward-cycle state.
 - `goal_stakeholder_audience`
   - Current goal stakeholder membership keyed by goal treasury for replay-safe notification fanout.
 - `premium_escrow`, `premium_account`, `premium_claim`
@@ -88,6 +94,15 @@
 - `goal_context_by_budget_tcr.goalTreasury` and `goal_context_by_budget_stake_ledger.goalTreasury` -> `goal_treasury.id`
 - `goal_context_by_budget_stake_ledger.budgetTcr` -> `goal_context_by_budget_tcr.id`
 - `tcr_item.goalTreasury` and `tcr_request.goalTreasury` -> `goal_treasury.id`
+- `tcr_item.budgetTreasury` and `tcr_request.budgetTreasury` -> `budget_treasury.id`
+- `goal_treasury.successAssertionId` and `budget_treasury.successAssertionId` -> `treasury_success_assertion_context.id` (logical assertion identity linkage).
+- `treasury_success_assertion_context.treasury` -> `goal_treasury.id` or `budget_treasury.id` depending on `scope`
+- `arbitrator_dispute.goalTreasury` -> `goal_treasury.id`
+- `arbitrator_dispute.budgetTreasury` -> `budget_treasury.id`
+- `arbitrator_dispute.stakeVault`, `juror_dispute_member.stakeVault`, and `juror_vote_receipt.arbitrator/disputeId` align dispute state with `stake_vault.id` and the parent dispute composite identity.
+- `juror_dispute_member.goalTreasury` -> `goal_treasury.id`
+- `juror_vote_receipt.claimableNotificationSourceId` stores cycle identity for `juror_reward_claimable` open/close semantics.
+- `protocol_notification_schedule.sourceType/sourceId` mirrors `protocol_notification_outbox.sourceType/sourceId` for cycle invalidation and dedupe.
 - `premium_account.escrow` and `premium_claim.escrow` -> `premium_escrow.id`
 - `goal_treasury_series.goalTreasury` and `goal_treasury_series_cursor.id` -> `goal_treasury.id`.
 - `goal_contributor_aggregate.goalTreasury` -> `goal_treasury.id`.

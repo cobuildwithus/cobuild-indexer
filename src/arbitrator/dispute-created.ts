@@ -10,6 +10,7 @@ import {
   jurorDisputeMember,
 } from "ponder:schema";
 import {
+  jurorPhaseReminderSourceId,
   arbitratorDisputeId,
   jurorDisputeMemberId,
   jurorId,
@@ -21,6 +22,7 @@ import {
   emitProtocolNotifications,
   getGoalRow,
   getStakeVaultJurorAccounts,
+  reminderDeliverAt,
 } from "../helpers/protocolNotifications";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
@@ -260,6 +262,72 @@ async function handleDisputeCreated(args: {
           },
         }),
       })),
+      ...(() => {
+        const deliverAt = reminderDeliverAt({
+          windowStartAt: event.args.votingStartTime,
+          windowEndAt: event.args.votingEndTime,
+        });
+        if (deliverAt === null) return [];
+        return jurorRecipients.map((recipient) => ({
+          recipientWalletAddress: recipient.recipientWalletAddress,
+          reason: "juror_vote_deadline_soon" as const,
+          sourceType: "juror_dispute_phase_deadline",
+          sourceId: jurorPhaseReminderSourceId(
+            arbitratorAddress,
+            disputeId,
+            0n,
+            "juror_vote_deadline_soon"
+          ),
+          deliverAt,
+          payload: buildGoalNotificationPayload({
+            role: recipient.role,
+            goalRow,
+            reason: "juror_vote_deadline_soon",
+            budgetTreasury,
+            arbitrator: arbitratorAddress,
+            disputeId,
+            schedule: {
+              deliverAt,
+              votingStartTime: event.args.votingStartTime,
+              votingEndTime: event.args.votingEndTime,
+              revealPeriodEndTime: event.args.revealPeriodEndTime,
+            },
+          }),
+        }));
+      })(),
+      ...(() => {
+        const deliverAt = reminderDeliverAt({
+          windowStartAt: event.args.votingEndTime,
+          windowEndAt: event.args.revealPeriodEndTime,
+        });
+        if (deliverAt === null) return [];
+        return jurorRecipients.map((recipient) => ({
+          recipientWalletAddress: recipient.recipientWalletAddress,
+          reason: "juror_reveal_deadline_soon" as const,
+          sourceType: "juror_dispute_phase_deadline",
+          sourceId: jurorPhaseReminderSourceId(
+            arbitratorAddress,
+            disputeId,
+            0n,
+            "juror_reveal_deadline_soon"
+          ),
+          deliverAt,
+          payload: buildGoalNotificationPayload({
+            role: recipient.role,
+            goalRow,
+            reason: "juror_reveal_deadline_soon",
+            budgetTreasury,
+            arbitrator: arbitratorAddress,
+            disputeId,
+            schedule: {
+              deliverAt,
+              votingStartTime: event.args.votingStartTime,
+              votingEndTime: event.args.votingEndTime,
+              revealPeriodEndTime: event.args.revealPeriodEndTime,
+            },
+          }),
+        }));
+      })(),
     ],
   });
 }

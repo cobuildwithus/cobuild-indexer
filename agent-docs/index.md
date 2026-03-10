@@ -1,6 +1,6 @@
 # Cobuild Indexer Agent Docs Index
 
-Last verified: 2026-03-10 (premium escrow topology fix)
+Last verified: 2026-03-10 (notification source expansion)
 
 ## Purpose
 

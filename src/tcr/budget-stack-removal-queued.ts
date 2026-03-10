@@ -8,9 +8,15 @@ import {
   tcrItem,
   tcrRequest,
 } from "ponder:schema";
-import { tcrItemId, tcrRequestId } from "../helpers/ids";
+import {
+  requestChallengeReminderSourceId,
+  tcrItemId,
+  tcrRequestId,
+} from "../helpers/ids";
 import {
   buildGoalNotificationPayload,
+  challengeWindowReminderLabel,
+  challengeWindowReminderReason,
   collectRecipientRoles,
   emitProtocolNotifications,
   getBudgetUnderwriterAccounts,
@@ -100,6 +106,44 @@ ponder.on("BudgetTCR:BudgetStackRemovalQueued", async ({ event, context }) => {
         budgetTreasury: (budgetLink?.budgetTreasury ?? null) as `0x${string}` | null,
         actorWalletAddress: requester as `0x${string}` | null,
       }),
-    })),
+    })).concat(
+      existingRequest?.requestType === "clearing"
+        ? recipients.map((recipient) => {
+            const reminderReason = challengeWindowReminderReason({
+              tcrKind: "budget",
+              requestType: "clearing",
+            });
+            return {
+              recipientWalletAddress: recipient.recipientWalletAddress,
+              reason: reminderReason,
+              sourceType: "budget_request_challenge_reminder",
+              sourceId: requestChallengeReminderSourceId(
+                tcrAddress,
+                itemId,
+                requestIndex,
+                reminderReason
+              ),
+              notificationClass: "cycle" as const,
+              action: "invalidate" as const,
+              actorWalletAddress: requester as `0x${string}` | null,
+              payload: buildGoalNotificationPayload({
+                role: recipient.role,
+                goalRow,
+                reason: reminderReason,
+                itemId,
+                requestIndex,
+                budgetTreasury: (budgetLink?.budgetTreasury ?? null) as `0x${string}` | null,
+                actorWalletAddress: requester as `0x${string}` | null,
+                labels: {
+                  reminderContextLabel: challengeWindowReminderLabel({
+                    tcrKind: "budget",
+                    requestType: "clearing",
+                  }),
+                },
+              }),
+            };
+          })
+        : []
+    ),
   });
 });

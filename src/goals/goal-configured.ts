@@ -115,8 +115,10 @@ async function handleGoalConfigured(args: {
   const canonicalRouteSlug = parsedRoute.canonicalRouteSlug ?? treasury.toLowerCase();
   const canonicalRouteDomain = parsedRoute.canonicalRouteDomain;
   const configuredFlow = await context.db.find(flow, { id: event.args.flow });
+  const factoryDeploymentId = `${context.chain.id}:${event.args.goalRevnetId.toString()}`;
+  const goalDeployment = await context.db.find(goalFactoryDeployment, { id: factoryDeploymentId });
   const goalTreasuryValues = {
-    owner: event.args.owner,
+    owner: (existingGoalTreasury?.owner ?? goalDeployment?.caller ?? null) as Hex | null,
     flowAddress: event.args.flow,
     stakeVault: event.args.stakeVault,
     budgetStakeLedger: event.args.budgetStakeLedger,
@@ -216,9 +218,6 @@ async function handleGoalConfigured(args: {
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     });
-
-  const factoryDeploymentId = `${context.chain.id}:${event.args.goalRevnetId.toString()}`;
-  const goalDeployment = await context.db.find(goalFactoryDeployment, { id: factoryDeploymentId });
 
   if (goalDeployment?.budgetTcr) {
     await context.db

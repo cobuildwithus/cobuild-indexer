@@ -2,12 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   emitProtocolNotificationsMock,
+  emitProtocolNotificationSchedulesMock,
   getBudgetUnderwriterAccountsMock,
   getGoalRowMock,
   insertProtocolEventMock,
   ponderOnMock,
 } = vi.hoisted(() => ({
   emitProtocolNotificationsMock: vi.fn(),
+  emitProtocolNotificationSchedulesMock: vi.fn(),
   getBudgetUnderwriterAccountsMock: vi.fn(),
   getGoalRowMock: vi.fn(),
   insertProtocolEventMock: vi.fn(),
@@ -52,6 +54,7 @@ vi.mock("../src/helpers/protocolNotifications", async () => {
 
   return {
     ...actual,
+    emitProtocolNotificationSchedules: emitProtocolNotificationSchedulesMock,
     emitProtocolNotifications: emitProtocolNotificationsMock,
     getBudgetUnderwriterAccounts: getBudgetUnderwriterAccountsMock,
     getGoalRow: getGoalRowMock,
@@ -80,6 +83,9 @@ function matchesFindKey(
 function createDb(findResults: Record<string, unknown | KeyedFindResult[]>) {
   const insertCalls: InsertCall[] = [];
   const updateCalls: Array<{ table: string; key: Record<string, unknown>; setArg: unknown }> = [];
+  const client = {
+    readContract: vi.fn(async () => [0n, 50n] as const),
+  };
 
   return {
     db: {
@@ -109,6 +115,7 @@ function createDb(findResults: Record<string, unknown | KeyedFindResult[]>) {
         },
       }),
     },
+    client,
     insertCalls,
     updateCalls,
   };
@@ -124,8 +131,30 @@ type Handler = (args: {
   context: {
     chain: { id: number };
     db: ReturnType<typeof createDb>["db"];
+    client?: ReturnType<typeof createDb>["client"];
   };
 }) => Promise<void>;
+
+function scheduledNotifications() {
+  const emitArgs = emitProtocolNotificationSchedulesMock.mock.calls[0]?.[0] as
+    | {
+        notifications: Array<{
+          recipientWalletAddress: string;
+          reason: string;
+          deliverAt: bigint;
+          payload: { role?: string };
+        }>;
+      }
+    | undefined;
+  if (!emitArgs) return [];
+
+  return emitArgs.notifications.map((notification) => ({
+    recipientWalletAddress: notification.recipientWalletAddress,
+    reason: notification.reason,
+    deliverAt: notification.deliverAt,
+    role: typeof notification.payload.role === "string" ? notification.payload.role : null,
+  }));
+}
 
 function getLastRegisteredHandler(): Handler {
   const handler = ponderOnMock.mock.calls.at(-1)?.[1];
@@ -159,7 +188,7 @@ describe("mechanism TCR notification handlers", () => {
   it("uses the emitted requester for mechanism proposals", async () => {
     await import("../src/mechanismTcr/request-submitted");
 
-    const { db, insertCalls } = createDb({
+    const { db, client, insertCalls } = createDb({
       budgetContextByMechanismTcr: {
         goalTreasury,
         budgetTreasury,
@@ -190,6 +219,7 @@ describe("mechanism TCR notification handlers", () => {
       context: {
         chain: { id: 8453 },
         db,
+        client,
       },
     });
 
@@ -237,6 +267,34 @@ describe("mechanism TCR notification handlers", () => {
         (notification) => notification.payload.resource?.budgetTreasury === budgetTreasury,
       ),
     ).toBe(true);
+    expect(scheduledNotifications()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          recipientWalletAddress: underwriter,
+          reason: "mechanism_proposal_challenge_window_ending_soon",
+          deliverAt: 35n,
+          role: "budget_underwriter",
+        }),
+        expect.objectContaining({
+          recipientWalletAddress: requester,
+          reason: "mechanism_proposal_challenge_window_ending_soon",
+          deliverAt: 35n,
+          role: "requester",
+        }),
+        expect.objectContaining({
+          recipientWalletAddress: controller,
+          reason: "mechanism_proposal_challenge_window_ending_soon",
+          deliverAt: 35n,
+          role: "budget_controller",
+        }),
+        expect.objectContaining({
+          recipientWalletAddress: proposer,
+          reason: "mechanism_proposal_challenge_window_ending_soon",
+          deliverAt: 35n,
+          role: "proposer",
+        }),
+      ]),
+    );
   });
 
   it("reuses the stored requester for mechanism activation and updates active topology", async () => {

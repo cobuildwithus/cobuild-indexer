@@ -231,7 +231,7 @@ describe("arbitrator dispute-created handlers", () => {
     );
     expect(emitProtocolNotificationSchedulesMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        notifications: [
+        notifications: expect.arrayContaining([
           expect.objectContaining({
             recipientWalletAddress: juror,
             reason: "juror_voting_open",
@@ -242,7 +242,17 @@ describe("arbitrator dispute-created handlers", () => {
             reason: "juror_reveal_open",
             deliverAt: 2_000n,
           }),
-        ],
+          expect.objectContaining({
+            recipientWalletAddress: juror,
+            reason: "juror_vote_deadline_soon",
+            deliverAt: 1_500n,
+          }),
+          expect.objectContaining({
+            recipientWalletAddress: juror,
+            reason: "juror_reveal_deadline_soon",
+            deliverAt: 2_500n,
+          }),
+        ]),
       }),
     );
   });

@@ -97,6 +97,9 @@ function matchesFindKey(
 function createDb(findResults: Record<string, unknown | KeyedFindResult[]>) {
   const insertCalls: InsertCall[] = [];
   const updateCalls: UpdateCall[] = [];
+  const client = {
+    readContract: vi.fn(async () => [0n, 50n] as const),
+  };
 
   return {
     db: {
@@ -130,6 +133,7 @@ function createDb(findResults: Record<string, unknown | KeyedFindResult[]>) {
         },
       }),
     },
+    client,
     insertCalls,
     updateCalls,
   };
@@ -145,6 +149,7 @@ type Handler = (args: {
   context: {
     chain: { id: number };
     db: ReturnType<typeof createDb>["db"];
+    client?: ReturnType<typeof createDb>["client"];
   };
 }) => Promise<void>;
 
@@ -225,7 +230,7 @@ describe("tcr protocol notification handlers", () => {
   it("uses the emitted requester as the canonical requester for registration requests", async () => {
     await import("../src/tcr/request-submitted");
 
-    const { db, insertCalls } = createDb({
+    const { db, client, insertCalls } = createDb({
       goalContextByBudgetTcr: { goalTreasury },
       tcrItem: { submitter },
     });
@@ -240,6 +245,7 @@ describe("tcr protocol notification handlers", () => {
       context: {
         chain: { id: 8453 },
         db,
+        client,
       },
     });
 
@@ -267,12 +273,34 @@ describe("tcr protocol notification handlers", () => {
       ]),
     );
     expect(notificationRoles().some((notification) => notification.actorWalletAddress === txFrom)).toBe(false);
+    expect(scheduledNotifications()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          recipientWalletAddress: stakeholder,
+          reason: "budget_proposal_challenge_window_ending_soon",
+          deliverAt: 35n,
+          role: "goal_stakeholder",
+        }),
+        expect.objectContaining({
+          recipientWalletAddress: goalOwner,
+          reason: "budget_proposal_challenge_window_ending_soon",
+          deliverAt: 35n,
+          role: "goal_owner",
+        }),
+        expect.objectContaining({
+          recipientWalletAddress: requester,
+          reason: "budget_proposal_challenge_window_ending_soon",
+          deliverAt: 35n,
+          role: "requester",
+        }),
+      ]),
+    );
   });
 
   it("uses the emitted requester for removal requests", async () => {
     await import("../src/tcr/request-submitted");
 
-    const { db, insertCalls } = createDb({
+    const { db, client, insertCalls } = createDb({
       goalContextByBudgetTcr: { goalTreasury },
       tcrItem: { submitter },
     });
@@ -287,6 +315,7 @@ describe("tcr protocol notification handlers", () => {
       context: {
         chain: { id: 8453 },
         db,
+        client,
       },
     });
 
@@ -304,12 +333,28 @@ describe("tcr protocol notification handlers", () => {
       ),
     ).toBe(true);
     expect(notificationRoles().some((notification) => notification.role === "proposer")).toBe(true);
+    expect(scheduledNotifications()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          recipientWalletAddress: requester,
+          reason: "budget_removal_challenge_window_ending_soon",
+          deliverAt: 36n,
+          role: "requester",
+        }),
+        expect.objectContaining({
+          recipientWalletAddress: submitter,
+          reason: "budget_removal_challenge_window_ending_soon",
+          deliverAt: 36n,
+          role: "proposer",
+        }),
+      ]),
+    );
   });
 
   it("does not fall back to submitter or tx.from when requester is missing", async () => {
     await import("../src/tcr/request-submitted");
 
-    const { db, insertCalls } = createDb({
+    const { db, client, insertCalls } = createDb({
       goalContextByBudgetTcr: { goalTreasury },
       tcrItem: { submitter },
     });
@@ -324,6 +369,7 @@ describe("tcr protocol notification handlers", () => {
       context: {
         chain: { id: 8453 },
         db,
+        client,
       },
     });
 
@@ -334,6 +380,28 @@ describe("tcr protocol notification handlers", () => {
     expect(notificationRoles().some((notification) => notification.role === "requester")).toBe(false);
     expect(notificationRoles().some((notification) => notification.role === "proposer")).toBe(true);
     expect(notificationRoles().some((notification) => notification.actorWalletAddress === txFrom)).toBe(false);
+    expect(scheduledNotifications()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          recipientWalletAddress: stakeholder,
+          reason: "budget_removal_challenge_window_ending_soon",
+          deliverAt: 36n,
+          role: "goal_stakeholder",
+        }),
+        expect.objectContaining({
+          recipientWalletAddress: goalOwner,
+          reason: "budget_removal_challenge_window_ending_soon",
+          deliverAt: 36n,
+          role: "goal_owner",
+        }),
+        expect.objectContaining({
+          recipientWalletAddress: submitter,
+          reason: "budget_removal_challenge_window_ending_soon",
+          deliverAt: 36n,
+          role: "proposer",
+        }),
+      ]),
+    );
   });
 
   it("uses the emitted requestIndex and challenger for disputes", async () => {

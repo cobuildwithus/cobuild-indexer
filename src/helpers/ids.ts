@@ -50,6 +50,24 @@ export function premiumClaimableCycleSourceId(
   return `${escrow.toLowerCase()}:${account.toLowerCase()}:${txHash.toLowerCase()}:${logIndex}`;
 }
 
+export function jurorRewardClaimableCycleSourceId(
+  arbitrator: Hex,
+  disputeId: bigint,
+  round: bigint,
+  juror: Hex,
+  txHash: Hex,
+  logIndex: number
+): string {
+  return [
+    arbitrator.toLowerCase(),
+    disputeId.toString(),
+    round.toString(),
+    juror.toLowerCase(),
+    txHash.toLowerCase(),
+    logIndex.toString(),
+  ].join(":");
+}
+
 export function tcrItemId(tcrAddress: Hex, itemId: Hex): string {
   return `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}`;
 }
@@ -58,8 +76,30 @@ export function tcrRequestId(tcrAddress: Hex, itemId: Hex, requestIndex: bigint)
   return `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}`;
 }
 
+export function requestChallengeReminderSourceId(
+  tcrAddress: Hex,
+  itemId: Hex,
+  requestIndex: bigint,
+  reason: string
+): string {
+  return `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}:${reason}`;
+}
+
 export function arbitratorDisputeId(arbitrator: Hex, disputeId: bigint): string {
   return `${arbitrator.toLowerCase()}:${disputeId.toString()}`;
+}
+
+export function jurorPhaseReminderSourceId(
+  arbitrator: Hex,
+  disputeId: bigint,
+  round: bigint,
+  reason: string
+): string {
+  return `${arbitrator.toLowerCase()}:${disputeId.toString()}:${round.toString()}:${reason}`;
+}
+
+export function reassertGraceReminderSourceId(treasury: Hex, assertionId: Hex): string {
+  return `${treasury.toLowerCase()}:${assertionId.toLowerCase()}:reassert_grace_ending_soon`;
 }
 
 export function jurorDisputeMemberId(arbitrator: Hex, disputeId: bigint, juror: Hex): string {

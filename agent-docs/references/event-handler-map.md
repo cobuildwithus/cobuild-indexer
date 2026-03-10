@@ -43,7 +43,7 @@
 
 - `GoalTreasury:*` handlers in `src/goals/**`
   - `Initialized`, `GoalConfigured`, `StateTransition`, `GoalFinalized`
-  - `SuccessAssertionRegistered`, `SuccessAssertionCleared`, `SuccessAssertionResolutionFailClosed`
+  - `SuccessAssertionRegistered`, `SuccessAssertionCleared`, `SuccessAssertionResolutionFailClosed`, `SuccessAssertionFinalizeFailed`
   - `DonationRecorded`, `FlowRateSynced`, `FlowRateSyncManualInterventionRequired`, `FlowRateZeroingFailed`, `FlowRateSyncCallFailed`
   - `ReassertGraceActivated`, `ResidualSettled`
   - `HookFundingRecorded`, `HookFundingDeferred`, `HookDeferredFundingSettled`
@@ -61,13 +61,16 @@
     - `goal_success_assertion_registered`
     - `goal_success_assertion_cleared`
     - `goal_success_assertion_resolution_fail_closed`
+    - `goal_success_assertion_finalize_failed`
     - `goal_success_assertion_reassert_grace_activated`
+  - `SuccessAssertionRegistered` also maintains `treasury_success_assertion_context` for resolver-side assertionId -> treasury recovery and invalidates any prior reassert-grace reminder cycle when a new assertion supersedes it.
+  - `ReassertGraceActivated` also emits `protocol_notification_schedule` rows for `goal_success_assertion_reassert_grace_ending_soon`; terminal success/fail-expiry handlers invalidate that cycle when the grace window closes early.
 
 ## Budget Treasury
 
 - `BudgetTreasury:*` handlers in `src/budgets/**`
   - `Initialized`, `BudgetConfigured`, `StateTransition`, `BudgetFinalized`
-  - `SuccessAssertionRegistered`, `SuccessAssertionCleared`, `SuccessAssertionResolutionFailClosed`, `SuccessResolutionDisabled`
+  - `SuccessAssertionRegistered`, `SuccessAssertionCleared`, `SuccessAssertionResolutionFailClosed`, `SuccessAssertionFinalizeFailed`, `SuccessResolutionDisabled`
   - `DonationRecorded`, `FlowRateSynced`, `FlowRateSyncManualInterventionRequired`, `FlowRateZeroingFailed`, `FlowRateSyncCallFailed`
   - `ReassertGraceActivated`, `ResidualSettled`
   - `TerminalFlowStopFailed`, `TerminalParentGoalSyncNotApplied`, `TerminalParentPruneFailed`, `TerminalPremiumEscrowCloseFailed`, `TerminalResidualSettlementToParentFailed`
@@ -81,8 +84,11 @@
     - `budget_success_assertion_registered`
     - `budget_success_assertion_cleared`
     - `budget_success_assertion_resolution_fail_closed`
+    - `budget_success_assertion_finalize_failed`
     - `budget_success_assertion_reassert_grace_activated`
     - `budget_success_resolution_disabled`
+  - `SuccessAssertionRegistered` also maintains `treasury_success_assertion_context` for resolver-side assertionId -> treasury recovery and invalidates any prior reassert-grace reminder cycle when a new assertion supersedes it.
+  - `ReassertGraceActivated` also emits `protocol_notification_schedule` rows for `budget_success_assertion_reassert_grace_ending_soon`; terminal success/fail-expiry and resolution-disabled handlers invalidate that cycle when the grace window closes early.
 
 ## Stake and Jurors
 
@@ -95,6 +101,16 @@
 - `BudgetStakeLedger:*` handlers in `src/stakeLedger/**`
   - `BudgetRegistered`, `BudgetRemoved`, `AllocationCheckpointed`
   - `BudgetRegistered` and `BudgetRemoved` also emit recipient-resolved `protocol_notification_outbox` rows for `budget_activated` and `budget_removed`, including the budget controller when indexed.
+
+## Arbitrator
+
+- `ERC20VotesArbitrator:*` and `MechanismERC20VotesArbitrator:*` handlers in `src/arbitrator/**`
+  - `DisputeCreated`, `VoteCommitted`, `VoteRevealed`, `DisputeExecuted`, `RewardWithdrawn`, `SlashRewardsWithdrawn`, `VoterSlashed`
+  - `DisputeCreated` snapshots current jurors into `arbitrator_dispute` + `juror_dispute_member`, emits `juror_dispute_created`, and schedules `juror_voting_open`, `juror_reveal_open`, `juror_vote_deadline_soon`, and `juror_reveal_deadline_soon`.
+  - `VoteCommitted` and `VoteRevealed` invalidate the relevant deadline reminder cycles when a juror has already acted.
+  - `DisputeExecuted` emits `juror_ruling_final` and `juror_slashable`, then refreshes per-juror `juror_reward_claimable` cycle state.
+  - `SlashRewardsWithdrawn` + `RewardWithdrawn` aggregate normal reward and slash buckets into append-only `juror_reward_claimed` notifications and then resync `juror_reward_claimable`.
+  - Reward-cycle sync uses deterministic pinned `getVoterRoundStatus` reads; `juror_vote_receipt.claimableNotificationSourceId` persists cycle identity across refresh/invalidate transitions.
 
 ## Premium Escrow
 
@@ -121,8 +137,13 @@
 - `BudgetTCRProtocolEvents:*` handler bridge in `src/tcr/**`
   - temporary local ABI bridge for `RequestSubmitted` and `Dispute` until the refreshed `@cobuild/wire` package publishes the requester/challenger event cutover
   - lifecycle projection semantics:
-    - `RequestSubmitted` upserts `tcr_request` from the emitted requester address and emits `budget_proposed` / `budget_removal_requested`
-    - `Dispute` updates `tcr_request` dispute state from the emitted request index + challenger fields and emits `budget_proposal_challenged` / `budget_removal_challenged`
+    - `RequestSubmitted` upserts `tcr_request` from the emitted requester address, emits `budget_proposed` / `budget_removal_requested`, and schedules `budget_*_challenge_window_ending_soon` reminders from a pinned `getRequestState` read.
+    - `Dispute` updates `tcr_request` dispute state from the emitted request index + challenger fields, emits `budget_proposal_challenged` / `budget_removal_challenged`, and invalidates the matching challenge-window reminder cycle.
+- `AllocationMechanismTCR:*` handlers in `src/mechanismTcr/**`
+  - `RequestSubmitted`, `Dispute`, `ItemSubmitted`, `ItemStatusChange`, `Ruling`, `MechanismActivated`, `MechanismRemoved`, `MechanismActivationQueued`, `MechanismRemovalQueued`
+  - `RequestSubmitted` mirrors `tcr_request` actor attribution for mechanism governance, emits `mechanism_proposed` / `mechanism_removal_requested`, and schedules `mechanism_*_challenge_window_ending_soon` reminders from a pinned `getRequestState` read.
+  - `Dispute` emits `mechanism_challenged` and invalidates the matching challenge-window reminder cycle.
+  - `MechanismActivationQueued` and `MechanismRemovalQueued` emit accepted/removal-accepted notifications and invalidate stale challenge-window reminder cycles.
 - `BudgetTCRFactory:*` handlers in `src/tcrFactory/**`
   - deployment-for-goal telemetry
   - `BudgetStackDeployed` maintains deterministic recipient/childFlow -> budget treasury lookup KV tables, recipient FK linkage, and the canonical budget/premium-escrow topology using the factory-emitted `premiumEscrow` address.
@@ -148,7 +169,8 @@
 ## Resolver and Routers
 
 - `UMATreasurySuccessResolver:*` handlers in `src/umaResolver/**`
-  - raw telemetry only: `SuccessAssertionRequested`, `SuccessAssertionDisputed`, `SuccessAssertionResolved`, `SuccessAssertionFinalized`
+  - `AssertionPrepared` remains raw telemetry only.
+  - `AssertionDisputed`, `TreasurySuccessResolved`, and `AssertionSettled` emit goal/budget success-assertion lifecycle notifications via `treasury_success_assertion_context` or direct treasury-address resolution.
 - `JurorSlasherRouter:*` handlers in `src/jurorSlasherRouter/**`
   - raw telemetry only: `SlasherAuthorizationSet`
 - `UnderwriterSlasherRouter:*` handlers in `src/underwriterSlasherRouter/**`

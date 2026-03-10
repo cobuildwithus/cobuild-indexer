@@ -1,4 +1,5 @@
 import { ponder } from "ponder:registry";
+import { budgetTcrAbi as BudgetTCRAbi } from "@cobuild/wire";
 import {
   budgetTreasury as budgetTreasuryTable,
   budgetTreasuryByRecipient,
@@ -6,16 +7,20 @@ import {
   tcrItem,
   tcrRequest,
 } from "ponder:schema";
-import { tcrItemId, tcrRequestId } from "../helpers/ids";
+import { requestChallengeReminderSourceId, tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
   buildGoalNotificationPayload,
+  challengeWindowReminderLabel,
+  challengeWindowReminderReason,
   collectRecipientRoles,
+  emitProtocolNotificationSchedules,
   emitProtocolNotifications,
   getBudgetUnderwriterAccounts,
   getBigIntArg,
   getGoalRow,
   getGoalStakeholderAccounts,
   getHexArg,
+  reminderDeliverAt,
   toRequestType,
 } from "../helpers/protocolNotifications";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
@@ -145,6 +150,58 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
         requestIndex,
         budgetTreasury: budgetTreasuryAddress,
         actorWalletAddress: requester,
+      }),
+    })),
+  });
+
+  const requestState = await context.client.readContract({
+    address: tcrAddress,
+    abi: BudgetTCRAbi,
+    functionName: "getRequestState",
+    args: [itemId, requestIndex],
+    blockNumber: event.block.number,
+  });
+  const challengeDeadline = requestState[1];
+  const deliverAt = reminderDeliverAt({
+    windowStartAt: event.block.timestamp,
+    windowEndAt: challengeDeadline,
+  });
+  if (deliverAt === null) return;
+
+  const reminderReason = challengeWindowReminderReason({
+    tcrKind: "budget",
+    requestType,
+  });
+  const reminderContextLabel = challengeWindowReminderLabel({
+    tcrKind: "budget",
+    requestType,
+  });
+
+  await emitProtocolNotificationSchedules({
+    context,
+    event,
+    notifications: recipients.map((recipient) => ({
+      recipientWalletAddress: recipient.recipientWalletAddress,
+      reason: reminderReason,
+      sourceType: "budget_request_challenge_reminder",
+      sourceId: requestChallengeReminderSourceId(tcrAddress, itemId, requestIndex, reminderReason),
+      deliverAt,
+      actorWalletAddress: requester,
+      payload: buildGoalNotificationPayload({
+        role: recipient.role,
+        goalRow,
+        reason: reminderReason,
+        itemId,
+        requestIndex,
+        budgetTreasury: budgetTreasuryAddress,
+        actorWalletAddress: requester,
+        labels: {
+          reminderContextLabel,
+        },
+        schedule: {
+          deliverAt,
+          challengeDeadline,
+        },
       }),
     })),
   });

@@ -1071,6 +1071,26 @@ export const tcrRequest = onchainTable(
 );
 
 /**
+ * Deterministic success-assertion -> treasury lookup keyed by assertion id.
+ * Used to recover goal/budget notification context from resolver events that
+ * only carry the assertion id.
+ */
+export const treasurySuccessAssertionContext = onchainTable(
+  "treasury_success_assertion_context",
+  (t) => ({
+    id: t.hex().primaryKey(), // assertionId
+    scope: t.text().notNull(), // "goal" | "budget"
+    treasury: t.hex().notNull(),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    treasuryIdx: index().on(t.treasury),
+    scopeTreasuryIdx: index().on(t.scope, t.treasury),
+  })
+);
+
+/**
  * Deterministic canonical-project -> goal treasuries lookup keyed by `${chainId}-${projectId}`.
  */
 export const goalTreasuriesByProject = onchainTable("goal_treasuries_by_project", (t) => ({
@@ -1468,6 +1488,13 @@ export const jurorVoteReceipt = onchainTable(
     slashRewardGoalAmount: t.bigint(),
     slashRewardCobuildAmount: t.bigint(),
     slashRewardsWithdrawnAt: t.bigint(),
+    claimableRewardAmount: t.bigint(),
+    claimableGoalSlashRewardAmount: t.bigint(),
+    claimableCobuildSlashRewardAmount: t.bigint(),
+    claimableNotificationSourceId: t.text(),
+    pendingSlashClaimTxHash: t.hex(),
+    pendingSlashClaimGoalAmount: t.bigint(),
+    pendingSlashClaimCobuildAmount: t.bigint(),
     snapshotVotes: t.bigint(),
     slashWeight: t.bigint(),
     missedReveal: t.boolean(),

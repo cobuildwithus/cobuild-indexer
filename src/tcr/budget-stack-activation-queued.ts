@@ -1,9 +1,11 @@
 import { ponder } from "ponder:registry";
 
 import { budgetStack, goalContextByBudgetTcr, tcrItem, tcrRequest } from "ponder:schema";
-import { tcrItemId, tcrRequestId } from "../helpers/ids";
+import { requestChallengeReminderSourceId, tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
   buildGoalNotificationPayload,
+  challengeWindowReminderLabel,
+  challengeWindowReminderReason,
   collectRecipientRoles,
   emitProtocolNotifications,
   getGoalRow,
@@ -84,6 +86,43 @@ ponder.on("BudgetTCR:BudgetStackActivationQueued", async ({ event, context }) =>
         requestIndex,
         actorWalletAddress: requester as `0x${string}` | null,
       }),
-    })),
+    })).concat(
+      existingRequest?.requestType === "registration"
+        ? recipients.map((recipient) => {
+            const reminderReason = challengeWindowReminderReason({
+              tcrKind: "budget",
+              requestType: "registration",
+            });
+            return {
+              recipientWalletAddress: recipient.recipientWalletAddress,
+              reason: reminderReason,
+              sourceType: "budget_request_challenge_reminder",
+              sourceId: requestChallengeReminderSourceId(
+                tcrAddress,
+                itemId,
+                requestIndex,
+                reminderReason
+              ),
+              notificationClass: "cycle" as const,
+              action: "invalidate" as const,
+              actorWalletAddress: requester as `0x${string}` | null,
+              payload: buildGoalNotificationPayload({
+                role: recipient.role,
+                goalRow,
+                reason: reminderReason,
+                itemId,
+                requestIndex,
+                actorWalletAddress: requester as `0x${string}` | null,
+                labels: {
+                  reminderContextLabel: challengeWindowReminderLabel({
+                    tcrKind: "budget",
+                    requestType: "registration",
+                  }),
+                },
+              }),
+            };
+          })
+        : []
+    ),
   });
 });

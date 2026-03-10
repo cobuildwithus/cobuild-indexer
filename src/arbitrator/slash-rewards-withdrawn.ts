@@ -49,6 +49,9 @@ async function handleSlashRewardsWithdrawn(args: {
     slashRewardGoalAmount: event.args.goalAmount,
     slashRewardCobuildAmount: event.args.cobuildAmount,
     slashRewardsWithdrawnAt: event.block.timestamp,
+    pendingSlashClaimTxHash: event.transaction.hash,
+    pendingSlashClaimGoalAmount: event.args.goalAmount,
+    pendingSlashClaimCobuildAmount: event.args.cobuildAmount,
     updatedAtBlock: event.block.number,
     updatedAtTimestamp: event.block.timestamp,
   });

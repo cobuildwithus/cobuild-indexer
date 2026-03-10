@@ -118,13 +118,17 @@ function toStringOrNull(value: bigint | null | undefined): string | null {
 
 function resourceKindForReason(reason: string): string {
   if (
+    reason.endsWith("challenge_window_ending_soon") ||
+    reason.endsWith("challenge_deadline_soon")
+  ) {
+    return reason.includes("mechanism") ? "mechanism_request" : "budget_request";
+  }
+
+  if (
     reason === "goal_active" ||
     reason === "goal_succeeded" ||
     reason === "goal_expired" ||
-    reason === "goal_success_assertion_registered" ||
-    reason === "goal_success_assertion_cleared" ||
-    reason === "goal_success_assertion_resolution_fail_closed" ||
-    reason === "goal_success_assertion_reassert_grace_activated" ||
+    reason.startsWith("goal_success_assertion_") ||
     reason === "underwriter_withdrawal_prep_required" ||
     reason === "underwriter_withdrawal_prep_complete"
   ) {
@@ -138,10 +142,7 @@ function resourceKindForReason(reason: string): string {
     reason === "budget_succeeded" ||
     reason === "budget_failed" ||
     reason === "budget_expired" ||
-    reason === "budget_success_assertion_registered" ||
-    reason === "budget_success_assertion_cleared" ||
-    reason === "budget_success_assertion_resolution_fail_closed" ||
-    reason === "budget_success_assertion_reassert_grace_activated" ||
+    reason.startsWith("budget_success_assertion_") ||
     reason === "budget_success_resolution_disabled" ||
     reason === "underwriter_slashed" ||
     reason === "premium_claimable" ||
@@ -166,7 +167,12 @@ function resourceKindForReason(reason: string): string {
     reason === "juror_dispute_created" ||
     reason === "juror_voting_open" ||
     reason === "juror_reveal_open" ||
+    reason === "juror_vote_deadline_soon" ||
+    reason === "juror_voting_deadline_soon" ||
+    reason === "juror_reveal_deadline_soon" ||
     reason === "juror_ruling_final" ||
+    reason === "juror_reward_claimable" ||
+    reason === "juror_reward_claimed" ||
     reason === "juror_slashable" ||
     reason === "juror_slashed"
   ) {
@@ -178,6 +184,8 @@ function resourceKindForReason(reason: string): string {
 
 export type NotificationAction = "upsert" | "invalidate";
 export type NotificationClass = "edge" | "open_close" | "cycle";
+
+const DEFAULT_REMINDER_LEAD_TIME_SECONDS = 24n * 60n * 60n;
 
 export function protocolNotificationOutboxId(args: {
   txHash: Hex;
@@ -205,6 +213,31 @@ export function protocolNotificationScheduleId(args: {
   return `${args.sourceType}:${args.sourceId}:${normalizeHex(args.recipientWalletAddress)}`;
 }
 
+export function reminderDeliverAt(args: {
+  windowStartAt: bigint | null | undefined;
+  windowEndAt: bigint | null | undefined;
+  leadTimeSeconds?: bigint | null | undefined;
+}): bigint | null {
+  const windowEndAt = args.windowEndAt ?? null;
+  if (windowEndAt === null || windowEndAt <= 0n) return null;
+
+  const leadTime =
+    args.leadTimeSeconds && args.leadTimeSeconds > 0n
+      ? args.leadTimeSeconds
+      : DEFAULT_REMINDER_LEAD_TIME_SECONDS;
+  const windowStartAt = args.windowStartAt ?? null;
+
+  if (windowStartAt === null || windowStartAt >= windowEndAt) {
+    return windowEndAt > leadTime ? windowEndAt - leadTime : windowEndAt;
+  }
+
+  const duration = windowEndAt - windowStartAt;
+  const clampedLead =
+    duration <= 1n ? 1n : duration / 2n < leadTime ? duration / 2n : leadTime;
+  const deliverAt = windowEndAt - clampedLead;
+  return deliverAt > windowStartAt ? deliverAt : windowStartAt;
+}
+
 export function toRequestType(value: unknown): "registration" | "clearing" | "unknown" {
   if (typeof value === "bigint") {
     if (value === 2n) return "registration";
@@ -217,6 +250,24 @@ export function toRequestType(value: unknown): "registration" | "clearing" | "un
     return "unknown";
   }
   return "unknown";
+}
+
+export function challengeWindowReminderReason(args: {
+  tcrKind: "budget" | "mechanism";
+  requestType: "registration" | "clearing";
+}): string {
+  const prefix = args.tcrKind === "mechanism" ? "mechanism" : "budget";
+  return args.requestType === "clearing"
+    ? `${prefix}_removal_challenge_window_ending_soon`
+    : `${prefix}_proposal_challenge_window_ending_soon`;
+}
+
+export function challengeWindowReminderLabel(args: {
+  tcrKind: "budget" | "mechanism";
+  requestType: "registration" | "clearing";
+}): string {
+  const prefix = args.tcrKind === "mechanism" ? "mechanism" : "budget";
+  return args.requestType === "clearing" ? `${prefix} removal` : `${prefix} proposal`;
 }
 
 export function getHexArg(args: Record<string, unknown>, ...names: string[]): Hex | null {
@@ -684,6 +735,13 @@ export function buildGoalNotificationPayload(args: {
     votingStartTime?: bigint | null;
     votingEndTime?: bigint | null;
     revealPeriodEndTime?: bigint | null;
+    challengeDeadline?: bigint | null;
+    reassertGraceDeadline?: bigint | null;
+  } | null;
+  labels?: {
+    budgetName?: string | null;
+    mechanismName?: string | null;
+    reminderContextLabel?: string | null;
   } | null;
   amounts?: {
     allocatedStake?: bigint | null;
@@ -692,9 +750,84 @@ export function buildGoalNotificationPayload(args: {
     snapshotWeight?: bigint | null;
     snapshotVotes?: bigint | null;
     slashWeight?: bigint | null;
+    claimableReward?: bigint | null;
+    claimableGoalSlashReward?: bigint | null;
+    claimableCobuildSlashReward?: bigint | null;
+    claimedReward?: bigint | null;
+    claimedGoalSlashReward?: bigint | null;
+    claimedCobuildSlashReward?: bigint | null;
   } | null;
 }): Record<string, unknown> {
   const goalTreasuryAddress = normalizeHexOrNull((args.goalRow?.id ?? null) as Hex | null);
+  const labels: Record<string, string | null> = {
+    goalName:
+      (typeof args.goalRow?.canonicalRouteSlug === "string" &&
+      args.goalRow.canonicalRouteSlug.trim() !== ""
+        ? args.goalRow.canonicalRouteSlug
+        : null) ?? null,
+  };
+
+  if (args.labels && "budgetName" in args.labels) {
+    labels.budgetName = args.labels.budgetName ?? null;
+  }
+  if (args.labels && "mechanismName" in args.labels) {
+    labels.mechanismName = args.labels.mechanismName ?? null;
+  }
+  if (args.labels && "reminderContextLabel" in args.labels) {
+    labels.reminderContextLabel = args.labels.reminderContextLabel ?? null;
+  }
+
+  const schedule: Record<string, string | null> | null = args.schedule
+    ? {
+        deliverAt: toStringOrNull(args.schedule.deliverAt ?? null),
+        votingStartAt: toStringOrNull(args.schedule.votingStartTime ?? null),
+        votingEndAt: toStringOrNull(args.schedule.votingEndTime ?? null),
+        revealEndAt: toStringOrNull(args.schedule.revealPeriodEndTime ?? null),
+      }
+    : null;
+
+  if (schedule && args.schedule && "challengeDeadline" in args.schedule) {
+    schedule.challengeDeadlineAt = toStringOrNull(args.schedule.challengeDeadline ?? null);
+  }
+  if (schedule && args.schedule && "reassertGraceDeadline" in args.schedule) {
+    schedule.reassertGraceDeadlineAt = toStringOrNull(args.schedule.reassertGraceDeadline ?? null);
+  }
+
+  const amounts: Record<string, string | null> | null = args.amounts
+    ? {
+        allocatedStake: toStringOrNull(args.amounts.allocatedStake ?? null),
+        claimable: toStringOrNull(args.amounts.claimable ?? null),
+        claimedAmount: toStringOrNull(args.amounts.claimedAmount ?? null),
+        snapshotWeight: toStringOrNull(args.amounts.snapshotWeight ?? null),
+        snapshotVotes: toStringOrNull(args.amounts.snapshotVotes ?? null),
+        slashWeight: toStringOrNull(args.amounts.slashWeight ?? null),
+      }
+    : null;
+
+  if (amounts && args.amounts && "claimableReward" in args.amounts) {
+    amounts.claimableReward = toStringOrNull(args.amounts.claimableReward ?? null);
+  }
+  if (amounts && args.amounts && "claimableGoalSlashReward" in args.amounts) {
+    amounts.claimableGoalSlashReward = toStringOrNull(
+      args.amounts.claimableGoalSlashReward ?? null
+    );
+  }
+  if (amounts && args.amounts && "claimableCobuildSlashReward" in args.amounts) {
+    amounts.claimableCobuildSlashReward = toStringOrNull(
+      args.amounts.claimableCobuildSlashReward ?? null
+    );
+  }
+  if (amounts && args.amounts && "claimedReward" in args.amounts) {
+    amounts.claimedReward = toStringOrNull(args.amounts.claimedReward ?? null);
+  }
+  if (amounts && args.amounts && "claimedGoalSlashReward" in args.amounts) {
+    amounts.claimedGoalSlashReward = toStringOrNull(args.amounts.claimedGoalSlashReward ?? null);
+  }
+  if (amounts && args.amounts && "claimedCobuildSlashReward" in args.amounts) {
+    amounts.claimedCobuildSlashReward = toStringOrNull(
+      args.amounts.claimedCobuildSlashReward ?? null
+    );
+  }
 
   return {
     role: args.role,
@@ -712,31 +845,9 @@ export function buildGoalNotificationPayload(args: {
           walletAddress: normalizeHex(args.actorWalletAddress),
         }
       : null,
-    labels: {
-      goalName:
-        (typeof args.goalRow?.canonicalRouteSlug === "string" &&
-        args.goalRow.canonicalRouteSlug.trim() !== ""
-          ? args.goalRow.canonicalRouteSlug
-          : null) ?? null,
-    },
-    schedule: args.schedule
-      ? {
-          deliverAt: toStringOrNull(args.schedule.deliverAt ?? null),
-          votingStartAt: toStringOrNull(args.schedule.votingStartTime ?? null),
-          votingEndAt: toStringOrNull(args.schedule.votingEndTime ?? null),
-          revealEndAt: toStringOrNull(args.schedule.revealPeriodEndTime ?? null),
-        }
-      : null,
-    amounts: args.amounts
-      ? {
-          allocatedStake: toStringOrNull(args.amounts.allocatedStake ?? null),
-          claimable: toStringOrNull(args.amounts.claimable ?? null),
-          claimedAmount: toStringOrNull(args.amounts.claimedAmount ?? null),
-          snapshotWeight: toStringOrNull(args.amounts.snapshotWeight ?? null),
-          snapshotVotes: toStringOrNull(args.amounts.snapshotVotes ?? null),
-          slashWeight: toStringOrNull(args.amounts.slashWeight ?? null),
-        }
-      : null,
+    labels,
+    schedule,
+    amounts,
   };
 }
 

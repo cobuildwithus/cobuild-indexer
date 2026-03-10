@@ -5,6 +5,8 @@ import {
   collectRecipientRoles,
   emitProtocolNotifications,
   getBudgetLifecycleNotificationContext,
+  type NotificationAction,
+  type NotificationClass,
 } from "../helpers/protocolNotifications";
 
 type BudgetNotificationContext = Parameters<typeof getBudgetLifecycleNotificationContext>[0]["context"];
@@ -18,11 +20,40 @@ export async function emitBudgetAudienceNotification(args: {
   sourceType: string;
   sourceId: string;
   actorWalletAddress?: Hex | null;
+  notificationClass?: NotificationClass;
+  action?: NotificationAction;
   includeGoalOwner?: boolean;
   includeStakeholders?: boolean;
   includeBudgetController?: boolean;
   includeBudgetUnderwriters?: boolean;
   includeRequestActors?: boolean;
+  schedule?: {
+    deliverAt?: bigint | null;
+    votingStartTime?: bigint | null;
+    votingEndTime?: bigint | null;
+    revealPeriodEndTime?: bigint | null;
+    challengeDeadline?: bigint | null;
+    reassertGraceDeadline?: bigint | null;
+  } | null;
+  labels?: {
+    budgetName?: string | null;
+    mechanismName?: string | null;
+    reminderContextLabel?: string | null;
+  } | null;
+  amounts?: {
+    allocatedStake?: bigint | null;
+    claimable?: bigint | null;
+    claimedAmount?: bigint | null;
+    snapshotWeight?: bigint | null;
+    snapshotVotes?: bigint | null;
+    slashWeight?: bigint | null;
+    claimableReward?: bigint | null;
+    claimableGoalSlashReward?: bigint | null;
+    claimableCobuildSlashReward?: bigint | null;
+    claimedReward?: bigint | null;
+    claimedGoalSlashReward?: bigint | null;
+    claimedCobuildSlashReward?: bigint | null;
+  } | null;
 }): Promise<void> {
   const notificationContext = await getBudgetLifecycleNotificationContext({
     context: args.context,
@@ -61,6 +92,8 @@ export async function emitBudgetAudienceNotification(args: {
       reason: args.reason,
       sourceType: args.sourceType,
       sourceId: args.sourceId,
+      notificationClass: args.notificationClass,
+      action: args.action,
       actorWalletAddress: args.actorWalletAddress ?? null,
       payload: buildGoalNotificationPayload({
         role: recipient.role,
@@ -70,6 +103,9 @@ export async function emitBudgetAudienceNotification(args: {
         requestIndex: notificationContext.requestIndex,
         budgetTreasury: args.budgetTreasuryAddress,
         actorWalletAddress: args.actorWalletAddress ?? null,
+        schedule: args.schedule ?? null,
+        labels: args.labels ?? null,
+        amounts: args.amounts ?? null,
       }),
     })),
   });

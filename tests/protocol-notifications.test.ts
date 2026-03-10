@@ -21,6 +21,7 @@ const {
   getBigIntArg,
   getHexArg,
   protocolNotificationOutboxId,
+  reminderDeliverAt,
   toRequestType,
 } = await import("../src/helpers/protocolNotifications");
 
@@ -250,5 +251,116 @@ describe("protocol notification helpers", () => {
         slashWeight: null,
       },
     });
+  });
+
+  it("builds expanded reminder and juror reward payload fields", () => {
+    const goalRow = {
+      id: "0x00000000000000000000000000000000000000aa" as Hex,
+      owner: "0x00000000000000000000000000000000000000bb" as Hex,
+      stakeVault: "0x00000000000000000000000000000000000000ee" as Hex,
+      canonicalRouteSlug: "alpha",
+    };
+
+    expect(
+      buildGoalNotificationPayload({
+        role: "goal_owner",
+        goalRow,
+        reason: "budget_proposal_challenge_window_ending_soon",
+        itemId:
+          "0x1111111111111111111111111111111111111111111111111111111111111111",
+        requestIndex: 4n,
+        budgetTreasury: "0x00000000000000000000000000000000000000cc",
+        schedule: {
+          deliverAt: 35n,
+          challengeDeadline: 50n,
+        },
+        labels: {
+          reminderContextLabel: "budget proposal",
+        },
+      })
+    ).toEqual({
+      role: "goal_owner",
+      resource: {
+        kind: "budget_request",
+        goalTreasury: "0x00000000000000000000000000000000000000aa",
+        budgetTreasury: "0x00000000000000000000000000000000000000cc",
+        itemId:
+          "0x1111111111111111111111111111111111111111111111111111111111111111",
+        requestIndex: "4",
+        arbitrator: null,
+        disputeId: null,
+      },
+      actor: null,
+      labels: {
+        goalName: "alpha",
+        reminderContextLabel: "budget proposal",
+      },
+      schedule: {
+        deliverAt: "35",
+        votingStartAt: null,
+        votingEndAt: null,
+        revealEndAt: null,
+        challengeDeadlineAt: "50",
+      },
+      amounts: null,
+    });
+
+    expect(
+      buildGoalNotificationPayload({
+        role: "juror",
+        goalRow,
+        reason: "juror_reward_claimable",
+        arbitrator: "0x00000000000000000000000000000000000000dd",
+        disputeId: 7n,
+        amounts: {
+          claimable: 42n,
+          claimableReward: 10n,
+          claimableGoalSlashReward: 20n,
+          claimableCobuildSlashReward: 12n,
+        },
+      })
+    ).toEqual({
+      role: "juror",
+      resource: {
+        kind: "juror_dispute",
+        goalTreasury: "0x00000000000000000000000000000000000000aa",
+        budgetTreasury: null,
+        itemId: null,
+        requestIndex: null,
+        arbitrator: "0x00000000000000000000000000000000000000dd",
+        disputeId: "7",
+      },
+      actor: null,
+      labels: {
+        goalName: "alpha",
+      },
+      schedule: null,
+      amounts: {
+        allocatedStake: null,
+        claimable: "42",
+        claimedAmount: null,
+        snapshotWeight: null,
+        snapshotVotes: null,
+        slashWeight: null,
+        claimableReward: "10",
+        claimableGoalSlashReward: "20",
+        claimableCobuildSlashReward: "12",
+      },
+    });
+  });
+
+  it("clamps reminder delivery inside short windows", () => {
+    expect(
+      reminderDeliverAt({
+        windowStartAt: 20n,
+        windowEndAt: 50n,
+      })
+    ).toBe(35n);
+    expect(
+      reminderDeliverAt({
+        windowStartAt: 1_000n,
+        windowEndAt: 2_000n,
+      })
+    ).toBe(1_500n);
   });
 });

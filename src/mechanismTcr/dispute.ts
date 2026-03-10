@@ -1,9 +1,16 @@
 import { ponder } from "ponder:registry";
 
 import { arbitratorDispute, tcrItem, tcrRequest } from "ponder:schema";
-import { arbitratorDisputeId, tcrItemId, tcrRequestId } from "../helpers/ids";
+import {
+  arbitratorDisputeId,
+  requestChallengeReminderSourceId,
+  tcrItemId,
+  tcrRequestId,
+} from "../helpers/ids";
 import {
   buildGoalNotificationPayload,
+  challengeWindowReminderLabel,
+  challengeWindowReminderReason,
   collectRecipientRoles,
   emitProtocolNotifications,
   getBigIntArg,
@@ -35,6 +42,10 @@ ponder.on("AllocationMechanismTCR:Dispute", async ({ event, context }) => {
   });
   const requestId = tcrRequestId(tcrAddress, itemId, requestIndex);
   const existingRequest = await context.db.find(tcrRequest, { id: requestId });
+  const requestType =
+    existingRequest?.requestType === "registration" || existingRequest?.requestType === "clearing"
+      ? existingRequest.requestType
+      : null;
 
   await context.db
     .insert(tcrRequest)
@@ -153,6 +164,44 @@ ponder.on("AllocationMechanismTCR:Dispute", async ({ event, context }) => {
         arbitrator: arbitratorAddress,
         disputeId,
       }),
-    })),
+    })).concat(
+      requestType
+        ? recipients.map((recipient) => {
+            const reminderReason = challengeWindowReminderReason({
+              tcrKind: "mechanism",
+              requestType,
+            });
+            return {
+              recipientWalletAddress: recipient.recipientWalletAddress,
+              reason: reminderReason,
+              sourceType: "mechanism_request_challenge_reminder",
+              sourceId: requestChallengeReminderSourceId(
+                tcrAddress,
+                itemId,
+                requestIndex,
+                reminderReason
+              ),
+              notificationClass: "cycle" as const,
+              action: "invalidate" as const,
+              actorWalletAddress: challenger,
+              payload: buildGoalNotificationPayload({
+                role: recipient.role,
+                goalRow,
+                reason: reminderReason,
+                itemId,
+                requestIndex,
+                budgetTreasury: mechanismContext.budgetTreasury,
+                actorWalletAddress: challenger,
+                labels: {
+                  reminderContextLabel: challengeWindowReminderLabel({
+                    tcrKind: "mechanism",
+                    requestType,
+                  }),
+                },
+              }),
+            };
+          })
+        : []
+    ),
   });
 });

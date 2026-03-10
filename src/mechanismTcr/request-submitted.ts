@@ -1,13 +1,18 @@
 import { ponder } from "ponder:registry";
+import { allocationMechanismTcrAbi as AllocationMechanismTCRAbi } from "@cobuild/wire";
 
 import { tcrItem, tcrRequest } from "ponder:schema";
-import { tcrItemId, tcrRequestId } from "../helpers/ids";
+import { requestChallengeReminderSourceId, tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
   buildGoalNotificationPayload,
+  challengeWindowReminderLabel,
+  challengeWindowReminderReason,
   collectRecipientRoles,
+  emitProtocolNotificationSchedules,
   emitProtocolNotifications,
   getBigIntArg,
   getHexArg,
+  reminderDeliverAt,
   toRequestType,
 } from "../helpers/protocolNotifications";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
@@ -115,6 +120,58 @@ ponder.on("AllocationMechanismTCR:RequestSubmitted", async ({ event, context }) 
         requestIndex,
         budgetTreasury: mechanismContext.budgetTreasury,
         actorWalletAddress: requester,
+      }),
+    })),
+  });
+
+  const requestState = await context.client.readContract({
+    address: tcrAddress,
+    abi: AllocationMechanismTCRAbi,
+    functionName: "getRequestState",
+    args: [itemId, requestIndex],
+    blockNumber: event.block.number,
+  });
+  const challengeDeadline = requestState[1];
+  const deliverAt = reminderDeliverAt({
+    windowStartAt: event.block.timestamp,
+    windowEndAt: challengeDeadline,
+  });
+  if (deliverAt === null) return;
+
+  const reminderReason = challengeWindowReminderReason({
+    tcrKind: "mechanism",
+    requestType,
+  });
+  const reminderContextLabel = challengeWindowReminderLabel({
+    tcrKind: "mechanism",
+    requestType,
+  });
+
+  await emitProtocolNotificationSchedules({
+    context,
+    event,
+    notifications: recipients.map((recipient) => ({
+      recipientWalletAddress: recipient.recipientWalletAddress,
+      reason: reminderReason,
+      sourceType: "mechanism_request_challenge_reminder",
+      sourceId: requestChallengeReminderSourceId(tcrAddress, itemId, requestIndex, reminderReason),
+      deliverAt,
+      actorWalletAddress: requester,
+      payload: buildGoalNotificationPayload({
+        role: recipient.role,
+        goalRow: mechanismContext.goalRow,
+        reason: reminderReason,
+        itemId,
+        requestIndex,
+        budgetTreasury: mechanismContext.budgetTreasury,
+        actorWalletAddress: requester,
+        labels: {
+          reminderContextLabel,
+        },
+        schedule: {
+          deliverAt,
+          challengeDeadline,
+        },
       }),
     })),
   });

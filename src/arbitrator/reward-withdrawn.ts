@@ -4,6 +4,11 @@ import type { Hex } from "viem";
 import { jurorVoteReceipt } from "ponder:schema";
 import { jurorVoteReceiptId } from "../helpers/ids";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
+import {
+  type RewardNotificationContext,
+  emitJurorRewardClaimedNotification,
+  syncJurorRewardClaimableNotification,
+} from "./reward-notifications";
 
 async function handleRewardWithdrawn(args: {
   contractName: "ERC20VotesArbitrator" | "MechanismERC20VotesArbitrator";
@@ -16,7 +21,7 @@ async function handleRewardWithdrawn(args: {
     };
     log: { address: Hex; logIndex: number };
   };
-  context: Parameters<typeof insertProtocolEvent>[0]["context"];
+  context: RewardNotificationContext;
 }): Promise<void> {
   const { contractName, event, context } = args;
   await insertProtocolEvent({ context, event, contractName });
@@ -28,6 +33,16 @@ async function handleRewardWithdrawn(args: {
     event.args.round,
     event.args.voter
   );
+  const existingReceipt = await context.db.find(jurorVoteReceipt, { id: receiptId });
+  const pendingSlashClaimTxHash = (existingReceipt?.pendingSlashClaimTxHash ?? null) as Hex | null;
+  const goalSlashAmount =
+    pendingSlashClaimTxHash === event.transaction.hash
+      ? BigInt(existingReceipt?.pendingSlashClaimGoalAmount ?? 0n)
+      : 0n;
+  const cobuildSlashAmount =
+    pendingSlashClaimTxHash === event.transaction.hash
+      ? BigInt(existingReceipt?.pendingSlashClaimCobuildAmount ?? 0n)
+      : 0n;
 
   await context.db
     .insert(jurorVoteReceipt)
@@ -47,8 +62,32 @@ async function handleRewardWithdrawn(args: {
   await context.db.update(jurorVoteReceipt, { id: receiptId }).set({
     rewardAmount: event.args.amount,
     rewardWithdrawnAt: event.block.timestamp,
+    pendingSlashClaimTxHash: null,
+    pendingSlashClaimGoalAmount: null,
+    pendingSlashClaimCobuildAmount: null,
     updatedAtBlock: event.block.number,
     updatedAtTimestamp: event.block.timestamp,
+  });
+
+  await emitJurorRewardClaimedNotification({
+    context,
+    event,
+    arbitratorAddress,
+    disputeId: event.args.disputeId,
+    round: event.args.round,
+    jurorAddress: event.args.voter,
+    rewardAmount: event.args.amount,
+    goalSlashAmount,
+    cobuildSlashAmount,
+  });
+
+  await syncJurorRewardClaimableNotification({
+    context,
+    event,
+    arbitratorAddress,
+    disputeId: event.args.disputeId,
+    round: event.args.round,
+    jurorAddress: event.args.voter,
   });
 }
 

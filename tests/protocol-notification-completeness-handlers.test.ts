@@ -40,6 +40,7 @@ vi.mock("ponder:schema", () => ({
   stakeVaultJurorAudience: "stakeVaultJurorAudience",
   tcrItem: "tcrItem",
   tcrRequest: "tcrRequest",
+  treasurySuccessAssertionContext: "treasurySuccessAssertionContext",
 }));
 
 vi.mock("../src/helpers/protocolEvent", () => ({
@@ -67,17 +68,33 @@ type UpdateCall = {
   setArg: unknown;
 };
 
+type InsertCall = {
+  table: string;
+  value: unknown;
+  update?: unknown;
+  didNothing?: boolean;
+};
+
 function createDb() {
+  const insertCalls: InsertCall[] = [];
   const updateCalls: UpdateCall[] = [];
 
   return {
     db: {
       find: vi.fn(async () => null),
-      insert: () => ({
-        values: () => ({
-          onConflictDoUpdate: async () => undefined,
-          onConflictDoNothing: async () => undefined,
-        }),
+      insert: (table: string) => ({
+        values: (value: unknown) => {
+          const call: InsertCall = { table, value };
+          insertCalls.push(call);
+          return {
+            onConflictDoUpdate: async (update: unknown) => {
+              call.update = update;
+            },
+            onConflictDoNothing: async () => {
+              call.didNothing = true;
+            },
+          };
+        },
       }),
       update: (table: string, key: Record<string, unknown>) => ({
         set: async (setArg: unknown) => {
@@ -85,6 +102,7 @@ function createDb() {
         },
       }),
     },
+    insertCalls,
     updateCalls,
   };
 }
@@ -150,7 +168,7 @@ describe("protocol notification completeness handlers", () => {
   it("emits goal success assertion notifications to the goal owner and stakeholders", async () => {
     await import("../src/goals/success-assertion-registered");
 
-    const { db, updateCalls } = createDb();
+    const { db, insertCalls, updateCalls } = createDb();
 
     await getRegisteredHandler<{
       assertionId: `0x${string}`;
@@ -182,6 +200,23 @@ describe("protocol notification completeness handlers", () => {
           key: { id: goalTreasury },
           setArg: expect.objectContaining({
             successAssertionRegisteredAt: 21n,
+          }),
+        }),
+      ])
+    );
+    expect(insertCalls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          table: "treasurySuccessAssertionContext",
+          value: expect.objectContaining({
+            id:
+              "0x2222222222222222222222222222222222222222222222222222222222222222",
+            scope: "goal",
+            treasury: goalTreasury,
+          }),
+          update: expect.objectContaining({
+            scope: "goal",
+            treasury: goalTreasury,
           }),
         }),
       ])

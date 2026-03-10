@@ -1,6 +1,7 @@
 import { ponder } from "ponder:registry";
 
 import { goalTreasury } from "ponder:schema";
+import { reassertGraceReminderSourceId } from "../helpers/ids";
 import {
   buildGoalNotificationPayload,
   collectRecipientRoles,
@@ -16,6 +17,7 @@ ponder.on("GoalTreasury:StateTransition", async ({ event, context }) => {
   await insertProtocolEvent({ context, event, contractName: "GoalTreasury" });
   const treasury = event.log.address;
   const newState = Number(event.args.newState);
+  const existingGoal = await context.db.find(goalTreasury, { id: treasury });
   await context.db
     .update(goalTreasury, { id: treasury })
     .set({
@@ -61,6 +63,10 @@ ponder.on("GoalTreasury:StateTransition", async ({ event, context }) => {
     goalUnderwriterAccounts: goalUnderwriters,
     jurorAccounts: jurors,
   });
+  const successAssertionId =
+    existingGoal?.successAssertionId && existingGoal.successAssertionId.startsWith("0x")
+      ? existingGoal.successAssertionId
+      : null;
 
   await emitProtocolNotifications({
     context,
@@ -75,6 +81,27 @@ ponder.on("GoalTreasury:StateTransition", async ({ event, context }) => {
         goalRow,
         reason,
       }),
-    })),
+    })).concat(
+      successAssertionId &&
+        existingGoal?.reassertGraceDeadline &&
+        (reason === "goal_succeeded" || reason === "goal_expired")
+        ? recipients.map((recipient) => ({
+            recipientWalletAddress: recipient.recipientWalletAddress,
+            reason: "goal_success_assertion_reassert_grace_ending_soon",
+            sourceType: "goal_success_assertion_reassert_grace_reminder",
+            sourceId: reassertGraceReminderSourceId(treasury, successAssertionId),
+            notificationClass: "cycle" as const,
+            action: "invalidate" as const,
+            payload: buildGoalNotificationPayload({
+              role: recipient.role,
+              goalRow,
+              reason: "goal_success_assertion_reassert_grace_ending_soon",
+              schedule: {
+                reassertGraceDeadline: existingGoal.reassertGraceDeadline,
+              },
+            }),
+          }))
+        : []
+    ),
   });
 });
