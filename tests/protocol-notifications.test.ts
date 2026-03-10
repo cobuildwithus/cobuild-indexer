@@ -347,6 +347,44 @@ describe("protocol notification helpers", () => {
         claimableCobuildSlashReward: "12",
       },
     });
+
+    expect(
+      buildGoalNotificationPayload({
+        role: "juror",
+        goalRow,
+        reason: "juror_vote_deadline_soon",
+        arbitrator: "0x00000000000000000000000000000000000000dd",
+        disputeId: 7n,
+        schedule: {
+          deliverAt: 35n,
+          votingStartTime: 10n,
+          votingEndTime: 50n,
+          revealPeriodEndTime: 75n,
+        },
+      })
+    ).toEqual({
+      role: "juror",
+      resource: {
+        kind: "juror_dispute",
+        goalTreasury: "0x00000000000000000000000000000000000000aa",
+        budgetTreasury: null,
+        itemId: null,
+        requestIndex: null,
+        arbitrator: "0x00000000000000000000000000000000000000dd",
+        disputeId: "7",
+      },
+      actor: null,
+      labels: {
+        goalName: "alpha",
+      },
+      schedule: {
+        deliverAt: "35",
+        votingStartAt: "10",
+        votingEndAt: "50",
+        revealEndAt: "75",
+      },
+      amounts: null,
+    });
   });
 
   it("clamps reminder delivery inside short windows", () => {

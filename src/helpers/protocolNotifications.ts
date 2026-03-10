@@ -117,10 +117,7 @@ function toStringOrNull(value: bigint | null | undefined): string | null {
 }
 
 function resourceKindForReason(reason: string): string {
-  if (
-    reason.endsWith("challenge_window_ending_soon") ||
-    reason.endsWith("challenge_deadline_soon")
-  ) {
+  if (reason.endsWith("challenge_window_ending_soon")) {
     return reason.includes("mechanism") ? "mechanism_request" : "budget_request";
   }
 
@@ -168,7 +165,6 @@ function resourceKindForReason(reason: string): string {
     reason === "juror_voting_open" ||
     reason === "juror_reveal_open" ||
     reason === "juror_vote_deadline_soon" ||
-    reason === "juror_voting_deadline_soon" ||
     reason === "juror_reveal_deadline_soon" ||
     reason === "juror_ruling_final" ||
     reason === "juror_reward_claimable" ||
