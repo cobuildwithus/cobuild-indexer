@@ -19,6 +19,7 @@ ABI generation:
 - Never change contract addresses without validating filter targets and handler assumptions.
 - Keep generated `abis.ts` in sync with deployed contract versions.
 - Keep factory event payload assumptions in `ponder.config.ts` (`GoalDeployed`, `BudgetTCRStackDeployedForGoal`, `BudgetStackDeployed`) aligned with deployed `v1-core` emitters.
+- When published `@cobuild/wire` lags a local protocol event cutover, prefer a narrowly scoped `ponder.config.ts` event-fragment override and remove it after the refreshed package is published.
 
 ## Safe Update Workflow
 

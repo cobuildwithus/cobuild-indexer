@@ -1,6 +1,7 @@
 import { ponder } from "ponder:registry";
 
 import {
+  goalContextByArbitrator,
   goalContextByBudgetStakeLedger,
   goalContextByBudgetTcr,
   goalFactoryDeployment,
@@ -75,6 +76,24 @@ ponder.on("GoalFactory:GoalDeployed", async ({ event, context }) => {
     })
     .onConflictDoUpdate({
       goalTreasury: stack.goalTreasury,
+      budgetTcr: stack.budgetTCR,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    });
+
+  await context.db
+    .insert(goalContextByArbitrator)
+    .values({
+      id: stack.arbitrator,
+      goalTreasury: stack.goalTreasury,
+      stakeVault: stack.stakeVault,
+      budgetTcr: stack.budgetTCR,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    })
+    .onConflictDoUpdate({
+      goalTreasury: stack.goalTreasury,
+      stakeVault: stack.stakeVault,
       budgetTcr: stack.budgetTCR,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,

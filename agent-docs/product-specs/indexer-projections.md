@@ -14,7 +14,10 @@
   - `goal_stakeholder_audience`
   - `tcr_item`
   - `tcr_request`
-- `tcr_request.requester` and `tcr_request.challenger` are reserved for canonical actor identities only. In the current TCR event surface, registration requester is derivable from `ItemSubmitted.submitter`; removal requester and challenger remain unknown until the protocol emits or exposes them deterministically.
+- `tcr_request.requester` and `tcr_request.challenger` are reserved for canonical actor identities only and should be populated directly from the emitted TCR event payloads.
+- `BudgetTCRProtocolEvents:RequestSubmitted` is the canonical source for `tcr_request.requester` across both registration and clearing request cycles.
+- `BudgetTCRProtocolEvents:Dispute` is the canonical source for both `tcr_request.requestIndex` selection and `tcr_request.challenger`.
+- Hard-cutover assumption: there are no live protocol deployments yet, so the local `BudgetTCRProtocolEvents` bridge only needs to decode post-cutover request/dispute logs.
 
 ## Consumer Expectations
 

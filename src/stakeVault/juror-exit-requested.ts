@@ -9,19 +9,26 @@ ponder.on("GoalStakeVault:JurorExitRequested", async ({ event, context }) => {
 
   const vault = event.log.address;
   const jurorAddress = event.args.juror;
+  const id = jurorId(vault, jurorAddress);
 
   await context.db
     .insert(juror)
     .values({
-      id: jurorId(vault, jurorAddress),
+      id,
       vault,
       jurorAddress,
-      optedIn: true,
+      optedIn: false,
       exitTime: event.args.availableAt,
+      lockedGoalAmount: 0n,
+      currentJurorWeight: 0n,
+      slashedTotal: 0n,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
-    .onConflictDoUpdate({
+    .onConflictDoNothing();
+
+  await context.db.update(juror, { id }).set({
+      optedIn: true,
       exitTime: event.args.availableAt,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,

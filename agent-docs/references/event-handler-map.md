@@ -95,12 +95,15 @@
     - `BudgetStackRemovalQueued`, `BudgetStackRemovalHandled`, and `BudgetStackTerminalizationRetried` enforce a strict existing `budget_stack` invariant (missing row is a hard projection error).
   - governance notification projections:
     - `ItemSubmitted` upserts `tcr_item`
-    - `RequestSubmitted` upserts `tcr_request`, infers a canonical requester only for registration requests via `ItemSubmitted.submitter`, and emits `budget_proposed` / `budget_removal_requested`
-    - `Dispute` updates `tcr_request` dispute state and emits `budget_proposal_challenged` / `budget_removal_challenged` without treating `tx.from` as a canonical challenger
     - `ItemStatusChange` updates `tcr_item.latestRequestIndex/currentStatus`
     - `BudgetStackActivationQueued` emits `budget_accepted`
     - `BudgetStackRemovalQueued` emits `budget_removal_accepted`
   - `BudgetStackDeployed` maintains deterministic recipient/childFlow -> budget treasury lookup KV tables and recipient FK linkage.
+- `BudgetTCRProtocolEvents:*` handler bridge in `src/tcr/**`
+  - temporary local ABI bridge for `RequestSubmitted` and `Dispute` until the refreshed `@cobuild/wire` package publishes the requester/challenger event cutover
+  - lifecycle projection semantics:
+    - `RequestSubmitted` upserts `tcr_request` from the emitted requester address and emits `budget_proposed` / `budget_removal_requested`
+    - `Dispute` updates `tcr_request` dispute state from the emitted request index + challenger fields and emits `budget_proposal_challenged` / `budget_removal_challenged`
 - `BudgetTCRFactory:*` handlers in `src/tcrFactory/**`
   - deployment-for-goal telemetry
   - dynamic discovery source for:

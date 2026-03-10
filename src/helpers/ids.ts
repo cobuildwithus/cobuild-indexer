@@ -29,6 +29,14 @@ export function jurorId(vault: Hex, juror: Hex): string {
   return `${vault.toLowerCase()}:${juror.toLowerCase()}`;
 }
 
+export function budgetUnderwriterCurrentId(budgetTreasury: Hex, account: Hex): string {
+  return `${budgetTreasury.toLowerCase()}:${account.toLowerCase()}`;
+}
+
+export function goalUnderwriterCurrentId(goalTreasury: Hex, account: Hex): string {
+  return `${goalTreasury.toLowerCase()}:${account.toLowerCase()}`;
+}
+
 export function premiumAccountId(escrow: Hex, account: Hex): string {
   return `${escrow.toLowerCase()}:${account.toLowerCase()}`;
 }
@@ -39,4 +47,21 @@ export function tcrItemId(tcrAddress: Hex, itemId: Hex): string {
 
 export function tcrRequestId(tcrAddress: Hex, itemId: Hex, requestIndex: bigint): string {
   return `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}`;
+}
+
+export function arbitratorDisputeId(arbitrator: Hex, disputeId: bigint): string {
+  return `${arbitrator.toLowerCase()}:${disputeId.toString()}`;
+}
+
+export function jurorDisputeMemberId(arbitrator: Hex, disputeId: bigint, juror: Hex): string {
+  return `${arbitrator.toLowerCase()}:${disputeId.toString()}:${juror.toLowerCase()}`;
+}
+
+export function jurorVoteReceiptId(
+  arbitrator: Hex,
+  disputeId: bigint,
+  round: bigint,
+  juror: Hex
+): string {
+  return `${arbitrator.toLowerCase()}:${disputeId.toString()}:${round.toString()}:${juror.toLowerCase()}`;
 }

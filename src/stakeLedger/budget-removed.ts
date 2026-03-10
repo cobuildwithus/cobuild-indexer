@@ -8,6 +8,7 @@ import {
   budgetTreasuryByRecipient,
   flow,
   flowRecipient,
+  goalContextByBudgetTreasury,
   goalContextByBudgetStakeLedger,
   tcrItem,
   tcrRequest,
@@ -15,6 +16,7 @@ import {
 import { flowRecipientKey, tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
   buildGoalNotificationPayload,
+  getBudgetUnderwriterAccounts,
   collectRecipientRoles,
   emitProtocolNotifications,
   getGoalRow,
@@ -99,6 +101,22 @@ ponder.on("BudgetStakeLedger:BudgetRemoved", async ({ event, context }) => {
   });
   if (!goalRow || !budgetTcr) return;
 
+  await context.db
+    .insert(goalContextByBudgetTreasury)
+    .values({
+      id: budgetTreasuryId,
+      goalTreasury: goalRow.id,
+      stakeVault: goalRow.stakeVault,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    })
+    .onConflictDoUpdate({
+      goalTreasury: goalRow.id,
+      stakeVault: goalRow.stakeVault,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    });
+
   const existingItem = await context.db.find(tcrItem, {
     id: tcrItemId(budgetTcr, recipientId),
   });
@@ -112,10 +130,15 @@ ponder.on("BudgetStakeLedger:BudgetRemoved", async ({ event, context }) => {
     context,
     goalTreasuryAddress: goalRow.id,
   });
+  const underwriters = await getBudgetUnderwriterAccounts({
+    context,
+    budgetTreasuryAddress: budgetTreasuryId,
+  });
   const requester = existingRequest?.requester ?? null;
   const recipients = collectRecipientRoles({
     goalOwner: (goalRow.owner ?? null) as `0x${string}` | null,
     stakeholderAccounts: stakeholders,
+    budgetUnderwriterAccounts: underwriters,
     requestActors: [
       {
         address: requester as `0x${string}` | null,
@@ -123,7 +146,7 @@ ponder.on("BudgetStakeLedger:BudgetRemoved", async ({ event, context }) => {
       },
       {
         address: (existingItem?.submitter ?? null) as `0x${string}` | null,
-        role: "submitter",
+        role: "proposer",
       },
     ],
   });

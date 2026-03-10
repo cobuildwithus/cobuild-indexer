@@ -1,11 +1,12 @@
 import { ponder } from "ponder:registry";
 
-import { budgetStack, goalContextByBudgetTcr, tcrItem, tcrRequest } from "ponder:schema";
+import { budgetStack, budgetTreasuryByRecipient, goalContextByBudgetTcr, tcrItem, tcrRequest } from "ponder:schema";
 import { tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
   buildGoalNotificationPayload,
   collectRecipientRoles,
   emitProtocolNotifications,
+  getBudgetUnderwriterAccounts,
   getGoalRow,
   getGoalStakeholderAccounts,
 } from "../helpers/protocolNotifications";
@@ -47,10 +48,16 @@ ponder.on("BudgetTCR:BudgetStackRemovalQueued", async ({ event, context }) => {
     context,
     goalTreasuryAddress: goalRow.id,
   });
+  const budgetLink = await context.db.find(budgetTreasuryByRecipient, { id: itemId });
+  const budgetUnderwriters = await getBudgetUnderwriterAccounts({
+    context,
+    budgetTreasuryAddress: (budgetLink?.budgetTreasury ?? null) as `0x${string}` | null,
+  });
   const requester = existingRequest?.requester ?? null;
   const recipients = collectRecipientRoles({
     goalOwner: (goalRow.owner ?? null) as `0x${string}` | null,
     stakeholderAccounts: stakeholders,
+    budgetUnderwriterAccounts: budgetUnderwriters,
     requestActors: [
       {
         address: requester as `0x${string}` | null,
@@ -58,7 +65,7 @@ ponder.on("BudgetTCR:BudgetStackRemovalQueued", async ({ event, context }) => {
       },
       {
         address: (existingItem?.submitter ?? null) as `0x${string}` | null,
-        role: "submitter",
+        role: "proposer",
       },
     ],
   });
@@ -78,6 +85,7 @@ ponder.on("BudgetTCR:BudgetStackRemovalQueued", async ({ event, context }) => {
         reason: "budget_removal_accepted",
         itemId,
         requestIndex,
+        budgetTreasury: (budgetLink?.budgetTreasury ?? null) as `0x${string}` | null,
         actorWalletAddress: requester as `0x${string}` | null,
       }),
     })),

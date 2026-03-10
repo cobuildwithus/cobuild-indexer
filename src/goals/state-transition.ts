@@ -5,8 +5,10 @@ import {
   buildGoalNotificationPayload,
   collectRecipientRoles,
   emitProtocolNotifications,
+  getGoalUnderwriterAccounts,
   getGoalRow,
   getGoalStakeholderAccounts,
+  getStakeVaultJurorAccounts,
 } from "../helpers/protocolNotifications";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
@@ -41,9 +43,22 @@ ponder.on("GoalTreasury:StateTransition", async ({ event, context }) => {
     context,
     goalTreasuryAddress: treasury,
   });
+  const jurors = await getStakeVaultJurorAccounts({
+    context,
+    stakeVaultAddress: goalRow.stakeVault,
+  });
+  const goalUnderwriters =
+    reason === "goal_succeeded" || reason === "goal_expired"
+      ? await getGoalUnderwriterAccounts({
+          context,
+          goalTreasuryAddress: treasury,
+        })
+      : [];
   const recipients = collectRecipientRoles({
     goalOwner: (goalRow.owner ?? null) as `0x${string}` | null,
     stakeholderAccounts: stakeholders,
+    goalUnderwriterAccounts: goalUnderwriters,
+    jurorAccounts: jurors,
   });
 
   await emitProtocolNotifications({

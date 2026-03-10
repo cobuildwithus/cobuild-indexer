@@ -1,21 +1,20 @@
 import { ponder } from "ponder:registry";
-import { budgetTreasuryByRecipient, goalContextByBudgetTcr, tcrItem, tcrRequest } from "ponder:schema";
+
+import { tcrItem, tcrRequest } from "ponder:schema";
 import { tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
   buildGoalNotificationPayload,
   collectRecipientRoles,
   emitProtocolNotifications,
-  getBudgetUnderwriterAccounts,
   getBigIntArg,
-  getGoalRow,
-  getGoalStakeholderAccounts,
   getHexArg,
   toRequestType,
 } from "../helpers/protocolNotifications";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
+import { getMechanismNotificationContext } from "./helpers";
 
-ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context }) => {
-  await insertProtocolEvent({ context, event, contractName: "BudgetTCR" });
+ponder.on("AllocationMechanismTCR:RequestSubmitted", async ({ event, context }) => {
+  await insertProtocolEvent({ context, event, contractName: "AllocationMechanismTCR" });
 
   const tcrAddress = event.log.address;
   const itemId = getHexArg(event.args, "_itemID", "itemID");
@@ -24,34 +23,24 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
 
   const requestType = toRequestType(getBigIntArg(event.args, "_requestType", "requestType"));
   const requester = getHexArg(event.args, "_requester", "requester");
-  const goalContext = await context.db.find(goalContextByBudgetTcr, { id: tcrAddress });
-  const goalRow = await getGoalRow({
+  const mechanismContext = await getMechanismNotificationContext({
     context,
-    goalTreasuryAddress: goalContext?.goalTreasury ?? null,
-  });
-  const stakeholders = await getGoalStakeholderAccounts({
-    context,
-    goalTreasuryAddress: goalRow?.id ?? null,
+    mechanismTcrAddress: tcrAddress,
   });
   const existingItem = await context.db.find(tcrItem, {
     id: tcrItemId(tcrAddress, itemId),
   });
-  const budgetLink =
-    requestType === "clearing"
-      ? await context.db.find(budgetTreasuryByRecipient, { id: itemId })
-      : null;
-  const budgetTreasury = (budgetLink?.budgetTreasury ?? null) as `0x${string}` | null;
 
   await context.db
     .insert(tcrRequest)
     .values({
       id: tcrRequestId(tcrAddress, itemId, requestIndex),
       tcrAddress,
-      tcrKind: "budget",
+      tcrKind: "mechanism",
       itemId,
       requestIndex,
-      goalTreasury: goalContext?.goalTreasury ?? null,
-      budgetTreasury,
+      goalTreasury: mechanismContext.goalRow?.id ?? mechanismContext.goalTreasury,
+      budgetTreasury: mechanismContext.budgetTreasury,
       requestType,
       requester,
       submittedAt: event.block.timestamp,
@@ -60,9 +49,9 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
-      goalTreasury: goalContext?.goalTreasury ?? null,
-      tcrKind: "budget",
-      budgetTreasury,
+      tcrKind: "mechanism",
+      goalTreasury: mechanismContext.goalRow?.id ?? mechanismContext.goalTreasury,
+      budgetTreasury: mechanismContext.budgetTreasury,
       requestType,
       requester,
       submittedAt: event.block.timestamp,
@@ -76,38 +65,29 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
     .values({
       id: tcrItemId(tcrAddress, itemId),
       tcrAddress,
-      tcrKind: "budget",
+      tcrKind: "mechanism",
       itemId,
-      goalTreasury: goalContext?.goalTreasury ?? null,
-      budgetTreasury,
+      goalTreasury: mechanismContext.goalRow?.id ?? mechanismContext.goalTreasury,
+      budgetTreasury: mechanismContext.budgetTreasury,
       latestRequestIndex: requestIndex,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
-      goalTreasury: goalContext?.goalTreasury ?? null,
-      tcrKind: "budget",
-      budgetTreasury,
+      tcrKind: "mechanism",
+      goalTreasury: mechanismContext.goalRow?.id ?? mechanismContext.goalTreasury,
+      budgetTreasury: mechanismContext.budgetTreasury,
       latestRequestIndex: requestIndex,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     });
 
-  if (requestType === "unknown" || !goalRow) return;
+  if (requestType === "unknown" || !mechanismContext.goalRow) return;
 
   const reason =
-    requestType === "registration" ? "budget_proposed" : "budget_removal_requested";
-  const budgetUnderwriters =
-    requestType === "clearing"
-      ? await getBudgetUnderwriterAccounts({
-          context,
-          budgetTreasuryAddress: budgetTreasury,
-        })
-      : [];
+    requestType === "registration" ? "mechanism_proposed" : "mechanism_removal_requested";
   const recipients = collectRecipientRoles({
-    goalOwner: (goalRow.owner ?? null) as `0x${string}` | null,
-    stakeholderAccounts: stakeholders,
-    budgetUnderwriterAccounts: budgetUnderwriters,
+    budgetUnderwriterAccounts: mechanismContext.underwriterAccounts,
     requestActors: [
       { address: requester, role: "requester" },
       {
@@ -123,16 +103,16 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
     notifications: recipients.map((recipient) => ({
       recipientWalletAddress: recipient.recipientWalletAddress,
       reason,
-      sourceType: "budget_request",
+      sourceType: "mechanism_request",
       sourceId: `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}:${reason}`,
       actorWalletAddress: requester,
       payload: buildGoalNotificationPayload({
         role: recipient.role,
-        goalRow,
+        goalRow: mechanismContext.goalRow,
         reason,
         itemId,
         requestIndex,
-        budgetTreasury,
+        budgetTreasury: mechanismContext.budgetTreasury,
         actorWalletAddress: requester,
       }),
     })),

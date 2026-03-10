@@ -1,17 +1,22 @@
 import { ponder } from "ponder:registry";
-import { goalContextByBudgetTcr, tcrItem } from "ponder:schema";
+
+import { tcrItem } from "ponder:schema";
 import { tcrItemId } from "../helpers/ids";
 import { getBigIntArg, getHexArg } from "../helpers/protocolNotifications";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
+import { getMechanismNotificationContext } from "./helpers";
 
-ponder.on("BudgetTCR:ItemSubmitted", async ({ event, context }) => {
-  await insertProtocolEvent({ context, event, contractName: "BudgetTCR" });
+ponder.on("AllocationMechanismTCR:ItemSubmitted", async ({ event, context }) => {
+  await insertProtocolEvent({ context, event, contractName: "AllocationMechanismTCR" });
 
   const tcrAddress = event.log.address;
   const itemId = getHexArg(event.args, "_itemID", "itemID");
   if (!itemId) return;
 
-  const goalContext = await context.db.find(goalContextByBudgetTcr, { id: tcrAddress });
+  const mechanismContext = await getMechanismNotificationContext({
+    context,
+    mechanismTcrAddress: tcrAddress,
+  });
   const evidenceGroupId = getBigIntArg(event.args, "_evidenceGroupID", "evidenceGroupID");
   const submitter = getHexArg(event.args, "_submitter", "submitter");
   const itemData = getHexArg(event.args, "_data", "data");
@@ -21,10 +26,10 @@ ponder.on("BudgetTCR:ItemSubmitted", async ({ event, context }) => {
     .values({
       id: tcrItemId(tcrAddress, itemId),
       tcrAddress,
-      tcrKind: "budget",
+      tcrKind: "mechanism",
       itemId,
-      goalTreasury: goalContext?.goalTreasury ?? null,
-      budgetTreasury: null,
+      goalTreasury: mechanismContext.goalRow?.id ?? mechanismContext.goalTreasury,
+      budgetTreasury: mechanismContext.budgetTreasury,
       submitter,
       evidenceGroupId,
       itemData,
@@ -32,9 +37,9 @@ ponder.on("BudgetTCR:ItemSubmitted", async ({ event, context }) => {
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
-      tcrKind: "budget",
-      goalTreasury: goalContext?.goalTreasury ?? null,
-      budgetTreasury: null,
+      tcrKind: "mechanism",
+      goalTreasury: mechanismContext.goalRow?.id ?? mechanismContext.goalTreasury,
+      budgetTreasury: mechanismContext.budgetTreasury,
       submitter,
       evidenceGroupId,
       itemData,

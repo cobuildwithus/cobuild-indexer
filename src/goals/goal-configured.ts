@@ -2,6 +2,7 @@ import { type Context, type Event, ponder } from "ponder:registry";
 import {
   flow,
   goalFactoryDeployment,
+  goalContextByArbitrator,
   goalContextByBudgetStakeLedger,
   goalContextByBudgetTcr,
   goalStakeholderAudience,
@@ -230,6 +231,26 @@ async function handleGoalConfigured(args: {
       })
       .onConflictDoUpdate({
         goalTreasury: treasury,
+        updatedAtBlock: event.block.number,
+        updatedAtTimestamp: event.block.timestamp,
+      });
+  }
+
+  if (goalDeployment?.arbitrator) {
+    await context.db
+      .insert(goalContextByArbitrator)
+      .values({
+        id: goalDeployment.arbitrator,
+        goalTreasury: treasury,
+        stakeVault: event.args.stakeVault,
+        budgetTcr: goalDeployment.budgetTcr,
+        updatedAtBlock: event.block.number,
+        updatedAtTimestamp: event.block.timestamp,
+      })
+      .onConflictDoUpdate({
+        goalTreasury: treasury,
+        stakeVault: event.args.stakeVault,
+        budgetTcr: goalDeployment.budgetTcr,
         updatedAtBlock: event.block.number,
         updatedAtTimestamp: event.block.timestamp,
       });

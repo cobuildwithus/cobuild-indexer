@@ -1,20 +1,19 @@
 import { ponder } from "ponder:registry";
-import { arbitratorDispute, budgetTreasuryByRecipient, goalContextByBudgetTcr, tcrItem, tcrRequest } from "ponder:schema";
+
+import { arbitratorDispute, tcrItem, tcrRequest } from "ponder:schema";
 import { arbitratorDisputeId, tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
   buildGoalNotificationPayload,
   collectRecipientRoles,
   emitProtocolNotifications,
   getBigIntArg,
-  getBudgetUnderwriterAccounts,
-  getGoalRow,
-  getGoalStakeholderAccounts,
   getHexArg,
 } from "../helpers/protocolNotifications";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
+import { getMechanismNotificationContext } from "./helpers";
 
-ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
-  await insertProtocolEvent({ context, event, contractName: "BudgetTCR" });
+ponder.on("AllocationMechanismTCR:Dispute", async ({ event, context }) => {
+  await insertProtocolEvent({ context, event, contractName: "AllocationMechanismTCR" });
 
   const tcrAddress = event.log.address;
   const itemId = getHexArg(event.args, "_itemID", "itemID");
@@ -24,39 +23,29 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
   const challenger = getHexArg(event.args, "_challenger", "challenger");
   if (!itemId || disputeId === null || requestIndex === null || !challenger) return;
 
+  const mechanismContext = await getMechanismNotificationContext({
+    context,
+    mechanismTcrAddress: tcrAddress,
+  });
+  const goalRow = mechanismContext.goalRow;
+  if (!goalRow) return;
+
   const existingItem = await context.db.find(tcrItem, {
     id: tcrItemId(tcrAddress, itemId),
   });
-
   const requestId = tcrRequestId(tcrAddress, itemId, requestIndex);
   const existingRequest = await context.db.find(tcrRequest, { id: requestId });
-  const goalContext = await context.db.find(goalContextByBudgetTcr, { id: tcrAddress });
-  const goalRow = await getGoalRow({
-    context,
-    goalTreasuryAddress: existingRequest?.goalTreasury ?? goalContext?.goalTreasury ?? null,
-  });
-  if (!goalRow) return;
-
-  const stakeholders = await getGoalStakeholderAccounts({
-    context,
-    goalTreasuryAddress: goalRow.id,
-  });
-  const budgetLink =
-    existingRequest?.requestType === "clearing"
-      ? await context.db.find(budgetTreasuryByRecipient, { id: itemId })
-      : null;
-  const budgetTreasury = (budgetLink?.budgetTreasury ?? null) as `0x${string}` | null;
 
   await context.db
     .insert(tcrRequest)
     .values({
       id: requestId,
       tcrAddress,
-      tcrKind: "budget",
+      tcrKind: "mechanism",
       itemId,
       requestIndex,
       goalTreasury: goalRow.id,
-      budgetTreasury,
+      budgetTreasury: mechanismContext.budgetTreasury,
       requestType: existingRequest?.requestType ?? "unknown",
       requester: existingRequest?.requester ?? null,
       challenger,
@@ -67,9 +56,9 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
+      tcrKind: "mechanism",
       goalTreasury: goalRow.id,
-      tcrKind: "budget",
-      budgetTreasury,
+      budgetTreasury: mechanismContext.budgetTreasury,
       requester: existingRequest?.requester ?? null,
       challenger,
       disputeId,
@@ -79,22 +68,12 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
       updatedAtTimestamp: event.block.timestamp,
     });
 
-  const reason =
-    existingRequest?.requestType === "clearing"
-      ? "budget_removal_challenged"
-      : "budget_proposal_challenged";
-  const budgetUnderwriters =
-    existingRequest?.requestType === "clearing"
-      ? await getBudgetUnderwriterAccounts({
-          context,
-          budgetTreasuryAddress: budgetTreasury,
-        })
-      : [];
   const disputeRow = arbitratorAddress
     ? await context.db.find(arbitratorDispute, {
         id: arbitratorDisputeId(arbitratorAddress, disputeId),
       })
     : null;
+
   if (arbitratorAddress) {
     await context.db
       .insert(arbitratorDispute)
@@ -104,9 +83,9 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
         arbitrable: tcrAddress,
         goalTreasury: goalRow.id,
         stakeVault: goalRow.stakeVault,
-        budgetTreasury,
+        budgetTreasury: mechanismContext.budgetTreasury,
         tcrAddress,
-        tcrKind: "budget",
+        tcrKind: "mechanism",
         itemId,
         requestIndex,
         disputeId,
@@ -128,9 +107,9 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
         arbitrable: tcrAddress,
         goalTreasury: goalRow.id,
         stakeVault: goalRow.stakeVault,
-        budgetTreasury,
+        budgetTreasury: mechanismContext.budgetTreasury,
         tcrAddress,
-        tcrKind: "budget",
+        tcrKind: "mechanism",
         itemId,
         requestIndex,
         updatedAtBlock: event.block.number,
@@ -139,9 +118,7 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
   }
 
   const recipients = collectRecipientRoles({
-    goalOwner: (goalRow.owner ?? null) as `0x${string}` | null,
-    stakeholderAccounts: stakeholders,
-    budgetUnderwriterAccounts: budgetUnderwriters,
+    budgetUnderwriterAccounts: mechanismContext.underwriterAccounts,
     requestActors: [
       {
         address: (existingRequest?.requester ?? null) as `0x${string}` | null,
@@ -160,17 +137,17 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
     event,
     notifications: recipients.map((recipient) => ({
       recipientWalletAddress: recipient.recipientWalletAddress,
-      reason,
-      sourceType: "budget_request",
-      sourceId: `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}:${reason}`,
+      reason: "mechanism_challenged",
+      sourceType: "mechanism_request",
+      sourceId: `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}:mechanism_challenged`,
       actorWalletAddress: challenger,
       payload: buildGoalNotificationPayload({
         role: recipient.role,
         goalRow,
-        reason,
+        reason: "mechanism_challenged",
         itemId,
         requestIndex,
-        budgetTreasury,
+        budgetTreasury: mechanismContext.budgetTreasury,
         actorWalletAddress: challenger,
       }),
     })),

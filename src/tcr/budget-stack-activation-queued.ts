@@ -62,7 +62,7 @@ ponder.on("BudgetTCR:BudgetStackActivationQueued", async ({ event, context }) =>
       },
       {
         address: (existingItem?.submitter ?? null) as `0x${string}` | null,
-        role: "submitter",
+        role: "proposer",
       },
     ],
   });

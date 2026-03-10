@@ -1,11 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Hex } from "viem";
 vi.mock("ponder:schema", () => ({
+  budgetUnderwriterAudience: {},
+  budgetUnderwriterCurrent: {},
   goalStakeholderAudience: {},
   goalTreasury: {},
+  goalUnderwriterAudience: {},
+  goalUnderwriterCurrent: {},
+  juror: {},
   protocolNotificationOutbox: {},
+  protocolNotificationSchedule: {},
   stakePosition: {},
   stakeVault: {},
+  stakeVaultJurorAudience: {},
 }));
 
 const {
@@ -63,7 +70,7 @@ describe("protocol notification helpers", () => {
         },
         {
           address: "0x0000000000000000000000000000000000000003",
-          role: "submitter",
+          role: "proposer",
         },
       ],
     });
@@ -79,7 +86,34 @@ describe("protocol notification helpers", () => {
       },
       {
         recipientWalletAddress: "0x0000000000000000000000000000000000000003",
-        role: "submitter",
+        role: "proposer",
+      },
+    ]);
+  });
+
+  it("prefers juror and request-actor roles over underwriter and owner roles", () => {
+    const recipientRoles = collectRecipientRoles({
+      goalOwner: "0x0000000000000000000000000000000000000001",
+      stakeholderAccounts: ["0x0000000000000000000000000000000000000001"],
+      goalUnderwriterAccounts: ["0x0000000000000000000000000000000000000001"],
+      budgetUnderwriterAccounts: ["0x0000000000000000000000000000000000000001"],
+      jurorAccounts: ["0x0000000000000000000000000000000000000001"],
+      requestActors: [
+        {
+          address: "0x0000000000000000000000000000000000000002",
+          role: "proposer",
+        },
+      ],
+    });
+
+    expect(recipientRoles).toEqual([
+      {
+        recipientWalletAddress: "0x0000000000000000000000000000000000000001",
+        role: "juror",
+      },
+      {
+        recipientWalletAddress: "0x0000000000000000000000000000000000000002",
+        role: "proposer",
       },
     ]);
   });
@@ -88,6 +122,7 @@ describe("protocol notification helpers", () => {
     const goalRow = {
       id: "0x00000000000000000000000000000000000000aa" as Hex,
       owner: "0x00000000000000000000000000000000000000bb" as Hex,
+      stakeVault: "0x00000000000000000000000000000000000000ee" as Hex,
       canonicalRouteSlug: "alpha",
     };
 
@@ -111,6 +146,8 @@ describe("protocol notification helpers", () => {
         itemId:
           "0x1111111111111111111111111111111111111111111111111111111111111111",
         requestIndex: "4",
+        arbitrator: null,
+        disputeId: null,
       },
       actor: {
         walletAddress: "0x00000000000000000000000000000000000000dd",
@@ -118,6 +155,8 @@ describe("protocol notification helpers", () => {
       labels: {
         goalName: "alpha",
       },
+      schedule: null,
+      amounts: null,
     });
 
     expect(
@@ -134,11 +173,15 @@ describe("protocol notification helpers", () => {
         budgetTreasury: null,
         itemId: null,
         requestIndex: null,
+        arbitrator: null,
+        disputeId: null,
       },
       actor: null,
       labels: {
         goalName: "alpha",
       },
+      schedule: null,
+      amounts: null,
     });
   });
 });

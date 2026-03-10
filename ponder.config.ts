@@ -1,12 +1,14 @@
 import { createConfig, factory } from "ponder";
 import { config, getChainsAndRpcUrls, IndexerConfig } from "./src/lib/config";
 import {
+  allocationMechanismTcrAbi as AllocationMechanismTCRAbi,
   baseEntrypoints,
   budgetStakeLedgerAbi as BudgetStakeLedgerAbi,
   budgetTcrAbi as BudgetTCRAbi,
   budgetTcrFactoryAbi as BudgetTCRFactoryAbi,
   budgetTreasuryAbi as BudgetTreasuryAbi,
   cobuildSwapImplAbi,
+  erc20VotesArbitratorAbi as ERC20VotesArbitratorAbi,
   flowAbi as FlowAbi,
   goalFactoryAbi as GoalFactoryAbi,
   goalFlowAllocationLedgerPipelineAbi as GoalFlowAllocationLedgerPipelineAbi,
@@ -19,7 +21,7 @@ import {
   underwriterSlasherRouterAbi as UnderwriterSlasherRouterAbi,
 } from "@cobuild/wire";
 import { contracts } from "./addresses";
-import { erc20Abi, getAbiItem, parseAbiItem } from "viem";
+import { erc20Abi, getAbiItem, parseAbiItem, type Abi } from "viem";
 import {
   jbControllerAbi,
   jbMultiTerminalAbi,
@@ -61,7 +63,47 @@ const BUDGET_STACK_DEPLOYED_FROM_FACTORY = parseAbiItem(
   "event BudgetStackDeployed(address indexed budgetTCR, bytes32 indexed itemID, address indexed childFlow, address budgetTreasury, address premiumEscrow, address strategy)"
 );
 
+const BUDGET_ALLOCATION_MECHANISM_DEPLOYED_FROM_FACTORY = getAbiItem({
+  abi: BudgetTCRFactoryAbi,
+  name: "BudgetAllocationMechanismDeployed",
+});
+
+// Published @cobuild/wire may lag the latest local protocol event cutover, so
+// the changed BudgetTCR event fragments are pinned here until the next wire release.
+const BUDGET_TCR_REQUEST_SUBMITTED = {
+  type: "event",
+  name: "RequestSubmitted",
+  anonymous: false,
+  inputs: [
+    { indexed: true, internalType: "bytes32", name: "_itemID", type: "bytes32" },
+    { indexed: true, internalType: "uint256", name: "_requestIndex", type: "uint256" },
+    { indexed: true, internalType: "enum IGeneralizedTCR.Status", name: "_requestType", type: "uint8" },
+    { indexed: false, internalType: "address", name: "_requester", type: "address" },
+  ],
+} as const satisfies Abi[number];
+
+const BUDGET_TCR_DISPUTE = {
+  type: "event",
+  name: "Dispute",
+  anonymous: false,
+  inputs: [
+    { indexed: true, internalType: "contract IArbitrator", name: "_arbitrator", type: "address" },
+    { indexed: true, internalType: "uint256", name: "_disputeID", type: "uint256" },
+    { indexed: false, internalType: "uint256", name: "_metaEvidenceID", type: "uint256" },
+    { indexed: false, internalType: "uint256", name: "_evidenceGroupID", type: "uint256" },
+    { indexed: false, internalType: "bytes32", name: "_itemID", type: "bytes32" },
+    { indexed: false, internalType: "uint256", name: "_requestIndex", type: "uint256" },
+    { indexed: false, internalType: "address", name: "_challenger", type: "address" },
+  ],
+} as const satisfies Abi[number];
+
+const BudgetTCRProtocolEventsAbi = [
+  BUDGET_TCR_REQUEST_SUBMITTED,
+  BUDGET_TCR_DISPUTE,
+] as const satisfies Abi;
+
 type GoalFactoryStackAddressParameter =
+  | "stack.arbitrator"
   | "stack.goalFlow"
   | "stack.goalTreasury"
   | "stack.goalFlowAllocationLedgerPipeline"
@@ -321,6 +363,42 @@ export default createConfig({
         address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
         event: BUDGET_TCR_STACK_DEPLOYED_FOR_GOAL,
         parameter: "budgetTCR",
+      }),
+      startBlock: SCAFFOLD_START_BLOCK,
+    },
+    BudgetTCRProtocolEvents: {
+      abi: BudgetTCRProtocolEventsAbi,
+      chain: "base",
+      address: factory({
+        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        event: BUDGET_TCR_STACK_DEPLOYED_FOR_GOAL,
+        parameter: "budgetTCR",
+      }),
+      startBlock: SCAFFOLD_START_BLOCK,
+    },
+    ERC20VotesArbitrator: {
+      abi: ERC20VotesArbitratorAbi,
+      chain: "base",
+      address: goalFactoryStackAddress("stack.arbitrator"),
+      startBlock: SCAFFOLD_START_BLOCK,
+    },
+    AllocationMechanismTCR: {
+      abi: AllocationMechanismTCRAbi,
+      chain: "base",
+      address: factory({
+        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        event: BUDGET_ALLOCATION_MECHANISM_DEPLOYED_FROM_FACTORY,
+        parameter: "allocationMechanism",
+      }),
+      startBlock: SCAFFOLD_START_BLOCK,
+    },
+    MechanismERC20VotesArbitrator: {
+      abi: ERC20VotesArbitratorAbi,
+      chain: "base",
+      address: factory({
+        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        event: BUDGET_ALLOCATION_MECHANISM_DEPLOYED_FROM_FACTORY,
+        parameter: "allocationMechanismArbitrator",
       }),
       startBlock: SCAFFOLD_START_BLOCK,
     },

@@ -8,6 +8,7 @@ import {
   budgetTreasuryByRecipient,
   flow,
   flowRecipient,
+  goalContextByBudgetTreasury,
   goalContextByBudgetStakeLedger,
   tcrItem,
   tcrRequest,
@@ -99,6 +100,22 @@ ponder.on("BudgetStakeLedger:BudgetRegistered", async ({ event, context }) => {
   });
   if (!goalRow || !budgetTcr) return;
 
+  await context.db
+    .insert(goalContextByBudgetTreasury)
+    .values({
+      id: budgetTreasuryId,
+      goalTreasury: goalRow.id,
+      stakeVault: goalRow.stakeVault,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    })
+    .onConflictDoUpdate({
+      goalTreasury: goalRow.id,
+      stakeVault: goalRow.stakeVault,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    });
+
   const existingItem = await context.db.find(tcrItem, {
     id: tcrItemId(budgetTcr, recipientId),
   });
@@ -123,7 +140,7 @@ ponder.on("BudgetStakeLedger:BudgetRegistered", async ({ event, context }) => {
       },
       {
         address: (existingItem?.submitter ?? null) as `0x${string}` | null,
-        role: "submitter",
+        role: "proposer",
       },
     ],
   });

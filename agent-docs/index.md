@@ -30,7 +30,7 @@ This index is the table of contents for durable, repository-local context that a
 | `agent-docs/references/event-handler-map.md` | Event/block handler inventory and touched tables. | `src/contracts/**`, `ponder.config.ts` | Indexer Maintainers | Per indexed-event PR | High | 2026-03-10 |
 | `agent-docs/references/schema-relations-map.md` | Table/PK/index/relations map and identifier semantics. | `ponder.schema.ts` | Indexer Maintainers | Per schema PR | High | 2026-03-10 |
 | `agent-docs/references/rpc-chain-config-map.md` | Chain scope, start-block, and RPC failover model. | `src/lib/config.ts`, `src/lib/rpc-transport.ts`, `ponder.config.ts` | Indexer Maintainers | Per infra/config PR | High | 2026-03-05 |
-| `agent-docs/references/address-abi-provenance.md` | Address and ABI source-of-truth and update workflow. | `addresses*.ts`, `wagmi.config.ts`, `abis.ts` | Indexer Maintainers | Per deployment/ABI PR | High | 2026-03-05 |
+| `agent-docs/references/address-abi-provenance.md` | Address and ABI source-of-truth and update workflow. | `addresses*.ts`, `wagmi.config.ts`, `abis.ts` | Indexer Maintainers | Per deployment/ABI PR | High | 2026-03-10 |
 | `agent-docs/references/api-query-surface.md` | GraphQL/API surface, expectations, and caveats. | `src/api/index.ts`, schema/query consumers | Indexer Maintainers | Per API/query-contract PR | High | 2026-02-25 |
 | `agent-docs/references/testing-ci-map.md` | Verification and CI enforcement map, including published-wire dependency guards. | `.github/workflows/**`, `scripts/**`, package scripts | Indexer Maintainers | Per CI/process PR | Medium | 2026-03-07 |
 | `agent-docs/references/ponder-llms.txt` | External Ponder reference pack. | Ponder docs | Indexer Maintainers | Quarterly | Low | 2026-02-25 |
@@ -49,4 +49,5 @@ This index is the table of contents for durable, repository-local context that a
 - For multi-file/high-risk work, add a plan in `agent-docs/exec-plans/active/`.
 - Keep `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` current for active coding tasks.
 - Active treasury terminal failure event sync plan: `agent-docs/exec-plans/active/2026-03-09-treasury-terminal-failure-event-sync.md`.
+- Active TCR request-actor event sync plan: `agent-docs/exec-plans/active/2026-03-10-tcr-request-actor-event-sync.md`.
 - Active factory-discovery cutover plan: `agent-docs/exec-plans/active/2026-03-05-factory-discovery-cutover.md`.

@@ -605,6 +605,36 @@ export const protocolNotificationOutbox = onchainTable(
 );
 
 /**
+ * Recipient-resolved scheduled protocol notification intents.
+ * Rows are immutable and replay-safe; downstream workers materialize them once `deliverAt` is due.
+ */
+export const protocolNotificationSchedule = onchainTable(
+  "protocol_notification_schedule",
+  (t) => ({
+    id: t.text().notNull(), // `${sourceType}:${sourceId}:${recipientWalletAddress}`
+    chainId: t.integer().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.bigint().notNull(),
+    txHash: t.hex().notNull(),
+    logIndex: t.integer().notNull(),
+    deliverAt: t.bigint().notNull(),
+    recipientWalletAddress: t.hex().notNull(),
+    reason: t.text().notNull(),
+    sourceType: t.text().notNull(),
+    sourceId: t.text().notNull(),
+    actorWalletAddress: t.hex(),
+    payload: t.json().notNull(),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.chainId, table.id] }),
+    chainDeliveryIdx: index().on(table.chainId, table.deliverAt, table.blockNumber, table.logIndex),
+    recipientIdx: index().on(table.recipientWalletAddress, table.deliverAt),
+    sourceIdx: index().on(table.sourceType, table.sourceId),
+    txLogIdx: index().on(table.txHash, table.logIndex),
+  })
+);
+
+/**
  * Flow entity state (1 row per Flow contract address).
  */
 export const flow = onchainTable("flow", (t) => ({
@@ -871,6 +901,111 @@ export const goalContextByBudgetStakeLedger = onchainTable(
 );
 
 /**
+ * Deterministic budget treasury -> goal treasury lookup.
+ */
+export const goalContextByBudgetTreasury = onchainTable(
+  "goal_context_by_budget_treasury",
+  (t) => ({
+    id: t.hex().primaryKey(), // budgetTreasury
+    goalTreasury: t.hex().notNull(),
+    stakeVault: t.hex(),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  })
+);
+
+/**
+ * Deterministic arbitrator -> goal treasury lookup.
+ */
+export const goalContextByArbitrator = onchainTable("goal_context_by_arbitrator", (t) => ({
+  id: t.hex().primaryKey(), // arbitrator
+  goalTreasury: t.hex().notNull(),
+  stakeVault: t.hex(),
+  budgetTcr: t.hex(),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
+/**
+ * Deterministic allocation-mechanism TCR -> budget/goal context lookup.
+ */
+export const budgetContextByMechanismTcr = onchainTable(
+  "budget_context_by_mechanism_tcr",
+  (t) => ({
+    id: t.hex().primaryKey(), // allocationMechanismTcr
+    goalTreasury: t.hex().notNull(),
+    budgetTreasury: t.hex().notNull(),
+    stakeVault: t.hex(),
+    budgetTcr: t.hex(),
+    recipientId: t.hex(),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    budgetTreasuryIdx: index().on(t.budgetTreasury),
+    goalTreasuryIdx: index().on(t.goalTreasury),
+  })
+);
+
+/**
+ * Deterministic mechanism arbitrator -> budget/goal context lookup.
+ */
+export const budgetContextByMechanismArbitrator = onchainTable(
+  "budget_context_by_mechanism_arbitrator",
+  (t) => ({
+    id: t.hex().primaryKey(), // allocationMechanismArbitrator
+    allocationMechanismTcr: t.hex().notNull(),
+    goalTreasury: t.hex().notNull(),
+    budgetTreasury: t.hex().notNull(),
+    stakeVault: t.hex(),
+    budgetTcr: t.hex(),
+    recipientId: t.hex(),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    mechanismTcrIdx: index().on(t.allocationMechanismTcr),
+    budgetTreasuryIdx: index().on(t.budgetTreasury),
+    goalTreasuryIdx: index().on(t.goalTreasury),
+  })
+);
+
+/**
+ * Canonical budget-scoped mechanism topology keyed by allocation-mechanism TCR.
+ */
+export const budgetMechanismRegistry = onchainTable(
+  "budget_mechanism_registry",
+  (t) => ({
+    id: t.hex().primaryKey(), // allocationMechanismTcr
+    goalTreasury: t.hex().notNull(),
+    budgetTreasury: t.hex().notNull(),
+    stakeVault: t.hex(),
+    budgetTcr: t.hex(),
+    recipientId: t.hex(),
+    childFlow: t.hex(),
+    strategy: t.hex(),
+    fundingEscrow: t.hex(),
+    allocationMechanismArbitrator: t.hex(),
+    roundFactory: t.hex(),
+    activeItemId: t.hex(),
+    activeMechanism: t.hex(),
+    activeFundingEscrow: t.hex(),
+    activePayoutRecipient: t.hex(),
+    activeDeploymentArbitrator: t.hex(),
+    activeAuxiliary: t.hex(),
+    activatedAt: t.bigint(),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    budgetTreasuryIdx: index().on(t.budgetTreasury),
+    goalTreasuryIdx: index().on(t.goalTreasury),
+    mechanismArbitratorIdx: index().on(t.allocationMechanismArbitrator),
+    recipientIdIdx: index().on(t.recipientId),
+  })
+);
+
+/**
  * Budget TCR item state used for request-cycle notifications.
  */
 export const tcrItem = onchainTable(
@@ -878,8 +1013,10 @@ export const tcrItem = onchainTable(
   (t) => ({
     id: t.text().primaryKey(), // `${tcrAddress}:${itemId}`
     tcrAddress: t.hex().notNull(),
+    tcrKind: t.text().notNull().default("budget"), // "budget" | "mechanism"
     itemId: t.hex().notNull(),
     goalTreasury: t.hex(),
+    budgetTreasury: t.hex(),
     submitter: t.hex(),
     evidenceGroupId: t.bigint(),
     latestRequestIndex: t.bigint(),
@@ -891,6 +1028,7 @@ export const tcrItem = onchainTable(
   (t) => ({
     tcrItemIdx: index().on(t.tcrAddress, t.itemId),
     goalTreasuryIdx: index().on(t.goalTreasury),
+    budgetTreasuryIdx: index().on(t.budgetTreasury),
   })
 );
 
@@ -903,9 +1041,11 @@ export const tcrRequest = onchainTable(
   (t) => ({
     id: t.text().primaryKey(), // `${tcrAddress}:${itemId}:${requestIndex}`
     tcrAddress: t.hex().notNull(),
+    tcrKind: t.text().notNull().default("budget"), // "budget" | "mechanism"
     itemId: t.hex().notNull(),
     requestIndex: t.bigint().notNull(),
     goalTreasury: t.hex(),
+    budgetTreasury: t.hex(),
     requestType: t.text().notNull(), // "registration" | "clearing" | "unknown"
     requester: t.hex(),
     challenger: t.hex(),
@@ -920,6 +1060,7 @@ export const tcrRequest = onchainTable(
     tcrRequestIdx: index().on(t.tcrAddress, t.itemId, t.requestIndex),
     requestDisputeIdx: index().on(t.disputeId),
     goalTreasuryIdx: index().on(t.goalTreasury),
+    budgetTreasuryIdx: index().on(t.budgetTreasury),
   })
 );
 
@@ -1137,6 +1278,83 @@ export const goalStakeholderAudience = onchainTable("goal_stakeholder_audience",
 }));
 
 /**
+ * Current budget-underwriter state keyed by budget treasury + account.
+ */
+export const budgetUnderwriterCurrent = onchainTable(
+  "budget_underwriter_current",
+  (t) => ({
+    id: t.text().primaryKey(), // `${budgetTreasury}:${account}`
+    goalTreasury: t.hex().notNull(),
+    stakeVault: t.hex(),
+    budgetTreasury: t.hex().notNull(),
+    recipientId: t.hex(),
+    account: t.hex().notNull(),
+    allocatedStake: t.bigint().notNull().default(0n),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    budgetAccountIdx: index().on(t.budgetTreasury, t.account),
+    goalAccountIdx: index().on(t.goalTreasury, t.account),
+    accountIdx: index().on(t.account, t.updatedAtBlock),
+  })
+);
+
+/**
+ * Current budget-underwriter audience keyed by budget treasury.
+ */
+export const budgetUnderwriterAudience = onchainTable("budget_underwriter_audience", (t) => ({
+  id: t.hex().primaryKey(), // budgetTreasury
+  goalTreasury: t.hex().notNull(),
+  stakeVault: t.hex(),
+  accounts: t.hex().array().notNull().default([]),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
+/**
+ * Current goal-underwriter aggregate keyed by goal treasury + account.
+ */
+export const goalUnderwriterCurrent = onchainTable(
+  "goal_underwriter_current",
+  (t) => ({
+    id: t.text().primaryKey(), // `${goalTreasury}:${account}`
+    goalTreasury: t.hex().notNull(),
+    stakeVault: t.hex(),
+    account: t.hex().notNull(),
+    allocatedStake: t.bigint().notNull().default(0n),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    goalAccountIdx: index().on(t.goalTreasury, t.account),
+    accountIdx: index().on(t.account, t.updatedAtBlock),
+  })
+);
+
+/**
+ * Current goal-underwriter audience keyed by goal treasury.
+ */
+export const goalUnderwriterAudience = onchainTable("goal_underwriter_audience", (t) => ({
+  id: t.hex().primaryKey(), // goalTreasury
+  stakeVault: t.hex(),
+  accounts: t.hex().array().notNull().default([]),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
+/**
+ * Current juror audience keyed by stake vault.
+ */
+export const stakeVaultJurorAudience = onchainTable("stake_vault_juror_audience", (t) => ({
+  id: t.hex().primaryKey(), // stakeVault
+  goalTreasury: t.hex(),
+  accounts: t.hex().array().notNull().default([]),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
+/**
  * Juror state within a stake vault.
  */
 export const juror = onchainTable("juror", (t) => ({
@@ -1149,11 +1367,114 @@ export const juror = onchainTable("juror", (t) => ({
   exitTime: t.bigint(), // uint64
   delegate: t.hex(),
   slasher: t.hex(),
+  lockedGoalAmount: t.bigint().notNull().default(0n),
+  currentJurorWeight: t.bigint().notNull().default(0n),
   slashedTotal: t.bigint().notNull().default(0n),
 
   updatedAtBlock: t.bigint().notNull(),
   updatedAtTimestamp: t.bigint().notNull(),
 }));
+
+/**
+ * Arbitrator dispute lifecycle keyed by arbitrator + dispute id.
+ */
+export const arbitratorDispute = onchainTable(
+  "arbitrator_dispute",
+  (t) => ({
+    id: t.text().primaryKey(), // `${arbitrator}:${disputeId}`
+    arbitrator: t.hex().notNull(),
+    arbitrable: t.hex(),
+    goalTreasury: t.hex(),
+    stakeVault: t.hex(),
+    budgetTreasury: t.hex(),
+    tcrAddress: t.hex(),
+    tcrKind: t.text(), // "budget" | "mechanism"
+    itemId: t.hex(),
+    requestIndex: t.bigint(),
+    disputeId: t.bigint().notNull(),
+    currentRound: t.bigint().notNull().default(0n),
+    jurorAddresses: t.hex().array().notNull().default([]),
+    votingStartTime: t.bigint(),
+    votingEndTime: t.bigint(),
+    revealPeriodEndTime: t.bigint(),
+    creationBlock: t.bigint(),
+    arbitrationCost: t.bigint(),
+    extraData: t.hex(),
+    choices: t.bigint(),
+    ruling: t.integer(),
+    executedAt: t.bigint(),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    arbitratorDisputeIdx: index().on(t.arbitrator, t.disputeId),
+    goalDisputeIdx: index().on(t.goalTreasury, t.disputeId),
+    budgetTreasuryDisputeIdx: index().on(t.budgetTreasury, t.disputeId),
+    tcrDisputeIdx: index().on(t.tcrAddress, t.disputeId),
+  })
+);
+
+/**
+ * Snapshot juror membership for a dispute at creation time.
+ */
+export const jurorDisputeMember = onchainTable(
+  "juror_dispute_member",
+  (t) => ({
+    id: t.text().primaryKey(), // `${arbitrator}:${disputeId}:${juror}`
+    arbitrator: t.hex().notNull(),
+    disputeId: t.bigint().notNull(),
+    goalTreasury: t.hex(),
+    stakeVault: t.hex(),
+    jurorAddress: t.hex().notNull(),
+    snapshotWeight: t.bigint().notNull().default(0n),
+    createdAtBlock: t.bigint().notNull(),
+    createdAtTimestamp: t.bigint().notNull(),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    disputeJurorIdx: index().on(t.arbitrator, t.disputeId, t.jurorAddress),
+    goalJurorIdx: index().on(t.goalTreasury, t.jurorAddress),
+  })
+);
+
+/**
+ * Current juror vote receipt state keyed by arbitrator + dispute + round + juror.
+ */
+export const jurorVoteReceipt = onchainTable(
+  "juror_vote_receipt",
+  (t) => ({
+    id: t.text().primaryKey(), // `${arbitrator}:${disputeId}:${round}:${juror}`
+    arbitrator: t.hex().notNull(),
+    disputeId: t.bigint().notNull(),
+    round: t.bigint().notNull().default(0n),
+    jurorAddress: t.hex().notNull(),
+    hasCommitted: t.boolean().notNull().default(false),
+    hasRevealed: t.boolean().notNull().default(false),
+    commitHash: t.hex(),
+    choice: t.bigint(),
+    reasonText: t.text(),
+    votes: t.bigint(),
+    committedAt: t.bigint(),
+    revealedAt: t.bigint(),
+    rewardAmount: t.bigint(),
+    rewardWithdrawnAt: t.bigint(),
+    slashRewardGoalAmount: t.bigint(),
+    slashRewardCobuildAmount: t.bigint(),
+    slashRewardsWithdrawnAt: t.bigint(),
+    snapshotVotes: t.bigint(),
+    slashWeight: t.bigint(),
+    missedReveal: t.boolean(),
+    slashRecipient: t.hex(),
+    slashedAt: t.bigint(),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    disputeRoundJurorIdx: index().on(t.arbitrator, t.disputeId, t.round, t.jurorAddress),
+    disputeJurorIdx: index().on(t.arbitrator, t.disputeId, t.jurorAddress),
+  })
+);
 
 export const premiumEscrow = onchainTable("premium_escrow", (t) => ({
   id: t.hex().primaryKey(),

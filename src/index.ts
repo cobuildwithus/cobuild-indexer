@@ -1,6 +1,13 @@
 /**
  * Unified CoBuild indexer registry (legacy + scaffold stacks).
  */
+import "./arbitrator/dispute-created";
+import "./arbitrator/dispute-executed";
+import "./arbitrator/reward-withdrawn";
+import "./arbitrator/slash-rewards-withdrawn";
+import "./arbitrator/vote-committed";
+import "./arbitrator/vote-revealed";
+import "./arbitrator/voter-slashed";
 import "./budgets/budget-configured";
 import "./budgets/budget-finalized";
 import "./budgets/donation-recorded";
@@ -79,6 +86,15 @@ import "./hook/goal-funding-processed";
 import "./hook/goal-success-settlement-processed";
 import "./hook/initialized";
 import "./jurorSlasherRouter/slasher-authorization-set";
+import "./mechanismTcr/dispute";
+import "./mechanismTcr/item-status-change";
+import "./mechanismTcr/item-submitted";
+import "./mechanismTcr/mechanism-activated";
+import "./mechanismTcr/mechanism-activation-queued";
+import "./mechanismTcr/mechanism-removed";
+import "./mechanismTcr/mechanism-removal-queued";
+import "./mechanismTcr/request-submitted";
+import "./mechanismTcr/ruling";
 import "./pipeline/child-allocation-sync-attempted";
 import "./pipeline/child-allocation-sync-failed";
 import "./pipeline/child-allocation-sync-skipped";
