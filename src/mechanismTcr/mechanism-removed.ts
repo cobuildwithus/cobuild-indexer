@@ -46,6 +46,7 @@ ponder.on("AllocationMechanismTCR:MechanismRemoved", async ({ event, context }) 
   });
   const requester = (existingRequest?.requester ?? null) as `0x${string}` | null;
   const recipients = collectRecipientRoles({
+    budgetController: mechanismContext.budgetController,
     budgetUnderwriterAccounts: mechanismContext.underwriterAccounts,
     requestActors: [
       { address: requester, role: "requester" },

@@ -2,8 +2,11 @@ import type { Context, Event } from "ponder:registry";
 import type { Hex } from "viem";
 
 import {
+  budgetTreasury,
   budgetUnderwriterAudience,
   budgetUnderwriterCurrent,
+  goalContextByBudgetTreasury,
+  goalContextByBudgetStakeLedger,
   goalStakeholderAudience,
   goalTreasury,
   goalUnderwriterAudience,
@@ -14,6 +17,8 @@ import {
   stakePosition,
   stakeVault,
   stakeVaultJurorAudience,
+  tcrItem,
+  tcrRequest,
 } from "ponder:schema";
 
 import {
@@ -28,6 +33,7 @@ export type RecipientRole =
   | "requester"
   | "challenger"
   | "proposer"
+  | "budget_controller"
   | "goal_owner"
   | "goal_stakeholder"
   | "goal_underwriter"
@@ -61,11 +67,32 @@ type GoalRow = {
   canonicalRouteSlug: string | null;
 };
 
+function toGoalRow(
+  row:
+    | {
+        id: Hex;
+        owner: Hex | null;
+        stakeVault: Hex | null;
+        canonicalRouteSlug: string | null;
+      }
+    | null
+    | undefined
+): GoalRow | null {
+  if (!row) return null;
+  return {
+    id: normalizeHex(row.id),
+    owner: normalizeHexOrNull(row.owner),
+    stakeVault: normalizeHexOrNull(row.stakeVault),
+    canonicalRouteSlug: row.canonicalRouteSlug ?? null,
+  };
+}
+
 const ROLE_PRIORITY: Record<RecipientRole, number> = {
-  requester: 7,
-  challenger: 7,
-  proposer: 6,
-  juror: 5,
+  requester: 8,
+  challenger: 8,
+  proposer: 7,
+  juror: 6,
+  budget_controller: 5,
   goal_owner: 4,
   budget_underwriter: 3,
   goal_underwriter: 2,
@@ -94,6 +121,10 @@ function resourceKindForReason(reason: string): string {
     reason === "goal_active" ||
     reason === "goal_succeeded" ||
     reason === "goal_expired" ||
+    reason === "goal_success_assertion_registered" ||
+    reason === "goal_success_assertion_cleared" ||
+    reason === "goal_success_assertion_resolution_fail_closed" ||
+    reason === "goal_success_assertion_reassert_grace_activated" ||
     reason === "underwriter_withdrawal_prep_required"
   ) {
     return "goal";
@@ -106,6 +137,11 @@ function resourceKindForReason(reason: string): string {
     reason === "budget_succeeded" ||
     reason === "budget_failed" ||
     reason === "budget_expired" ||
+    reason === "budget_success_assertion_registered" ||
+    reason === "budget_success_assertion_cleared" ||
+    reason === "budget_success_assertion_resolution_fail_closed" ||
+    reason === "budget_success_assertion_reassert_grace_activated" ||
+    reason === "budget_success_resolution_disabled" ||
     reason === "underwriter_slashed" ||
     reason === "premium_claimable" ||
     reason === "premium_claimed"
@@ -470,13 +506,16 @@ export async function getGoalRow(args: {
   const goalTreasuryAddress = normalizeHexOrNull(args.goalTreasuryAddress);
   if (!goalTreasuryAddress) return null;
   const row = await args.context.db.find(goalTreasury, { id: goalTreasuryAddress });
-  if (!row) return null;
-  return {
-    id: normalizeHex(row.id),
-    owner: normalizeHexOrNull(row.owner),
-    stakeVault: normalizeHexOrNull(row.stakeVault),
-    canonicalRouteSlug: row.canonicalRouteSlug ?? null,
-  };
+  return toGoalRow(
+    row as
+      | {
+          id: Hex;
+          owner: Hex | null;
+          stakeVault: Hex | null;
+          canonicalRouteSlug: string | null;
+        }
+      | null
+  );
 }
 
 export async function getGoalStakeholderAccounts(args: {
@@ -533,6 +572,100 @@ export async function getStakeVaultJurorAccounts(args: {
   return Array.isArray(audience?.accounts)
     ? uniqueSortedHex(audience.accounts as Hex[])
     : [];
+}
+
+export async function getBudgetLifecycleNotificationContext(args: {
+  context: NotificationContext;
+  budgetTreasuryAddress: Hex | null | undefined;
+}): Promise<{
+  goalRow: GoalRow | null;
+  budgetController: Hex | null;
+  itemId: Hex | null;
+  requester: Hex | null;
+  proposer: Hex | null;
+  requestIndex: bigint | null;
+  stakeholderAccounts: Hex[];
+  underwriterAccounts: Hex[];
+}> {
+  const budgetTreasuryAddress = normalizeHexOrNull(args.budgetTreasuryAddress);
+  if (!budgetTreasuryAddress) {
+    return {
+      goalRow: null,
+      budgetController: null,
+      itemId: null,
+      requester: null,
+      proposer: null,
+      requestIndex: null,
+      stakeholderAccounts: [],
+      underwriterAccounts: [],
+    };
+  }
+
+  const [budgetRow, goalContext, underwriterAccounts] = await Promise.all([
+    args.context.db.find(budgetTreasury, { id: budgetTreasuryAddress }),
+    args.context.db.find(goalContextByBudgetTreasury, { id: budgetTreasuryAddress }),
+    getBudgetUnderwriterAccounts({
+      context: args.context,
+      budgetTreasuryAddress,
+    }),
+  ]);
+
+  const goalTreasuryAddress = normalizeHexOrNull(
+    (goalContext?.goalTreasury ?? null) as Hex | null
+  );
+  const goalTreasuryRow = goalTreasuryAddress
+    ? await args.context.db.find(goalTreasury, { id: goalTreasuryAddress })
+    : null;
+  const goalRow = toGoalRow(
+    goalTreasuryRow as
+      | {
+          id: Hex;
+          owner: Hex | null;
+          stakeVault: Hex | null;
+          canonicalRouteSlug: string | null;
+        }
+      | null
+  );
+  const stakeholderAccounts = goalRow
+    ? await getGoalStakeholderAccounts({
+        context: args.context,
+        goalTreasuryAddress: goalRow.id,
+      })
+    : [];
+
+  const budgetStakeLedger = normalizeHexOrNull(
+    (goalTreasuryRow?.budgetStakeLedger ?? null) as Hex | null
+  );
+  const budgetTcrContext = budgetStakeLedger
+    ? await args.context.db.find(goalContextByBudgetStakeLedger, { id: budgetStakeLedger })
+    : null;
+  const budgetTcr = normalizeHexOrNull((budgetTcrContext?.budgetTcr ?? null) as Hex | null);
+  const itemId = normalizeHexOrNull((budgetRow?.recipientId ?? null) as Hex | null);
+  const itemRow =
+    budgetTcr && itemId
+      ? await args.context.db.find(tcrItem, {
+          id: `${budgetTcr.toLowerCase()}:${itemId.toLowerCase()}`,
+        })
+      : null;
+  const requestIndexValue = itemRow?.latestRequestIndex;
+  const requestIndex = typeof requestIndexValue === "bigint" ? requestIndexValue : null;
+  const requestRow =
+    budgetTcr && itemId && requestIndex !== null
+      ? await args.context.db.find(tcrRequest, {
+          id: `${budgetTcr.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}`,
+        })
+      : null;
+
+  return {
+    goalRow,
+    budgetController: normalizeHexOrNull((budgetRow?.controller ?? null) as Hex | null),
+    itemId,
+    requester: normalizeHexOrNull((requestRow?.requester ?? null) as Hex | null),
+    proposer: normalizeHexOrNull((itemRow?.submitter ?? null) as Hex | null),
+    requestIndex,
+    stakeholderAccounts,
+    underwriterAccounts,
+  };
 }
 
 export function buildGoalNotificationPayload(args: {
@@ -608,6 +741,7 @@ export function buildGoalNotificationPayload(args: {
 
 export function collectRecipientRoles(args: {
   goalOwner?: Hex | null;
+  budgetController?: Hex | null;
   stakeholderAccounts?: readonly Hex[];
   goalUnderwriterAccounts?: readonly Hex[];
   budgetUnderwriterAccounts?: readonly Hex[];
@@ -645,6 +779,7 @@ export function collectRecipientRoles(args: {
   }
 
   assign(args.goalOwner ?? null, "goal_owner");
+  assign(args.budgetController ?? null, "budget_controller");
 
   for (const actor of args.requestActors ?? []) {
     assign(actor.address, actor.role);

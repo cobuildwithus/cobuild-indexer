@@ -56,6 +56,11 @@
     - `goal_stakeholder_audience`
   - `FlowRateSynced` also writes `goal_treasury_series` + `goal_treasury_series_cursor`.
   - `StateTransition` also emits recipient-resolved `protocol_notification_outbox` rows for `goal_active`, `goal_succeeded`, and `goal_expired`.
+  - Goal success-assertion lifecycle handlers also emit recipient-resolved `protocol_notification_outbox` rows for:
+    - `goal_success_assertion_registered`
+    - `goal_success_assertion_cleared`
+    - `goal_success_assertion_resolution_fail_closed`
+    - `goal_success_assertion_reassert_grace_activated`
 
 ## Budget Treasury
 
@@ -65,6 +70,18 @@
   - `DonationRecorded`, `FlowRateSynced`, `FlowRateSyncManualInterventionRequired`, `FlowRateZeroingFailed`, `FlowRateSyncCallFailed`
   - `ReassertGraceActivated`, `ResidualSettled`
   - `TerminalFlowStopFailed`, `TerminalParentGoalSyncNotApplied`, `TerminalParentPruneFailed`, `TerminalPremiumEscrowCloseFailed`, `TerminalResidualSettlementToParentFailed`
+  - `StateTransition` also emits recipient-resolved `protocol_notification_outbox` rows for:
+    - `budget_active`
+    - `budget_succeeded`
+    - `budget_failed`
+    - `budget_expired`
+    - audience includes current budget underwriters plus canonical request actors, the budget controller, and the goal owner when indexed
+  - Budget success-assertion lifecycle handlers also emit recipient-resolved `protocol_notification_outbox` rows for:
+    - `budget_success_assertion_registered`
+    - `budget_success_assertion_cleared`
+    - `budget_success_assertion_resolution_fail_closed`
+    - `budget_success_assertion_reassert_grace_activated`
+    - `budget_success_resolution_disabled`
 
 ## Stake and Jurors
 
@@ -74,7 +91,7 @@
   - goal/cobuild stake and withdraw handlers also maintain `goal_stakeholder_audience` membership from net stake.
 - `BudgetStakeLedger:*` handlers in `src/stakeLedger/**`
   - `BudgetRegistered`, `BudgetRemoved`, `AllocationCheckpointed`
-  - `BudgetRegistered` and `BudgetRemoved` also emit recipient-resolved `protocol_notification_outbox` rows for `budget_activated` and `budget_removed`.
+  - `BudgetRegistered` and `BudgetRemoved` also emit recipient-resolved `protocol_notification_outbox` rows for `budget_activated` and `budget_removed`, including the budget controller when indexed.
 
 ## Premium Escrow
 

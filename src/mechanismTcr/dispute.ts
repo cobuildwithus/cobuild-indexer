@@ -118,6 +118,7 @@ ponder.on("AllocationMechanismTCR:Dispute", async ({ event, context }) => {
   }
 
   const recipients = collectRecipientRoles({
+    budgetController: mechanismContext.budgetController,
     budgetUnderwriterAccounts: mechanismContext.underwriterAccounts,
     requestActors: [
       {

@@ -1,6 +1,6 @@
 # Cobuild Indexer Agent Docs Index
 
-Last verified: 2026-03-10 (protocol notifications phase 1)
+Last verified: 2026-03-10 (protocol notification completeness pass)
 
 ## Purpose
 
@@ -50,4 +50,5 @@ This index is the table of contents for durable, repository-local context that a
 - Keep `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` current for active coding tasks.
 - Active treasury terminal failure event sync plan: `agent-docs/exec-plans/active/2026-03-09-treasury-terminal-failure-event-sync.md`.
 - Active TCR request-actor event sync plan: `agent-docs/exec-plans/active/2026-03-10-tcr-request-actor-event-sync.md`.
+- Active notification completeness pass plan: `agent-docs/exec-plans/active/2026-03-10-notification-review-followups.md`.
 - Active factory-discovery cutover plan: `agent-docs/exec-plans/active/2026-03-05-factory-discovery-cutover.md`.

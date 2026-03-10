@@ -1,4 +1,4 @@
-import { budgetContextByMechanismTcr } from "ponder:schema";
+import { budgetContextByMechanismTcr, budgetTreasury as budgetTreasuryTable } from "ponder:schema";
 import type { Hex } from "viem";
 
 import {
@@ -15,6 +15,7 @@ export async function getMechanismNotificationContext(args: {
 }): Promise<{
   goalRow: GoalRow;
   budgetTreasury: Hex | null;
+  budgetController: Hex | null;
   goalTreasury: Hex | null;
   stakeVault: Hex | null;
   budgetTcr: Hex | null;
@@ -29,6 +30,9 @@ export async function getMechanismNotificationContext(args: {
     goalTreasuryAddress: (mechanismContext?.goalTreasury ?? null) as Hex | null,
   });
   const budgetTreasury = (mechanismContext?.budgetTreasury ?? null) as Hex | null;
+  const budgetRow = budgetTreasury
+    ? await args.context.db.find(budgetTreasuryTable, { id: budgetTreasury })
+    : null;
   const underwriterAccounts = await getBudgetUnderwriterAccounts({
     context: args.context,
     budgetTreasuryAddress: budgetTreasury,
@@ -37,6 +41,7 @@ export async function getMechanismNotificationContext(args: {
   return {
     goalRow,
     budgetTreasury,
+    budgetController: (budgetRow?.controller ?? null) as Hex | null,
     goalTreasury: (mechanismContext?.goalTreasury ?? null) as Hex | null,
     stakeVault: (mechanismContext?.stakeVault ?? null) as Hex | null,
     budgetTcr: (mechanismContext?.budgetTcr ?? null) as Hex | null,

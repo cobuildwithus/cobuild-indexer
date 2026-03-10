@@ -1,5 +1,11 @@
 import { ponder } from "ponder:registry";
-import { budgetTreasuryByRecipient, goalContextByBudgetTcr, tcrItem, tcrRequest } from "ponder:schema";
+import {
+  budgetTreasury as budgetTreasuryTable,
+  budgetTreasuryByRecipient,
+  goalContextByBudgetTcr,
+  tcrItem,
+  tcrRequest,
+} from "ponder:schema";
 import { tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
   buildGoalNotificationPayload,
@@ -40,7 +46,11 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
     requestType === "clearing"
       ? await context.db.find(budgetTreasuryByRecipient, { id: itemId })
       : null;
-  const budgetTreasury = (budgetLink?.budgetTreasury ?? null) as `0x${string}` | null;
+  const budgetTreasuryAddress = (budgetLink?.budgetTreasury ?? null) as `0x${string}` | null;
+  const budgetRow =
+    requestType === "clearing" && budgetTreasuryAddress
+      ? await context.db.find(budgetTreasuryTable, { id: budgetTreasuryAddress })
+      : null;
 
   await context.db
     .insert(tcrRequest)
@@ -51,7 +61,7 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
       itemId,
       requestIndex,
       goalTreasury: goalContext?.goalTreasury ?? null,
-      budgetTreasury,
+      budgetTreasury: budgetTreasuryAddress,
       requestType,
       requester,
       submittedAt: event.block.timestamp,
@@ -62,7 +72,7 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
     .onConflictDoUpdate({
       goalTreasury: goalContext?.goalTreasury ?? null,
       tcrKind: "budget",
-      budgetTreasury,
+      budgetTreasury: budgetTreasuryAddress,
       requestType,
       requester,
       submittedAt: event.block.timestamp,
@@ -79,7 +89,7 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
       tcrKind: "budget",
       itemId,
       goalTreasury: goalContext?.goalTreasury ?? null,
-      budgetTreasury,
+      budgetTreasury: budgetTreasuryAddress,
       latestRequestIndex: requestIndex,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
@@ -87,7 +97,7 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
     .onConflictDoUpdate({
       goalTreasury: goalContext?.goalTreasury ?? null,
       tcrKind: "budget",
-      budgetTreasury,
+      budgetTreasury: budgetTreasuryAddress,
       latestRequestIndex: requestIndex,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
@@ -101,11 +111,12 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
     requestType === "clearing"
       ? await getBudgetUnderwriterAccounts({
           context,
-          budgetTreasuryAddress: budgetTreasury,
+          budgetTreasuryAddress,
         })
       : [];
   const recipients = collectRecipientRoles({
     goalOwner: (goalRow.owner ?? null) as `0x${string}` | null,
+    budgetController: (budgetRow?.controller ?? null) as `0x${string}` | null,
     stakeholderAccounts: stakeholders,
     budgetUnderwriterAccounts: budgetUnderwriters,
     requestActors: [
@@ -132,7 +143,7 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
         reason,
         itemId,
         requestIndex,
-        budgetTreasury,
+        budgetTreasury: budgetTreasuryAddress,
         actorWalletAddress: requester,
       }),
     })),

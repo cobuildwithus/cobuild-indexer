@@ -97,6 +97,7 @@ describe("protocol notification helpers", () => {
   it("prefers juror and request-actor roles over underwriter and owner roles", () => {
     const recipientRoles = collectRecipientRoles({
       goalOwner: "0x0000000000000000000000000000000000000001",
+      budgetController: "0x0000000000000000000000000000000000000001",
       stakeholderAccounts: ["0x0000000000000000000000000000000000000001"],
       goalUnderwriterAccounts: ["0x0000000000000000000000000000000000000001"],
       budgetUnderwriterAccounts: ["0x0000000000000000000000000000000000000001"],
@@ -174,6 +175,32 @@ describe("protocol notification helpers", () => {
         kind: "goal",
         goalTreasury: "0x00000000000000000000000000000000000000aa",
         budgetTreasury: null,
+        itemId: null,
+        requestIndex: null,
+        arbitrator: null,
+        disputeId: null,
+      },
+      actor: null,
+      labels: {
+        goalName: "alpha",
+      },
+      schedule: null,
+      amounts: null,
+    });
+
+    expect(
+      buildGoalNotificationPayload({
+        role: "budget_controller",
+        goalRow,
+        reason: "budget_success_assertion_registered",
+        budgetTreasury: "0x00000000000000000000000000000000000000cc",
+      })
+    ).toEqual({
+      role: "budget_controller",
+      resource: {
+        kind: "budget",
+        goalTreasury: "0x00000000000000000000000000000000000000aa",
+        budgetTreasury: "0x00000000000000000000000000000000000000cc",
         itemId: null,
         requestIndex: null,
         arbitrator: null,

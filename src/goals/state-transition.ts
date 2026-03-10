@@ -15,20 +15,21 @@ import { insertProtocolEvent } from "../helpers/protocolEvent";
 ponder.on("GoalTreasury:StateTransition", async ({ event, context }) => {
   await insertProtocolEvent({ context, event, contractName: "GoalTreasury" });
   const treasury = event.log.address;
+  const newState = Number(event.args.newState);
   await context.db
     .update(goalTreasury, { id: treasury })
     .set({
-      state: Number(event.args.newState),
+      state: newState,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     });
 
   const reason =
-    event.args.newState === 1
+    newState === 1
       ? "goal_active"
-      : event.args.newState === 2
+      : newState === 2
         ? "goal_succeeded"
-        : event.args.newState === 3
+        : newState === 3
           ? "goal_expired"
           : null;
   if (!reason) return;

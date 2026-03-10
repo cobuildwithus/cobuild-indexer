@@ -465,6 +465,125 @@ describe("actionable financial notification handlers", () => {
     );
   });
 
+  it("opens a fresh premium_claimable cycle after a prior cycle is fully resolved", async () => {
+    await import("../src/premiumEscrow/claimed");
+    await import("../src/premiumEscrow/account-checkpointed");
+
+    const claimHandler = getRegisteredHandler<{
+      account: `0x${string}`;
+      to: `0x${string}`;
+      amount: bigint;
+    }>("PremiumEscrow:Claimed");
+    const checkpointHandler = getRegisteredHandler<{
+      account: `0x${string}`;
+      currentCoverage: bigint;
+      claimableAmount: bigint;
+      exposureIntegral: bigint;
+      totalCoverage: bigint;
+    }>("PremiumEscrow:AccountCheckpointed");
+
+    const claimPass = createDb({
+      premiumAccount: {
+        claimableAmount: 9n,
+        claimableNotificationSourceId: `${escrow.toLowerCase()}:${account.toLowerCase()}:cycle-open`,
+      },
+      premiumEscrow: {
+        budgetTreasury,
+      },
+      goalContextByBudgetTreasury: {
+        goalTreasury,
+      },
+      premiumClaim: null,
+    });
+
+    await claimHandler({
+      event: {
+        id: "claim-reset",
+        log: { address: escrow, logIndex: 18 },
+        args: {
+          account,
+          to: "0x00000000000000000000000000000000000000b8",
+          amount: 9n,
+        },
+        transaction: {
+          hash: "0x0000000000000000000000000000000000000000000000000000000000000013",
+          from: "0x00000000000000000000000000000000000000b9",
+        },
+        block: { number: 17n, timestamp: 27n },
+      },
+      context: {
+        chain: { id: 8453 },
+        db: claimPass.db,
+      },
+    });
+
+    expect(emitProtocolNotificationsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notifications: expect.arrayContaining([
+          expect.objectContaining({
+            reason: "premium_claimable",
+            action: "invalidate",
+            sourceId: `${escrow.toLowerCase()}:${account.toLowerCase()}:cycle-open`,
+          }),
+        ]),
+      })
+    );
+
+    emitProtocolNotificationsMock.mockClear();
+
+    const reopenPass = createDb({
+      premiumAccount: {
+        currentCoverage: 0n,
+        claimableAmount: 0n,
+        claimableNotificationSourceId: null,
+      },
+      premiumEscrow: {
+        budgetTreasury,
+      },
+      goalContextByBudgetTreasury: {
+        goalTreasury,
+      },
+    });
+
+    await checkpointHandler({
+      event: {
+        id: "checkpoint-reopen",
+        log: { address: escrow, logIndex: 19 },
+        args: {
+          account,
+          currentCoverage: 4n,
+          claimableAmount: 6n,
+          exposureIntegral: 8n,
+          totalCoverage: 9n,
+        },
+        transaction: {
+          hash: "0x0000000000000000000000000000000000000000000000000000000000000014",
+          from: "0x00000000000000000000000000000000000000ba",
+        },
+        block: { number: 18n, timestamp: 28n },
+      },
+      context: {
+        chain: { id: 8453 },
+        db: reopenPass.db,
+      },
+    });
+
+    expect(emitProtocolNotificationsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notifications: [
+          expect.objectContaining({
+            recipientWalletAddress: account,
+            reason: "premium_claimable",
+            action: "upsert",
+            notificationClass: "cycle",
+            sourceType: "premium_claimable_cycle",
+            sourceId: `${escrow.toLowerCase()}:${account.toLowerCase()}:0x0000000000000000000000000000000000000000000000000000000000000014:19`,
+          }),
+        ],
+      })
+    );
+  });
+
   it("opens withdrawal-prep-required notifications for resolved goal stakeholders", async () => {
     await import("../src/stakeVault/goal-resolved");
 

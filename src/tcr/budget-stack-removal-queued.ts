@@ -1,6 +1,13 @@
 import { ponder } from "ponder:registry";
 
-import { budgetStack, budgetTreasuryByRecipient, goalContextByBudgetTcr, tcrItem, tcrRequest } from "ponder:schema";
+import {
+  budgetStack,
+  budgetTreasury as budgetTreasuryTable,
+  budgetTreasuryByRecipient,
+  goalContextByBudgetTcr,
+  tcrItem,
+  tcrRequest,
+} from "ponder:schema";
 import { tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
   buildGoalNotificationPayload,
@@ -49,6 +56,10 @@ ponder.on("BudgetTCR:BudgetStackRemovalQueued", async ({ event, context }) => {
     goalTreasuryAddress: goalRow.id,
   });
   const budgetLink = await context.db.find(budgetTreasuryByRecipient, { id: itemId });
+  const budgetRow =
+    budgetLink?.budgetTreasury
+      ? await context.db.find(budgetTreasuryTable, { id: budgetLink.budgetTreasury })
+      : null;
   const budgetUnderwriters = await getBudgetUnderwriterAccounts({
     context,
     budgetTreasuryAddress: (budgetLink?.budgetTreasury ?? null) as `0x${string}` | null,
@@ -56,6 +67,7 @@ ponder.on("BudgetTCR:BudgetStackRemovalQueued", async ({ event, context }) => {
   const requester = existingRequest?.requester ?? null;
   const recipients = collectRecipientRoles({
     goalOwner: (goalRow.owner ?? null) as `0x${string}` | null,
+    budgetController: (budgetRow?.controller ?? null) as `0x${string}` | null,
     stakeholderAccounts: stakeholders,
     budgetUnderwriterAccounts: budgetUnderwriters,
     requestActors: [

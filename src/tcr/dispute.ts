@@ -1,5 +1,12 @@
 import { ponder } from "ponder:registry";
-import { arbitratorDispute, budgetTreasuryByRecipient, goalContextByBudgetTcr, tcrItem, tcrRequest } from "ponder:schema";
+import {
+  arbitratorDispute,
+  budgetTreasury as budgetTreasuryTable,
+  budgetTreasuryByRecipient,
+  goalContextByBudgetTcr,
+  tcrItem,
+  tcrRequest,
+} from "ponder:schema";
 import { arbitratorDisputeId, tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
   buildGoalNotificationPayload,
@@ -45,7 +52,11 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
     existingRequest?.requestType === "clearing"
       ? await context.db.find(budgetTreasuryByRecipient, { id: itemId })
       : null;
-  const budgetTreasury = (budgetLink?.budgetTreasury ?? null) as `0x${string}` | null;
+  const budgetTreasuryAddress = (budgetLink?.budgetTreasury ?? null) as `0x${string}` | null;
+  const budgetRow =
+    existingRequest?.requestType === "clearing" && budgetTreasuryAddress
+      ? await context.db.find(budgetTreasuryTable, { id: budgetTreasuryAddress })
+      : null;
 
   await context.db
     .insert(tcrRequest)
@@ -56,7 +67,7 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
       itemId,
       requestIndex,
       goalTreasury: goalRow.id,
-      budgetTreasury,
+      budgetTreasury: budgetTreasuryAddress,
       requestType: existingRequest?.requestType ?? "unknown",
       requester: existingRequest?.requester ?? null,
       challenger,
@@ -69,7 +80,7 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
     .onConflictDoUpdate({
       goalTreasury: goalRow.id,
       tcrKind: "budget",
-      budgetTreasury,
+      budgetTreasury: budgetTreasuryAddress,
       requester: existingRequest?.requester ?? null,
       challenger,
       disputeId,
@@ -87,7 +98,7 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
     existingRequest?.requestType === "clearing"
       ? await getBudgetUnderwriterAccounts({
           context,
-          budgetTreasuryAddress: budgetTreasury,
+          budgetTreasuryAddress,
         })
       : [];
   const disputeRow = arbitratorAddress
@@ -104,7 +115,7 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
         arbitrable: tcrAddress,
         goalTreasury: goalRow.id,
         stakeVault: goalRow.stakeVault,
-        budgetTreasury,
+        budgetTreasury: budgetTreasuryAddress,
         tcrAddress,
         tcrKind: "budget",
         itemId,
@@ -128,7 +139,7 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
         arbitrable: tcrAddress,
         goalTreasury: goalRow.id,
         stakeVault: goalRow.stakeVault,
-        budgetTreasury,
+        budgetTreasury: budgetTreasuryAddress,
         tcrAddress,
         tcrKind: "budget",
         itemId,
@@ -140,6 +151,7 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
 
   const recipients = collectRecipientRoles({
     goalOwner: (goalRow.owner ?? null) as `0x${string}` | null,
+    budgetController: (budgetRow?.controller ?? null) as `0x${string}` | null,
     stakeholderAccounts: stakeholders,
     budgetUnderwriterAccounts: budgetUnderwriters,
     requestActors: [
@@ -170,7 +182,7 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
         reason,
         itemId,
         requestIndex,
-        budgetTreasury,
+        budgetTreasury: budgetTreasuryAddress,
         actorWalletAddress: challenger,
         arbitrator: arbitratorAddress,
         disputeId,

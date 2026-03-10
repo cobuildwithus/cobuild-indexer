@@ -1,52 +1,61 @@
 import { ponder } from "ponder:registry";
 
-import { budgetTreasury, goalContextByBudgetTreasury } from "ponder:schema";
+import { budgetTreasury } from "ponder:schema";
 import {
   buildGoalNotificationPayload,
   collectRecipientRoles,
   emitProtocolNotifications,
-  getBudgetUnderwriterAccounts,
-  getGoalRow,
+  getBudgetLifecycleNotificationContext,
 } from "../helpers/protocolNotifications";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
 ponder.on("BudgetTreasury:StateTransition", async ({ event, context }) => {
   await insertProtocolEvent({ context, event, contractName: "BudgetTreasury" });
   const treasury = event.log.address;
+  const newState = Number(event.args.newState);
   await context.db
     .update(budgetTreasury, { id: event.log.address })
     .set({
-      state: Number(event.args.newState),
+      state: newState,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     });
 
   const reason =
-    event.args.newState === 1
+    newState === 1
       ? "budget_active"
-      : event.args.newState === 2
+      : newState === 2
         ? "budget_succeeded"
-        : event.args.newState === 3
+        : newState === 3
           ? "budget_failed"
-          : event.args.newState === 4
+          : newState === 4
             ? "budget_expired"
             : null;
   if (!reason) return;
 
-  const goalContext = await context.db.find(goalContextByBudgetTreasury, { id: treasury });
-  const goalRow = await getGoalRow({
-    context,
-    goalTreasuryAddress: goalContext?.goalTreasury ?? null,
-  });
-  const underwriters = await getBudgetUnderwriterAccounts({
+  const notificationContext = await getBudgetLifecycleNotificationContext({
     context,
     budgetTreasuryAddress: treasury,
   });
-  if (underwriters.length === 0) return;
+  const goalRow = notificationContext.goalRow;
+  if (!goalRow) return;
 
   const recipients = collectRecipientRoles({
-    budgetUnderwriterAccounts: underwriters,
+    goalOwner: (goalRow.owner ?? null) as `0x${string}` | null,
+    budgetController: notificationContext.budgetController,
+    budgetUnderwriterAccounts: notificationContext.underwriterAccounts,
+    requestActors: [
+      {
+        address: notificationContext.requester,
+        role: "requester",
+      },
+      {
+        address: notificationContext.proposer,
+        role: "proposer",
+      },
+    ],
   });
+  if (recipients.length === 0) return;
 
   await emitProtocolNotifications({
     context,
@@ -60,6 +69,8 @@ ponder.on("BudgetTreasury:StateTransition", async ({ event, context }) => {
         role: recipient.role,
         goalRow,
         reason,
+        itemId: notificationContext.itemId,
+        requestIndex: notificationContext.requestIndex,
         budgetTreasury: treasury,
       }),
     })),

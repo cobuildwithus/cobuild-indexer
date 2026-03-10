@@ -11,6 +11,9 @@ Tighten protocol notification correctness after the review pass without changing
 - Make withdrawal-prep notifications invalidate the open state instead of emitting duplicate completion history.
 - Ensure `premium_claimable` only opens once linkage is resolvable and can reopen with a fresh cycle source id.
 - Keep shared payload semantics stable while downstream consumers move to a shared presenter.
+- Add the remaining user-facing success-assertion notification reasons for goal and budget treasury flows.
+- Expand budget and mechanism lifecycle fanout to controller-like roles without weakening deterministic recipient resolution.
+- Preserve exact payload refs needed for more specific downstream app routing.
 
 ## Constraints
 

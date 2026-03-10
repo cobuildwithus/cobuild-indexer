@@ -87,6 +87,7 @@ ponder.on("AllocationMechanismTCR:RequestSubmitted", async ({ event, context }) 
   const reason =
     requestType === "registration" ? "mechanism_proposed" : "mechanism_removal_requested";
   const recipients = collectRecipientRoles({
+    budgetController: mechanismContext.budgetController,
     budgetUnderwriterAccounts: mechanismContext.underwriterAccounts,
     requestActors: [
       { address: requester, role: "requester" },

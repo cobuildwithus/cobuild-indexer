@@ -132,6 +132,7 @@ ponder.on("BudgetStakeLedger:BudgetRegistered", async ({ event, context }) => {
   const requester = existingRequest?.requester ?? null;
   const recipients = collectRecipientRoles({
     goalOwner: (goalRow.owner ?? null) as `0x${string}` | null,
+    budgetController: (budget?.controller ?? null) as `0x${string}` | null,
     stakeholderAccounts: stakeholders,
     requestActors: [
       {

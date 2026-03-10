@@ -21,6 +21,7 @@ vi.mock("ponder:registry", () => ({
 }));
 
 vi.mock("ponder:schema", () => ({
+  budgetTreasury: "budgetTreasury",
   budgetUnderwriterAudience: "budgetUnderwriterAudience",
   budgetUnderwriterCurrent: "budgetUnderwriterCurrent",
   budgetContextByMechanismTcr: "budgetContextByMechanismTcr",
@@ -139,6 +140,7 @@ describe("mechanism TCR notification handlers", () => {
   const requester = "0x00000000000000000000000000000000000000ad";
   const proposer = "0x00000000000000000000000000000000000000ae";
   const underwriter = "0x00000000000000000000000000000000000000af";
+  const controller = "0x00000000000000000000000000000000000000b2";
   const itemId =
     "0x1111111111111111111111111111111111111111111111111111111111111111";
 
@@ -161,6 +163,9 @@ describe("mechanism TCR notification handlers", () => {
       budgetContextByMechanismTcr: {
         goalTreasury,
         budgetTreasury,
+      },
+      budgetTreasury: {
+        controller,
       },
       tcrItem: {
         submitter: proposer,
@@ -214,6 +219,12 @@ describe("mechanism TCR notification handlers", () => {
           payload: expect.objectContaining({ role: "requester" }),
         }),
         expect.objectContaining({
+          recipientWalletAddress: controller,
+          actorWalletAddress: requester,
+          reason: "mechanism_proposed",
+          payload: expect.objectContaining({ role: "budget_controller" }),
+        }),
+        expect.objectContaining({
           recipientWalletAddress: proposer,
           actorWalletAddress: requester,
           reason: "mechanism_proposed",
@@ -235,6 +246,9 @@ describe("mechanism TCR notification handlers", () => {
       budgetContextByMechanismTcr: {
         goalTreasury,
         budgetTreasury,
+      },
+      budgetTreasury: {
+        controller,
       },
       tcrItem: {
         latestRequestIndex: 2n,
@@ -295,6 +309,11 @@ describe("mechanism TCR notification handlers", () => {
       expect.arrayContaining([
         expect.objectContaining({
           recipientWalletAddress: requester,
+          actorWalletAddress: requester,
+          reason: "mechanism_activated",
+        }),
+        expect.objectContaining({
+          recipientWalletAddress: controller,
           actorWalletAddress: requester,
           reason: "mechanism_activated",
         }),
