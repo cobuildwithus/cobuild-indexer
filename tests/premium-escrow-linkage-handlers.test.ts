@@ -6,6 +6,10 @@ const { getGoalRowMock, insertProtocolEventMock, ponderOnMock } = vi.hoisted(() 
   ponderOnMock: vi.fn(),
 }));
 
+const { queueFlowForActualRateRefreshMock } = vi.hoisted(() => ({
+  queueFlowForActualRateRefreshMock: vi.fn(),
+}));
+
 vi.mock("ponder:registry", () => ({
   ponder: {
     on: ponderOnMock,
@@ -33,6 +37,10 @@ vi.mock("../src/helpers/protocolEvent", () => ({
 
 vi.mock("../src/helpers/protocolNotifications", () => ({
   getGoalRow: getGoalRowMock,
+}));
+
+vi.mock("../src/helpers/flowRefresh", () => ({
+  queueFlowForActualRateRefresh: queueFlowForActualRateRefreshMock,
 }));
 
 type InsertCall = {
@@ -118,6 +126,7 @@ describe("premium escrow linkage handlers", () => {
   const recipientId = "0x00000000000000000000000000000000000000ad";
   const premiumEscrowAddress = "0x00000000000000000000000000000000000000ae";
   const mechanismTcr = "0x00000000000000000000000000000000000000af";
+  const managerRewardPoolAddress = "0x00000000000000000000000000000000000000b2";
 
   beforeEach(() => {
     vi.resetModules();
@@ -130,15 +139,72 @@ describe("premium escrow linkage handlers", () => {
     });
   });
 
-  it("derives premiumEscrow from the child flow when BudgetConfigured runs before escrow links exist", async () => {
+  it("does not alias the child manager reward pool into budget topology during ChildFlowDeployed", async () => {
+    await import("../src/flow/child-flow-deployed");
+
+    const { db, insertCalls, updateCalls } = createDb({
+      budgetTreasuryByRecipient: {
+        budgetTreasury,
+      },
+      budgetTreasuryByChildFlow: null,
+    });
+
+    await getLastRegisteredHandler<{
+      recipient: `0x${string}`;
+      recipientId: `0x${string}`;
+      recipientAdmin: `0x${string}`;
+      flowOperator: `0x${string}`;
+      sweeper: `0x${string}`;
+      managerRewardPool: `0x${string}`;
+      strategy: `0x${string}`;
+    }>()({
+      event: {
+        log: { address: mechanismTcr, logIndex: 0 },
+        args: {
+          recipient: childFlow,
+          recipientId,
+          recipientAdmin: "0x00000000000000000000000000000000000000b3",
+          flowOperator: "0x00000000000000000000000000000000000000b4",
+          sweeper: "0x00000000000000000000000000000000000000b5",
+          managerRewardPool: managerRewardPoolAddress,
+          strategy: "0x00000000000000000000000000000000000000b6",
+        },
+        transaction: {
+          hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+          from: "0x00000000000000000000000000000000000000b7",
+        },
+        block: { number: 9n, timestamp: 19n },
+      },
+      context: {
+        chain: { id: 8453 },
+        db,
+      },
+    });
+
+    const flowInsert = insertCalls.find((call) => call.table === "flow");
+    const budgetStackInsert = insertCalls.find((call) => call.table === "budgetStack");
+    const budgetTreasuryUpdate = updateCalls.find((call) => call.table === "budgetTreasury");
+
+    expect(flowInsert?.value.managerRewardPool).toBe(managerRewardPoolAddress);
+    expect(budgetStackInsert?.value.premiumEscrow).toBeUndefined();
+    expect(insertCalls.find((call) => call.table === "premiumEscrow")).toBeUndefined();
+    expect(insertCalls.find((call) => call.table === "premiumEscrowByBudgetTreasury")).toBeUndefined();
+    expect((budgetTreasuryUpdate?.setArg as Record<string, unknown> | undefined)?.premiumEscrow).toBeUndefined();
+    expect(queueFlowForActualRateRefreshMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        flowId: childFlow,
+      })
+    );
+  });
+
+  it("leaves premiumEscrow unset when BudgetConfigured runs before escrow links exist", async () => {
     await import("../src/budgets/budget-configured");
 
     const { db, insertCalls } = createDb({
       budgetTreasury: null,
       budgetTreasuryByChildFlow: null,
-      flow: {
-        managerRewardPool: premiumEscrowAddress,
-      },
+      premiumEscrowByBudgetTreasury: null,
+      flow: null,
     });
 
     await getLastRegisteredHandler<{
@@ -176,41 +242,27 @@ describe("premium escrow linkage handlers", () => {
     const premiumEscrowByBudgetInsert = insertCalls.find(
       (call) => call.table === "premiumEscrowByBudgetTreasury"
     );
-    expect(budgetInsert?.value.premiumEscrow).toBe(premiumEscrowAddress);
-    expect(budgetInsert?.update?.premiumEscrow).toBe(premiumEscrowAddress);
-    expect(premiumEscrowInsert?.value).toEqual(
-      expect.objectContaining({
-        id: premiumEscrowAddress,
-        budgetTreasury,
-        childFlow,
-      })
-    );
-    expect(premiumEscrowInsert?.value.budgetStackId).toBeUndefined();
-    expect(premiumEscrowByBudgetInsert?.value).toEqual(
-      expect.objectContaining({
-        id: budgetTreasury,
-        premiumEscrow: premiumEscrowAddress,
-        childFlow,
-        budgetStackId: null,
-      })
-    );
+    expect(budgetInsert?.value.premiumEscrow).toBeNull();
+    expect(budgetInsert?.update?.premiumEscrow).toBeNull();
+    expect(premiumEscrowInsert).toBeUndefined();
+    expect(premiumEscrowByBudgetInsert).toBeUndefined();
   });
 
-  it("hydrates budget and escrow rows from the child flow when BudgetStackDeployed arrives first", async () => {
-    await import("../src/tcr/budget-stack-deployed");
+  it("uses the factory-emitted premiumEscrow when BudgetStackDeployed arrives", async () => {
+    await import("../src/tcrFactory/budget-stack-deployed");
 
     const { db, insertCalls } = createDb({
       flow: {
-        managerRewardPool: premiumEscrowAddress,
+        managerRewardPool: managerRewardPoolAddress,
         parentFlow: null,
       },
-      budgetStack: null,
     });
 
     await getLastRegisteredHandler<{
       itemID: `0x${string}`;
       childFlow: `0x${string}`;
       budgetTreasury: `0x${string}`;
+      premiumEscrow: `0x${string}`;
       strategy: `0x${string}`;
     }>()({
       event: {
@@ -219,6 +271,7 @@ describe("premium escrow linkage handlers", () => {
           itemID: recipientId,
           childFlow,
           budgetTreasury,
+          premiumEscrow: premiumEscrowAddress,
           strategy: "0x00000000000000000000000000000000000000b4",
         },
         transaction: {
@@ -266,7 +319,7 @@ describe("premium escrow linkage handlers", () => {
     );
   });
 
-  it("fills mechanism fundingEscrow from the child flow when the escrow lookup row is missing", async () => {
+  it("does not fall back to the child manager reward pool for mechanism fundingEscrow", async () => {
     await import("../src/tcr/budget-allocation-mechanism-deployed");
 
     const { db, insertCalls } = createDb({
@@ -279,11 +332,12 @@ describe("premium escrow linkage handlers", () => {
       },
       budgetTreasury: {
         childFlow,
+        premiumEscrow: null,
         strategy: "0x00000000000000000000000000000000000000b6",
       },
       premiumEscrowByBudgetTreasury: null,
       flow: {
-        managerRewardPool: premiumEscrowAddress,
+        managerRewardPool: managerRewardPoolAddress,
       },
     });
 
@@ -314,7 +368,7 @@ describe("premium escrow linkage handlers", () => {
     });
 
     const registryInsert = insertCalls.find((call) => call.table === "budgetMechanismRegistry");
-    expect(registryInsert?.value.fundingEscrow).toBe(premiumEscrowAddress);
-    expect(registryInsert?.update?.fundingEscrow).toBe(premiumEscrowAddress);
+    expect(registryInsert?.value.fundingEscrow).toBeNull();
+    expect(registryInsert?.update?.fundingEscrow).toBeNull();
   });
 });

@@ -153,6 +153,7 @@ import "./tcr/request-submitted";
 import "./tcr/ruling";
 import "./tcr/submission-deposit-paid";
 import "./tcr/submission-deposit-transferred";
+import "./tcrFactory/budget-stack-deployed";
 import "./tcrFactory/budget-tcr-stack-deployed-for-goal";
 import "./umaResolver/success-assertion-disputed";
 import "./umaResolver/success-assertion-finalized";

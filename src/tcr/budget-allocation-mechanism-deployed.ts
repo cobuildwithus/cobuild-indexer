@@ -5,11 +5,10 @@ import {
   budgetContextByMechanismArbitrator,
   budgetContextByMechanismTcr,
   budgetMechanismRegistry,
-  premiumEscrowByBudgetTreasury,
   budgetTreasury,
   budgetTreasuryByRecipient,
-  flow,
   goalContextByBudgetTcr,
+  premiumEscrowByBudgetTreasury,
 } from "ponder:schema";
 
 import { getGoalRow } from "../helpers/protocolNotifications";
@@ -42,11 +41,10 @@ ponder.on("BudgetTCR:BudgetAllocationMechanismDeployed", async ({ event, context
   if (!goalRow) return;
 
   const childFlow = (budgetRow?.childFlow ?? budgetLink?.childFlow ?? null) as Hex | null;
-  const childFlowRow = childFlow ? await context.db.find(flow, { id: childFlow }) : null;
   const strategy = (budgetRow?.strategy ?? null) as Hex | null;
-  const fundingEscrow = (premiumEscrowLink?.premiumEscrow ??
-    childFlowRow?.managerRewardPool ??
-    null) as Hex | null;
+  const fundingEscrow = (premiumEscrowLink?.premiumEscrow ?? budgetRow?.premiumEscrow ?? null) as
+    | Hex
+    | null;
 
   await context.db
     .insert(budgetMechanismRegistry)

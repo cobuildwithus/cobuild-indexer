@@ -18,14 +18,17 @@ ponder.on("BudgetTreasury:BudgetConfigured", async ({ event, context }) => {
 
   const treasuryId = event.log.address as Hex;
   const childFlowId = event.args.flow as Hex;
-  const existingBudget = await context.db.find(budgetTreasury, { id: treasuryId });
-  const childFlowLink = await context.db.find(budgetTreasuryByChildFlow, { id: childFlowId });
-  const childFlow = await context.db.find(flow, { id: childFlowId });
+  const [existingBudget, childFlowLink, childFlow, premiumEscrowLink] = await Promise.all([
+    context.db.find(budgetTreasury, { id: treasuryId }),
+    context.db.find(budgetTreasuryByChildFlow, { id: childFlowId }),
+    context.db.find(flow, { id: childFlowId }),
+    context.db.find(premiumEscrowByBudgetTreasury, { id: treasuryId }),
+  ]);
   const recipientId = (existingBudget?.recipientId ?? childFlowLink?.recipientId ?? null) as
     | Hex
     | null;
   const premiumEscrowAddress = (existingBudget?.premiumEscrow ??
-    childFlow?.managerRewardPool ??
+    premiumEscrowLink?.premiumEscrow ??
     null) as Hex | null;
 
   await context.db

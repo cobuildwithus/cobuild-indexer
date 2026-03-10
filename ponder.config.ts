@@ -68,6 +68,12 @@ const BUDGET_ALLOCATION_MECHANISM_DEPLOYED_FROM_FACTORY = getAbiItem({
   name: "BudgetAllocationMechanismDeployed",
 });
 
+const BudgetTCRFactoryProtocolEventsAbi = [
+  BUDGET_TCR_STACK_DEPLOYED_FOR_GOAL,
+  BUDGET_STACK_DEPLOYED_FROM_FACTORY,
+  BUDGET_ALLOCATION_MECHANISM_DEPLOYED_FROM_FACTORY,
+] as const satisfies Abi;
+
 // Published @cobuild/wire may lag the latest local protocol event cutover, so
 // the changed BudgetTCR event fragments are pinned here until the next wire release.
 const BUDGET_TCR_REQUEST_SUBMITTED = {
@@ -351,7 +357,7 @@ export default createConfig({
       startBlock: SCAFFOLD_START_BLOCK,
     },
     BudgetTCRFactory: {
-      abi: BudgetTCRFactoryAbi,
+      abi: BudgetTCRFactoryProtocolEventsAbi,
       chain: "base",
       address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
       startBlock: SCAFFOLD_START_BLOCK,

@@ -8,8 +8,6 @@ import {
   budgetTreasuryByRecipient,
   flow,
   flowRecipient,
-  premiumEscrow,
-  premiumEscrowByBudgetTreasury,
 } from "ponder:schema";
 import { flowRecipientKey } from "../helpers/ids";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
@@ -21,7 +19,7 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
   const parentFlowId = event.log.address as Hex;
   const childFlowId = event.args.recipient as Hex;
   const recipientId = event.args.recipientId as Hex;
-  const escrowId = event.args.managerRewardPool as Hex;
+  const managerRewardPoolId = event.args.managerRewardPool as Hex;
   const recipientRowId = flowRecipientKey(parentFlowId, recipientId);
   const updatedAt = {
     updatedAtBlock: event.block.number,
@@ -50,7 +48,7 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
       initialOwner: event.args.recipientAdmin,
       flowOperator: event.args.flowOperator,
       sweeper: event.args.sweeper,
-      managerRewardPool: escrowId,
+      managerRewardPool: managerRewardPoolId,
       strategy: event.args.strategy,
       currentFlowRate: 0n,
       targetOutflowRate: 0n,
@@ -64,7 +62,7 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
       initialOwner: event.args.recipientAdmin,
       flowOperator: event.args.flowOperator,
       sweeper: event.args.sweeper,
-      managerRewardPool: escrowId,
+      managerRewardPool: managerRewardPoolId,
       strategy: event.args.strategy,
       ...updatedAt,
     });
@@ -80,30 +78,12 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
     .values({
       id: recipientId,
       childFlow: childFlowId,
-      premiumEscrow: escrowId,
       strategy: event.args.strategy,
       ...updatedAt,
     })
     .onConflictDoUpdate({
       childFlow: childFlowId,
-      premiumEscrow: escrowId,
       strategy: event.args.strategy,
-      ...updatedAt,
-    });
-
-  await context.db
-    .insert(premiumEscrow)
-    .values({
-      id: escrowId,
-      budgetStackId: recipientId,
-      childFlow: childFlowId,
-      ...(treasuryId ? { budgetTreasury: treasuryId } : {}),
-      ...updatedAt,
-    })
-    .onConflictDoUpdate({
-      budgetStackId: recipientId,
-      childFlow: childFlowId,
-      ...(treasuryId ? { budgetTreasury: treasuryId } : {}),
       ...updatedAt,
     });
 
@@ -112,7 +92,6 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
   await context.db.update(budgetTreasury, { id: treasuryId }).set({
     recipientId,
     childFlow: childFlowId,
-    premiumEscrow: escrowId,
     ...updatedAt,
   });
 
@@ -141,22 +120,6 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
     .onConflictDoUpdate({
       budgetTreasury: treasuryId,
       recipientId,
-      ...updatedAt,
-    });
-
-  await context.db
-    .insert(premiumEscrowByBudgetTreasury)
-    .values({
-      id: treasuryId,
-      premiumEscrow: escrowId,
-      budgetStackId: recipientId,
-      childFlow: childFlowId,
-      ...updatedAt,
-    })
-    .onConflictDoUpdate({
-      premiumEscrow: escrowId,
-      budgetStackId: recipientId,
-      childFlow: childFlowId,
       ...updatedAt,
     });
 });

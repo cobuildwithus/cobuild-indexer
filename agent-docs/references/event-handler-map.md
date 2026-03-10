@@ -30,6 +30,7 @@
   - `TargetOutflowRateUpdated`, `TargetOutflowRefreshFailed`
   - `AllocationCommitted`, `AllocationSnapshotUpdated`, `SuperTokenSwept`
   - `RecipientCreated` maintains deterministic `flow_recipient_by_index` rows (`${flow}:${recipientIndex}` -> `flow_recipient.id`) for compact allocation snapshot lookups.
+  - `ChildFlowDeployed` records the child flow topology plus `flow.managerRewardPool`, but does not treat that manager reward pool address as the canonical `premiumEscrow` id.
 - `FlowActualRateRefresh:block` handler in `src/flow/actual-flow-rate-refresh.ts`
   - deterministic block cron projection refresh for `flow.currentFlowRate` via `IFlow.getActualFlowRate()` on queued flow addresses.
   - round-robin queue state is maintained in `flow_actual_rate_refresh_state` and enqueue hooks in `FlowInitialized`, `ChildFlowDeployed`, and `FlowRecipientCreated`.
@@ -89,6 +90,8 @@
   - stake/withdraw totals, goal resolution, juror lifecycle/slashing/delegation, underwriter slashing telemetry
   - includes `AllocationSyncFailed` telemetry
   - goal/cobuild stake and withdraw handlers also maintain `goal_stakeholder_audience` membership from net stake.
+  - `GoalResolved` opens `underwriter_withdrawal_prep_required` open/close notifications for current goal stakeholders.
+  - `UnderwriterWithdrawalPrepared` invalidates that open-state notification when `complete=true` and emits a separate append-only `underwriter_withdrawal_prep_complete` notification.
 - `BudgetStakeLedger:*` handlers in `src/stakeLedger/**`
   - `BudgetRegistered`, `BudgetRemoved`, `AllocationCheckpointed`
   - `BudgetRegistered` and `BudgetRemoved` also emit recipient-resolved `protocol_notification_outbox` rows for `budget_activated` and `budget_removed`, including the budget controller when indexed.
@@ -115,7 +118,6 @@
     - `ItemStatusChange` updates `tcr_item.latestRequestIndex/currentStatus`
     - `BudgetStackActivationQueued` emits `budget_accepted`
     - `BudgetStackRemovalQueued` emits `budget_removal_accepted`
-  - `BudgetStackDeployed` maintains deterministic recipient/childFlow -> budget treasury lookup KV tables and recipient FK linkage.
 - `BudgetTCRProtocolEvents:*` handler bridge in `src/tcr/**`
   - temporary local ABI bridge for `RequestSubmitted` and `Dispute` until the refreshed `@cobuild/wire` package publishes the requester/challenger event cutover
   - lifecycle projection semantics:
@@ -123,6 +125,7 @@
     - `Dispute` updates `tcr_request` dispute state from the emitted request index + challenger fields and emits `budget_proposal_challenged` / `budget_removal_challenged`
 - `BudgetTCRFactory:*` handlers in `src/tcrFactory/**`
   - deployment-for-goal telemetry
+  - `BudgetStackDeployed` maintains deterministic recipient/childFlow -> budget treasury lookup KV tables, recipient FK linkage, and the canonical budget/premium-escrow topology using the factory-emitted `premiumEscrow` address.
   - dynamic discovery source for:
     - `BudgetTCR` via `BudgetTCRStackDeployedForGoal(budgetTCR)`
     - `BudgetTreasury` via `BudgetStackDeployed(budgetTreasury)`
