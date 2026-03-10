@@ -7,6 +7,8 @@ import {
   budgetTreasuryByRecipient,
   flow,
   flowRecipient,
+  premiumEscrow,
+  premiumEscrowByBudgetTreasury,
 } from "ponder:schema";
 import { flowRecipientKey } from "../helpers/ids";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
@@ -18,9 +20,13 @@ ponder.on("BudgetTreasury:BudgetConfigured", async ({ event, context }) => {
   const childFlowId = event.args.flow as Hex;
   const existingBudget = await context.db.find(budgetTreasury, { id: treasuryId });
   const childFlowLink = await context.db.find(budgetTreasuryByChildFlow, { id: childFlowId });
+  const childFlow = await context.db.find(flow, { id: childFlowId });
   const recipientId = (existingBudget?.recipientId ?? childFlowLink?.recipientId ?? null) as
     | Hex
     | null;
+  const premiumEscrowAddress = (existingBudget?.premiumEscrow ??
+    childFlow?.managerRewardPool ??
+    null) as Hex | null;
 
   await context.db
     .insert(budgetTreasury)
@@ -29,6 +35,7 @@ ponder.on("BudgetTreasury:BudgetConfigured", async ({ event, context }) => {
       controller: event.args.controller,
       recipientId,
       childFlow: childFlowId,
+      premiumEscrow: premiumEscrowAddress,
       fundingDeadline: event.args.fundingDeadline,
       executionDuration: event.args.executionDuration,
       activationThreshold: event.args.activationThreshold,
@@ -44,6 +51,7 @@ ponder.on("BudgetTreasury:BudgetConfigured", async ({ event, context }) => {
       controller: event.args.controller,
       recipientId,
       childFlow: childFlowId,
+      premiumEscrow: premiumEscrowAddress,
       fundingDeadline: event.args.fundingDeadline,
       executionDuration: event.args.executionDuration,
       activationThreshold: event.args.activationThreshold,
@@ -68,6 +76,44 @@ ponder.on("BudgetTreasury:BudgetConfigured", async ({ event, context }) => {
       updatedAtTimestamp: event.block.timestamp,
     });
 
+  if (premiumEscrowAddress) {
+    await context.db
+      .insert(premiumEscrow)
+      .values({
+        id: premiumEscrowAddress,
+        ...(recipientId ? { budgetStackId: recipientId } : {}),
+        childFlow: childFlowId,
+        budgetTreasury: treasuryId,
+        updatedAtBlock: event.block.number,
+        updatedAtTimestamp: event.block.timestamp,
+      })
+      .onConflictDoUpdate({
+        ...(recipientId ? { budgetStackId: recipientId } : {}),
+        childFlow: childFlowId,
+        budgetTreasury: treasuryId,
+        updatedAtBlock: event.block.number,
+        updatedAtTimestamp: event.block.timestamp,
+      });
+
+    await context.db
+      .insert(premiumEscrowByBudgetTreasury)
+      .values({
+        id: treasuryId,
+        premiumEscrow: premiumEscrowAddress,
+        budgetStackId: recipientId,
+        childFlow: childFlowId,
+        updatedAtBlock: event.block.number,
+        updatedAtTimestamp: event.block.timestamp,
+      })
+      .onConflictDoUpdate({
+        premiumEscrow: premiumEscrowAddress,
+        budgetStackId: recipientId,
+        childFlow: childFlowId,
+        updatedAtBlock: event.block.number,
+        updatedAtTimestamp: event.block.timestamp,
+      });
+  }
+
   if (!recipientId) return;
 
   await context.db
@@ -86,7 +132,6 @@ ponder.on("BudgetTreasury:BudgetConfigured", async ({ event, context }) => {
       updatedAtTimestamp: event.block.timestamp,
     });
 
-  const childFlow = await context.db.find(flow, { id: childFlowId });
   if (!childFlow?.parentFlow) return;
 
   await context.db.update(flowRecipient, { id: flowRecipientKey(childFlow.parentFlow as Hex, recipientId) }).set({

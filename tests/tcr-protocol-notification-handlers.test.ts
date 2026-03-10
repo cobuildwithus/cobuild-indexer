@@ -24,6 +24,8 @@ vi.mock("ponder:registry", () => ({
 
 vi.mock("ponder:schema", () => ({
   arbitratorDispute: "arbitratorDispute",
+  budgetUnderwriterAudience: "budgetUnderwriterAudience",
+  budgetUnderwriterCurrent: "budgetUnderwriterCurrent",
   budgetStack: "budgetStack",
   budgetTreasury: "budgetTreasury",
   budgetTreasuryByChildFlow: "budgetTreasuryByChildFlow",
@@ -33,6 +35,16 @@ vi.mock("ponder:schema", () => ({
   goalContextByBudgetStakeLedger: "goalContextByBudgetStakeLedger",
   goalContextByBudgetTreasury: "goalContextByBudgetTreasury",
   goalContextByBudgetTcr: "goalContextByBudgetTcr",
+  goalStakeholderAudience: "goalStakeholderAudience",
+  goalTreasury: "goalTreasury",
+  goalUnderwriterAudience: "goalUnderwriterAudience",
+  goalUnderwriterCurrent: "goalUnderwriterCurrent",
+  juror: "juror",
+  protocolNotificationOutbox: "protocolNotificationOutbox",
+  protocolNotificationSchedule: "protocolNotificationSchedule",
+  stakePosition: "stakePosition",
+  stakeVault: "stakeVault",
+  stakeVaultJurorAudience: "stakeVaultJurorAudience",
   tcrItem: "tcrItem",
   tcrRequest: "tcrRequest",
 }));

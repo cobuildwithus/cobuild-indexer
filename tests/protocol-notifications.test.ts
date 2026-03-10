@@ -28,12 +28,15 @@ describe("protocol notification helpers", () => {
   it("builds deterministic lowercased outbox ids", () => {
     expect(
       protocolNotificationOutboxId({
+        txHash: "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+        logIndex: 9,
         sourceType: "budget_request",
         sourceId: "Budget:1",
         recipientWalletAddress: "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        action: "upsert",
       })
     ).toBe(
-      "budget_request:Budget:1:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      "budget_request:Budget:1:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:upsert:0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb:9"
     );
   });
 
@@ -182,6 +185,43 @@ describe("protocol notification helpers", () => {
       },
       schedule: null,
       amounts: null,
+    });
+
+    expect(
+      buildGoalNotificationPayload({
+        role: "budget_underwriter",
+        goalRow,
+        reason: "premium_claimable",
+        budgetTreasury: "0x00000000000000000000000000000000000000cc",
+        amounts: {
+          claimable: 42n,
+          claimedAmount: 7n,
+        },
+      })
+    ).toEqual({
+      role: "budget_underwriter",
+      resource: {
+        kind: "budget",
+        goalTreasury: "0x00000000000000000000000000000000000000aa",
+        budgetTreasury: "0x00000000000000000000000000000000000000cc",
+        itemId: null,
+        requestIndex: null,
+        arbitrator: null,
+        disputeId: null,
+      },
+      actor: null,
+      labels: {
+        goalName: "alpha",
+      },
+      schedule: null,
+      amounts: {
+        allocatedStake: null,
+        claimable: "42",
+        claimedAmount: "7",
+        snapshotWeight: null,
+        snapshotVotes: null,
+        slashWeight: null,
+      },
     });
   });
 });

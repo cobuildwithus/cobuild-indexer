@@ -149,6 +149,8 @@ ponder.on("AllocationMechanismTCR:Dispute", async ({ event, context }) => {
         requestIndex,
         budgetTreasury: mechanismContext.budgetTreasury,
         actorWalletAddress: challenger,
+        arbitrator: arbitratorAddress,
+        disputeId,
       }),
     })),
   });

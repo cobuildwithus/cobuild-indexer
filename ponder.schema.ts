@@ -578,17 +578,23 @@ export const keeperOutbox = onchainTable(
 /**
  * Recipient-resolved protocol notification intents.
  * Rows are immutable and replay-safe; downstream workers materialize them into app inbox tables.
+ * `sourceType` + `sourceId` remain the app-level upsert identity, while `action`
+ * controls whether the materializer opens/updates or invalidates the inbox row.
+ * `notificationClass` distinguishes append-only edges from monotonic open/close states
+ * and cyclical states that can reopen with a new `sourceId`.
  */
 export const protocolNotificationOutbox = onchainTable(
   "protocol_notification_outbox",
   (t) => ({
-    id: t.text().notNull(), // `${sourceType}:${sourceId}:${recipientWalletAddress}`
+    id: t.text().notNull(), // `${sourceType}:${sourceId}:${recipientWalletAddress}:${action}:${txHash}:${logIndex}`
     chainId: t.integer().notNull(),
     blockNumber: t.bigint().notNull(),
     timestamp: t.bigint().notNull(),
     txHash: t.hex().notNull(),
     logIndex: t.integer().notNull(),
     recipientWalletAddress: t.hex().notNull(),
+    notificationClass: t.text().notNull().default("edge"), // "edge" | "open_close" | "cycle"
+    action: t.text().notNull().default("upsert"), // "upsert" | "invalidate"
     reason: t.text().notNull(),
     sourceType: t.text().notNull(),
     sourceId: t.text().notNull(),
@@ -1500,6 +1506,18 @@ export const premiumEscrow = onchainTable("premium_escrow", (t) => ({
   updatedAtTimestamp: t.bigint(),
 }));
 
+export const premiumEscrowByBudgetTreasury = onchainTable(
+  "premium_escrow_by_budget_treasury",
+  (t) => ({
+    id: t.hex().primaryKey(), // budgetTreasury
+    premiumEscrow: t.hex().notNull(),
+    budgetStackId: t.hex(),
+    childFlow: t.hex(),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  })
+);
+
 export const premiumAccount = onchainTable("premium_account", (t) => ({
   id: t.text().primaryKey(), // `${escrow}:${account}`
 
@@ -1509,6 +1527,7 @@ export const premiumAccount = onchainTable("premium_account", (t) => ({
   currentCoverage: t.bigint().notNull().default(0n),
   claimableAmount: t.bigint().notNull().default(0n),
   exposureIntegral: t.bigint().notNull().default(0n),
+  claimableNotificationSourceId: t.text(),
 
   slashed: t.boolean().notNull().default(false),
   lastSlashWeight: t.bigint(),

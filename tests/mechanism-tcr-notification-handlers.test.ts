@@ -21,8 +21,20 @@ vi.mock("ponder:registry", () => ({
 }));
 
 vi.mock("ponder:schema", () => ({
+  budgetUnderwriterAudience: "budgetUnderwriterAudience",
+  budgetUnderwriterCurrent: "budgetUnderwriterCurrent",
   budgetContextByMechanismTcr: "budgetContextByMechanismTcr",
   budgetMechanismRegistry: "budgetMechanismRegistry",
+  goalStakeholderAudience: "goalStakeholderAudience",
+  goalTreasury: "goalTreasury",
+  goalUnderwriterAudience: "goalUnderwriterAudience",
+  goalUnderwriterCurrent: "goalUnderwriterCurrent",
+  juror: "juror",
+  protocolNotificationOutbox: "protocolNotificationOutbox",
+  protocolNotificationSchedule: "protocolNotificationSchedule",
+  stakePosition: "stakePosition",
+  stakeVault: "stakeVault",
+  stakeVaultJurorAudience: "stakeVaultJurorAudience",
   tcrItem: "tcrItem",
   tcrRequest: "tcrRequest",
 }));

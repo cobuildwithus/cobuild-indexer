@@ -24,11 +24,22 @@ vi.mock("ponder:registry", () => ({
 
 vi.mock("ponder:schema", () => ({
   arbitratorDispute: "arbitratorDispute",
+  budgetUnderwriterAudience: "budgetUnderwriterAudience",
+  budgetUnderwriterCurrent: "budgetUnderwriterCurrent",
   budgetContextByMechanismArbitrator: "budgetContextByMechanismArbitrator",
   budgetContextByMechanismTcr: "budgetContextByMechanismTcr",
   goalContextByArbitrator: "goalContextByArbitrator",
+  goalStakeholderAudience: "goalStakeholderAudience",
+  goalTreasury: "goalTreasury",
+  goalUnderwriterAudience: "goalUnderwriterAudience",
+  goalUnderwriterCurrent: "goalUnderwriterCurrent",
   juror: "juror",
   jurorDisputeMember: "jurorDisputeMember",
+  protocolNotificationOutbox: "protocolNotificationOutbox",
+  protocolNotificationSchedule: "protocolNotificationSchedule",
+  stakePosition: "stakePosition",
+  stakeVault: "stakeVault",
+  stakeVaultJurorAudience: "stakeVaultJurorAudience",
 }));
 
 vi.mock("../src/helpers/protocolEvent", () => ({

@@ -41,6 +41,15 @@ export function premiumAccountId(escrow: Hex, account: Hex): string {
   return `${escrow.toLowerCase()}:${account.toLowerCase()}`;
 }
 
+export function premiumClaimableCycleSourceId(
+  escrow: Hex,
+  account: Hex,
+  txHash: Hex,
+  logIndex: number
+): string {
+  return `${escrow.toLowerCase()}:${account.toLowerCase()}:${txHash.toLowerCase()}:${logIndex}`;
+}
+
 export function tcrItemId(tcrAddress: Hex, itemId: Hex): string {
   return `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}`;
 }

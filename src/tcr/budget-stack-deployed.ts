@@ -9,6 +9,7 @@ import {
   flow,
   flowRecipient,
   premiumEscrow,
+  premiumEscrowByBudgetTreasury,
 } from "ponder:schema";
 
 import { flowRecipientKey } from "../helpers/ids";
@@ -20,8 +21,11 @@ ponder.on("BudgetTCR:BudgetStackDeployed", async ({ event, context }) => {
   const recipientId = event.args.itemID as Hex;
   const childFlowId = event.args.childFlow as Hex;
   const budgetTreasuryId = event.args.budgetTreasury as Hex;
+  const childFlow = await context.db.find(flow, { id: childFlowId });
   const existingStack = await context.db.find(budgetStack, { id: recipientId });
-  const premiumEscrowAddress = existingStack?.premiumEscrow ?? null;
+  const premiumEscrowAddress = (existingStack?.premiumEscrow ??
+    childFlow?.managerRewardPool ??
+    null) as Hex | null;
 
   await context.db
     .insert(budgetStack)
@@ -102,7 +106,6 @@ ponder.on("BudgetTCR:BudgetStackDeployed", async ({ event, context }) => {
       updatedAtTimestamp: event.block.timestamp,
     });
 
-  const childFlow = await context.db.find(flow, { id: childFlowId });
   if (childFlow?.parentFlow) {
     const parentRecipientId = flowRecipientKey(childFlow.parentFlow as Hex, recipientId);
     await context.db.update(flowRecipient, { id: parentRecipientId }).set({
@@ -127,6 +130,24 @@ ponder.on("BudgetTCR:BudgetStackDeployed", async ({ event, context }) => {
         budgetStackId: recipientId,
         childFlow: childFlowId,
         budgetTreasury: budgetTreasuryId,
+        updatedAtBlock: event.block.number,
+        updatedAtTimestamp: event.block.timestamp,
+      });
+
+    await context.db
+      .insert(premiumEscrowByBudgetTreasury)
+      .values({
+        id: budgetTreasuryId,
+        premiumEscrow: premiumEscrowAddress,
+        budgetStackId: recipientId,
+        childFlow: childFlowId,
+        updatedAtBlock: event.block.number,
+        updatedAtTimestamp: event.block.timestamp,
+      })
+      .onConflictDoUpdate({
+        premiumEscrow: premiumEscrowAddress,
+        budgetStackId: recipientId,
+        childFlow: childFlowId,
         updatedAtBlock: event.block.number,
         updatedAtTimestamp: event.block.timestamp,
       });

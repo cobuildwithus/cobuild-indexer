@@ -5,8 +5,10 @@ import {
   budgetContextByMechanismArbitrator,
   budgetContextByMechanismTcr,
   budgetMechanismRegistry,
+  premiumEscrowByBudgetTreasury,
   budgetTreasury,
   budgetTreasuryByRecipient,
+  flow,
   goalContextByBudgetTcr,
 } from "ponder:schema";
 
@@ -29,18 +31,22 @@ ponder.on("BudgetTCR:BudgetAllocationMechanismDeployed", async ({ event, context
   const budgetTreasuryId = (budgetLink?.budgetTreasury ?? null) as Hex | null;
   if (!goalContext?.goalTreasury || !budgetTreasuryId) return;
 
-  const [goalRow, budgetRow] = await Promise.all([
+  const [goalRow, budgetRow, premiumEscrowLink] = await Promise.all([
     getGoalRow({
       context,
       goalTreasuryAddress: goalContext.goalTreasury,
     }),
     context.db.find(budgetTreasury, { id: budgetTreasuryId }),
+    context.db.find(premiumEscrowByBudgetTreasury, { id: budgetTreasuryId }),
   ]);
   if (!goalRow) return;
 
   const childFlow = (budgetRow?.childFlow ?? budgetLink?.childFlow ?? null) as Hex | null;
+  const childFlowRow = childFlow ? await context.db.find(flow, { id: childFlow }) : null;
   const strategy = (budgetRow?.strategy ?? null) as Hex | null;
-  const fundingEscrow = (budgetRow?.premiumEscrow ?? null) as Hex | null;
+  const fundingEscrow = (premiumEscrowLink?.premiumEscrow ??
+    childFlowRow?.managerRewardPool ??
+    null) as Hex | null;
 
   await context.db
     .insert(budgetMechanismRegistry)

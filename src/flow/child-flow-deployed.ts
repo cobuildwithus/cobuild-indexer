@@ -9,6 +9,7 @@ import {
   flow,
   flowRecipient,
   premiumEscrow,
+  premiumEscrowByBudgetTreasury,
 } from "ponder:schema";
 import { flowRecipientKey } from "../helpers/ids";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
@@ -140,6 +141,22 @@ ponder.on("GoalFlow:ChildFlowDeployed", async ({ event, context }) => {
     .onConflictDoUpdate({
       budgetTreasury: treasuryId,
       recipientId,
+      ...updatedAt,
+    });
+
+  await context.db
+    .insert(premiumEscrowByBudgetTreasury)
+    .values({
+      id: treasuryId,
+      premiumEscrow: escrowId,
+      budgetStackId: recipientId,
+      childFlow: childFlowId,
+      ...updatedAt,
+    })
+    .onConflictDoUpdate({
+      premiumEscrow: escrowId,
+      budgetStackId: recipientId,
+      childFlow: childFlowId,
       ...updatedAt,
     });
 });

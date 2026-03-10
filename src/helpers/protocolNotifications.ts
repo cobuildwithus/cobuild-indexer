@@ -93,7 +93,8 @@ function resourceKindForReason(reason: string): string {
   if (
     reason === "goal_active" ||
     reason === "goal_succeeded" ||
-    reason === "goal_expired"
+    reason === "goal_expired" ||
+    reason === "underwriter_withdrawal_prep_required"
   ) {
     return "goal";
   }
@@ -105,7 +106,9 @@ function resourceKindForReason(reason: string): string {
     reason === "budget_succeeded" ||
     reason === "budget_failed" ||
     reason === "budget_expired" ||
-    reason === "underwriter_slashed"
+    reason === "underwriter_slashed" ||
+    reason === "premium_claimable" ||
+    reason === "premium_claimed"
   ) {
     return "budget";
   }
@@ -136,12 +139,25 @@ function resourceKindForReason(reason: string): string {
   return "budget_request";
 }
 
+export type NotificationAction = "upsert" | "invalidate";
+export type NotificationClass = "edge" | "open_close" | "cycle";
+
 export function protocolNotificationOutboxId(args: {
+  txHash: Hex;
+  logIndex: number;
   sourceType: string;
   sourceId: string;
   recipientWalletAddress: Hex;
+  action: NotificationAction;
 }): string {
-  return `${args.sourceType}:${args.sourceId}:${normalizeHex(args.recipientWalletAddress)}`;
+  return [
+    args.sourceType,
+    args.sourceId,
+    normalizeHex(args.recipientWalletAddress),
+    args.action,
+    normalizeHex(args.txHash),
+    args.logIndex.toString(),
+  ].join(":");
 }
 
 export function protocolNotificationScheduleId(args: {
@@ -149,7 +165,7 @@ export function protocolNotificationScheduleId(args: {
   sourceId: string;
   recipientWalletAddress: Hex;
 }): string {
-  return protocolNotificationOutboxId(args);
+  return `${args.sourceType}:${args.sourceId}:${normalizeHex(args.recipientWalletAddress)}`;
 }
 
 export function toRequestType(value: unknown): "registration" | "clearing" | "unknown" {
@@ -537,6 +553,8 @@ export function buildGoalNotificationPayload(args: {
   } | null;
   amounts?: {
     allocatedStake?: bigint | null;
+    claimable?: bigint | null;
+    claimedAmount?: bigint | null;
     snapshotWeight?: bigint | null;
     snapshotVotes?: bigint | null;
     slashWeight?: bigint | null;
@@ -578,6 +596,8 @@ export function buildGoalNotificationPayload(args: {
     amounts: args.amounts
       ? {
           allocatedStake: toStringOrNull(args.amounts.allocatedStake ?? null),
+          claimable: toStringOrNull(args.amounts.claimable ?? null),
+          claimedAmount: toStringOrNull(args.amounts.claimedAmount ?? null),
           snapshotWeight: toStringOrNull(args.amounts.snapshotWeight ?? null),
           snapshotVotes: toStringOrNull(args.amounts.snapshotVotes ?? null),
           slashWeight: toStringOrNull(args.amounts.slashWeight ?? null),
@@ -641,6 +661,8 @@ type PendingNotification = {
   reason: string;
   sourceType: string;
   sourceId: string;
+  notificationClass?: NotificationClass;
+  action?: NotificationAction;
   actorWalletAddress?: Hex | null;
   payload: Record<string, unknown>;
 };
@@ -663,9 +685,12 @@ export async function emitProtocolNotifications(args: {
         .insert(protocolNotificationOutbox)
         .values({
           id: protocolNotificationOutboxId({
+            txHash: event.transaction.hash as Hex,
+            logIndex: event.log.logIndex,
             sourceType: notification.sourceType,
             sourceId: notification.sourceId,
             recipientWalletAddress: notification.recipientWalletAddress,
+            action: notification.action ?? "upsert",
           }),
           chainId: context.chain.id,
           blockNumber: event.block.number,
@@ -673,6 +698,8 @@ export async function emitProtocolNotifications(args: {
           txHash: event.transaction.hash,
           logIndex: event.log.logIndex,
           recipientWalletAddress: normalizeHex(notification.recipientWalletAddress),
+          notificationClass: notification.notificationClass ?? "edge",
+          action: notification.action ?? "upsert",
           reason: notification.reason,
           sourceType: notification.sourceType,
           sourceId: notification.sourceId,

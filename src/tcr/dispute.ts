@@ -172,6 +172,8 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
         requestIndex,
         budgetTreasury,
         actorWalletAddress: challenger,
+        arbitrator: arbitratorAddress,
+        disputeId,
       }),
     })),
   });
