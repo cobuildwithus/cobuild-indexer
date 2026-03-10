@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { reassertGraceReminderSourceId } from "../src/helpers/ids";
 
 const {
   emitProtocolNotificationsMock,
@@ -81,7 +82,7 @@ function createDb() {
 
   return {
     db: {
-      find: vi.fn(async () => null),
+      find: vi.fn(async (): Promise<Record<string, unknown> | null> => null),
       insert: (table: string) => ({
         values: (value: unknown) => {
           const call: InsertCall = { table, value };
@@ -362,6 +363,156 @@ describe("protocol notification completeness handlers", () => {
             recipientWalletAddress: proposer,
             reason: "budget_failed",
             payload: expect.objectContaining({ role: "proposer" }),
+          }),
+        ]),
+      })
+    );
+  });
+
+  it("invalidates the prior goal reassert-grace reminder before clearing the assertion state", async () => {
+    await import("../src/goals/success-assertion-cleared");
+
+    const { db, updateCalls } = createDb();
+    db.find.mockResolvedValueOnce({
+      successAssertionId:
+        "0x2222222222222222222222222222222222222222222222222222222222222222",
+      reassertGraceDeadline: 99n,
+    });
+
+    await getRegisteredHandler<Record<string, never>>("GoalTreasury:SuccessAssertionCleared")({
+      event: {
+        log: { address: goalTreasury, logIndex: 10 },
+        args: {},
+        transaction: {
+          hash: "0x0000000000000000000000000000000000000000000000000000000000000004",
+          from: "0x00000000000000000000000000000000000000b6",
+        },
+        block: { number: 13n, timestamp: 23n },
+      },
+      context: {
+        chain: { id: 8453 },
+        db,
+      },
+    });
+
+    expect(updateCalls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          table: "goalTreasury",
+          key: { id: goalTreasury },
+          setArg: expect.objectContaining({
+            successAssertionId: null,
+            successAssertionRegisteredAt: null,
+            reassertGraceDeadline: null,
+          }),
+        }),
+      ])
+    );
+    expect(emitProtocolNotificationsMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        notifications: expect.arrayContaining([
+          expect.objectContaining({
+            recipientWalletAddress: stakeholder,
+            reason: "goal_success_assertion_reassert_grace_ending_soon",
+            action: "invalidate",
+            notificationClass: "cycle",
+            sourceType: "goal_success_assertion_reassert_grace_reminder",
+            sourceId: reassertGraceReminderSourceId(
+              goalTreasury,
+              "0x2222222222222222222222222222222222222222222222222222222222222222"
+            ),
+            payload: expect.objectContaining({
+              schedule: expect.objectContaining({
+                reassertGraceDeadline: "99",
+              }),
+            }),
+          }),
+        ]),
+      })
+    );
+    expect(emitProtocolNotificationsMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        notifications: expect.arrayContaining([
+          expect.objectContaining({
+            recipientWalletAddress: stakeholder,
+            reason: "goal_success_assertion_cleared",
+          }),
+        ]),
+      })
+    );
+  });
+
+  it("invalidates the prior budget reassert-grace reminder before clearing the assertion state", async () => {
+    await import("../src/budgets/success-assertion-cleared");
+
+    const { db, updateCalls } = createDb();
+    db.find.mockResolvedValueOnce({
+      successAssertionId:
+        "0x3333333333333333333333333333333333333333333333333333333333333333",
+      reassertGraceDeadline: 111n,
+    });
+
+    await getRegisteredHandler<Record<string, never>>("BudgetTreasury:SuccessAssertionCleared")({
+      event: {
+        log: { address: budgetTreasury, logIndex: 11 },
+        args: {},
+        transaction: {
+          hash: "0x0000000000000000000000000000000000000000000000000000000000000005",
+          from: "0x00000000000000000000000000000000000000b7",
+        },
+        block: { number: 14n, timestamp: 24n },
+      },
+      context: {
+        chain: { id: 8453 },
+        db,
+      },
+    });
+
+    expect(updateCalls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          table: "budgetTreasury",
+          key: { id: budgetTreasury },
+          setArg: expect.objectContaining({
+            successAssertionId: null,
+            successAssertionRegisteredAt: null,
+            reassertGraceDeadline: null,
+          }),
+        }),
+      ])
+    );
+    expect(emitProtocolNotificationsMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        notifications: expect.arrayContaining([
+          expect.objectContaining({
+            recipientWalletAddress: controller,
+            reason: "budget_success_assertion_reassert_grace_ending_soon",
+            action: "invalidate",
+            notificationClass: "cycle",
+            sourceType: "budget_success_assertion_reassert_grace_reminder",
+            sourceId: reassertGraceReminderSourceId(
+              budgetTreasury,
+              "0x3333333333333333333333333333333333333333333333333333333333333333"
+            ),
+            payload: expect.objectContaining({
+              schedule: expect.objectContaining({
+                reassertGraceDeadline: "111",
+              }),
+            }),
+          }),
+        ]),
+      })
+    );
+    expect(emitProtocolNotificationsMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        notifications: expect.arrayContaining([
+          expect.objectContaining({
+            recipientWalletAddress: controller,
+            reason: "budget_success_assertion_cleared",
           }),
         ]),
       })

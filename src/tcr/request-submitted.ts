@@ -9,7 +9,7 @@ import {
 } from "ponder:schema";
 import { requestChallengeReminderSourceId, tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   challengeWindowReminderLabel,
   challengeWindowReminderReason,
   collectRecipientRoles,
@@ -142,7 +142,7 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
       sourceType: "budget_request",
       sourceId: `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}:${reason}`,
       actorWalletAddress: requester,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason,
@@ -187,7 +187,7 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
       sourceId: requestChallengeReminderSourceId(tcrAddress, itemId, requestIndex, reminderReason),
       deliverAt,
       actorWalletAddress: requester,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason: reminderReason,
@@ -200,7 +200,7 @@ ponder.on("BudgetTCRProtocolEvents:RequestSubmitted", async ({ event, context })
         },
         schedule: {
           deliverAt,
-          challengeDeadline,
+          challengeWindowEndAt: challengeDeadline,
         },
       }),
     })),

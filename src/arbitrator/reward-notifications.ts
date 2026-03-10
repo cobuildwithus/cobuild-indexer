@@ -9,7 +9,7 @@ import {
   jurorVoteReceiptId,
 } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   emitProtocolNotifications,
   getGoalRow,
 } from "../helpers/protocolNotifications";
@@ -31,6 +31,39 @@ type DisputeNotificationRow = {
   itemId?: Hex | null;
   requestIndex?: bigint | null;
 };
+
+type RewardBucket = {
+  bucket: string;
+  bucketLabel: string;
+};
+
+function buildRewardBucket(args: {
+  rewardAmount?: bigint | null;
+  goalSlashAmount?: bigint | null;
+  cobuildSlashAmount?: bigint | null;
+}): RewardBucket | null {
+  const rewardAmount = BigInt(args.rewardAmount ?? 0n);
+  const goalSlashAmount = BigInt(args.goalSlashAmount ?? 0n);
+  const cobuildSlashAmount = BigInt(args.cobuildSlashAmount ?? 0n);
+
+  const buckets: RewardBucket[] = [];
+  if (rewardAmount > 0n) {
+    buckets.push({ bucket: "appeal_bonus", bucketLabel: "appeal bonus" });
+  }
+  if (goalSlashAmount > 0n) {
+    buckets.push({ bucket: "goal_slash", bucketLabel: "goal slash" });
+  }
+  if (cobuildSlashAmount > 0n) {
+    buckets.push({ bucket: "cobuild_slash", bucketLabel: "cobuild slash" });
+  }
+
+  if (buckets.length === 0) return null;
+  if (buckets.length === 1) return buckets[0]!;
+  return {
+    bucket: "mixed",
+    bucketLabel: "mixed",
+  };
+}
 
 async function resolveDisputeRow(args: {
   context: RewardNotificationContext;
@@ -164,7 +197,7 @@ export async function syncJurorRewardClaimableNotification(args: {
         sourceId,
         notificationClass: "cycle",
         action: shouldUpsert ? "upsert" : "invalidate",
-        payload: buildGoalNotificationPayload({
+        payload: buildProtocolNotificationPayload({
           role: "juror",
           goalRow,
           reason: "juror_reward_claimable",
@@ -179,6 +212,11 @@ export async function syncJurorRewardClaimableNotification(args: {
             claimableGoalSlashReward: nextClaimableGoalSlashReward,
             claimableCobuildSlashReward: nextClaimableCobuildSlashReward,
           },
+          reward: buildRewardBucket({
+            rewardAmount: nextClaimableReward,
+            goalSlashAmount: nextClaimableGoalSlashReward,
+            cobuildSlashAmount: nextClaimableCobuildSlashReward,
+          }),
         }),
       },
     ],
@@ -226,7 +264,7 @@ export async function emitJurorRewardClaimedNotification(args: {
           args.event.transaction.hash.toLowerCase(),
           args.event.log.logIndex.toString(),
         ].join(":"),
-        payload: buildGoalNotificationPayload({
+        payload: buildProtocolNotificationPayload({
           role: "juror",
           goalRow,
           reason: "juror_reward_claimed",
@@ -241,6 +279,11 @@ export async function emitJurorRewardClaimedNotification(args: {
             claimedGoalSlashReward: args.goalSlashAmount,
             claimedCobuildSlashReward: args.cobuildSlashAmount,
           },
+          reward: buildRewardBucket({
+            rewardAmount: args.rewardAmount,
+            goalSlashAmount: args.goalSlashAmount,
+            cobuildSlashAmount: args.cobuildSlashAmount,
+          }),
         }),
       },
     ],

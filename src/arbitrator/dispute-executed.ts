@@ -16,7 +16,7 @@ import {
   tcrRequestId,
 } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   collectRecipientRoles,
   emitProtocolNotifications,
   getGoalRow,
@@ -112,7 +112,7 @@ async function handleDisputeExecuted(args: {
       reason: "juror_ruling_final",
       sourceType: "juror_dispute",
       sourceId: `${arbitratorAddress.toLowerCase()}:${event.args.disputeId.toString()}:juror_ruling_final`,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason: "juror_ruling_final",
@@ -149,7 +149,7 @@ async function handleDisputeExecuted(args: {
       reason: "juror_slashable",
       sourceType: "juror_dispute",
       sourceId: `${arbitratorAddress.toLowerCase()}:${event.args.disputeId.toString()}:juror_slashable`,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: "juror",
         goalRow,
         reason: "juror_slashable",

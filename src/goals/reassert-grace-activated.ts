@@ -3,7 +3,7 @@ import { ponder } from "ponder:registry";
 import { goalTreasury } from "ponder:schema";
 import { reassertGraceReminderSourceId } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   collectRecipientRoles,
   emitProtocolNotificationSchedules,
   getGoalRow,
@@ -62,7 +62,7 @@ ponder.on("GoalTreasury:ReassertGraceActivated", async ({ event, context }) => {
       sourceType: "goal_success_assertion_reassert_grace_reminder",
       sourceId: reassertGraceReminderSourceId(event.log.address, event.args.clearedAssertionId),
       deliverAt,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason: "goal_success_assertion_reassert_grace_ending_soon",

@@ -1,7 +1,7 @@
 import type { Hex } from "viem";
 
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   collectRecipientRoles,
   emitProtocolNotifications,
   getGoalRow,
@@ -25,10 +25,10 @@ export async function emitGoalAudienceNotification(args: {
   action?: NotificationAction;
   schedule?: {
     deliverAt?: bigint | null;
-    votingStartTime?: bigint | null;
-    votingEndTime?: bigint | null;
-    revealPeriodEndTime?: bigint | null;
-    challengeDeadline?: bigint | null;
+    votingStartAt?: bigint | null;
+    votingEndAt?: bigint | null;
+    revealEndAt?: bigint | null;
+    challengeWindowEndAt?: bigint | null;
     reassertGraceDeadline?: bigint | null;
   } | null;
   labels?: {
@@ -78,7 +78,7 @@ export async function emitGoalAudienceNotification(args: {
       notificationClass: args.notificationClass,
       action: args.action,
       actorWalletAddress: args.actorWalletAddress ?? null,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason: args.reason,

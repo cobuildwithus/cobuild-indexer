@@ -10,7 +10,7 @@ import {
   premiumClaimableCycleSourceId,
 } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   emitProtocolNotifications,
   getGoalRow,
 } from "../helpers/protocolNotifications";
@@ -105,7 +105,7 @@ ponder.on("PremiumEscrow:AccountCheckpointed", async ({ event, context }) => {
         sourceId: cycleSourceId,
         notificationClass: "cycle" as const,
         action: shouldOpenCycle ? "upsert" : "invalidate",
-        payload: buildGoalNotificationPayload({
+        payload: buildProtocolNotificationPayload({
           role: "budget_underwriter",
           goalRow,
           reason: "premium_claimable",

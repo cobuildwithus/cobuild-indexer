@@ -14,7 +14,7 @@ import {
   tcrRequestId,
 } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   challengeWindowReminderLabel,
   challengeWindowReminderReason,
   collectRecipientRoles,
@@ -187,7 +187,7 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
       sourceType: "budget_request",
       sourceId: `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}:${reason}`,
       actorWalletAddress: challenger,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason,
@@ -218,7 +218,7 @@ ponder.on("BudgetTCRProtocolEvents:Dispute", async ({ event, context }) => {
               notificationClass: "cycle" as const,
               action: "invalidate" as const,
               actorWalletAddress: challenger,
-              payload: buildGoalNotificationPayload({
+              payload: buildProtocolNotificationPayload({
                 role: recipient.role,
                 goalRow,
                 reason: reminderReason,

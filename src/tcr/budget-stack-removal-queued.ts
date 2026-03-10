@@ -14,7 +14,7 @@ import {
   tcrRequestId,
 } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   challengeWindowReminderLabel,
   challengeWindowReminderReason,
   collectRecipientRoles,
@@ -97,7 +97,7 @@ ponder.on("BudgetTCR:BudgetStackRemovalQueued", async ({ event, context }) => {
       sourceType: "budget_request",
       sourceId: `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}:budget_removal_accepted`,
       actorWalletAddress: requester as `0x${string}` | null,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason: "budget_removal_accepted",
@@ -126,7 +126,7 @@ ponder.on("BudgetTCR:BudgetStackRemovalQueued", async ({ event, context }) => {
               notificationClass: "cycle" as const,
               action: "invalidate" as const,
               actorWalletAddress: requester as `0x${string}` | null,
-              payload: buildGoalNotificationPayload({
+              payload: buildProtocolNotificationPayload({
                 role: recipient.role,
                 goalRow,
                 reason: reminderReason,

@@ -3,7 +3,7 @@ import { ponder } from "ponder:registry";
 import { goalTreasury } from "ponder:schema";
 import { reassertGraceReminderSourceId } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   collectRecipientRoles,
   emitProtocolNotifications,
   getGoalUnderwriterAccounts,
@@ -76,7 +76,7 @@ ponder.on("GoalTreasury:StateTransition", async ({ event, context }) => {
       reason,
       sourceType: "goal_state",
       sourceId: `${treasury.toLowerCase()}:${reason}`,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason,
@@ -92,7 +92,7 @@ ponder.on("GoalTreasury:StateTransition", async ({ event, context }) => {
             sourceId: reassertGraceReminderSourceId(treasury, successAssertionId),
             notificationClass: "cycle" as const,
             action: "invalidate" as const,
-            payload: buildGoalNotificationPayload({
+            payload: buildProtocolNotificationPayload({
               role: recipient.role,
               goalRow,
               reason: "goal_success_assertion_reassert_grace_ending_soon",

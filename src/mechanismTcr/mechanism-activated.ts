@@ -4,7 +4,7 @@ import type { Hex } from "viem";
 import { budgetMechanismRegistry, tcrItem, tcrRequest } from "ponder:schema";
 import { tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   collectRecipientRoles,
   emitProtocolNotifications,
 } from "../helpers/protocolNotifications";
@@ -66,7 +66,7 @@ ponder.on("AllocationMechanismTCR:MechanismActivated", async ({ event, context }
       sourceType: "mechanism_request",
       sourceId: `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}:mechanism_activated`,
       actorWalletAddress: requester,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason: "mechanism_activated",

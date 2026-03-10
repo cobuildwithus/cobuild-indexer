@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { parseProtocolNotificationPayload } from "@cobuild/wire";
 import type { Hex } from "viem";
 vi.mock("ponder:schema", () => ({
   budgetUnderwriterAudience: {},
@@ -16,7 +17,7 @@ vi.mock("ponder:schema", () => ({
 }));
 
 const {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   collectRecipientRoles,
   getBigIntArg,
   getHexArg,
@@ -132,7 +133,7 @@ describe("protocol notification helpers", () => {
     };
 
     expect(
-      buildGoalNotificationPayload({
+      buildProtocolNotificationPayload({
         role: "requester",
         goalRow,
         reason: "budget_accepted",
@@ -165,7 +166,7 @@ describe("protocol notification helpers", () => {
     });
 
     expect(
-      buildGoalNotificationPayload({
+      buildProtocolNotificationPayload({
         role: "goal_owner",
         goalRow,
         reason: "goal_succeeded",
@@ -190,7 +191,7 @@ describe("protocol notification helpers", () => {
     });
 
     expect(
-      buildGoalNotificationPayload({
+      buildProtocolNotificationPayload({
         role: "budget_controller",
         goalRow,
         reason: "budget_success_assertion_registered",
@@ -216,7 +217,7 @@ describe("protocol notification helpers", () => {
     });
 
     expect(
-      buildGoalNotificationPayload({
+      buildProtocolNotificationPayload({
         role: "budget_underwriter",
         goalRow,
         reason: "premium_claimable",
@@ -262,7 +263,7 @@ describe("protocol notification helpers", () => {
     };
 
     expect(
-      buildGoalNotificationPayload({
+      buildProtocolNotificationPayload({
         role: "goal_owner",
         goalRow,
         reason: "budget_proposal_challenge_window_ending_soon",
@@ -272,7 +273,7 @@ describe("protocol notification helpers", () => {
         budgetTreasury: "0x00000000000000000000000000000000000000cc",
         schedule: {
           deliverAt: 35n,
-          challengeDeadline: 50n,
+          challengeWindowEndAt: 50n,
         },
         labels: {
           reminderContextLabel: "budget proposal",
@@ -300,13 +301,47 @@ describe("protocol notification helpers", () => {
         votingStartAt: null,
         votingEndAt: null,
         revealEndAt: null,
-        challengeDeadlineAt: "50",
+        challengeWindowEndAt: "50",
       },
       amounts: null,
     });
 
     expect(
-      buildGoalNotificationPayload({
+      buildProtocolNotificationPayload({
+        role: "goal_owner",
+        goalRow,
+        reason: "goal_success_assertion_registered",
+        schedule: {
+          reassertGraceDeadline: 90n,
+        },
+      })
+    ).toEqual({
+      role: "goal_owner",
+      resource: {
+        kind: "goal",
+        goalTreasury: "0x00000000000000000000000000000000000000aa",
+        budgetTreasury: null,
+        itemId: null,
+        requestIndex: null,
+        arbitrator: null,
+        disputeId: null,
+      },
+      actor: null,
+      labels: {
+        goalName: "alpha",
+      },
+      schedule: {
+        deliverAt: null,
+        votingStartAt: null,
+        votingEndAt: null,
+        revealEndAt: null,
+        reassertGraceDeadline: "90",
+      },
+      amounts: null,
+    });
+
+    expect(
+      buildProtocolNotificationPayload({
         role: "juror",
         goalRow,
         reason: "juror_reward_claimable",
@@ -348,8 +383,43 @@ describe("protocol notification helpers", () => {
       },
     });
 
+    const rewardPayload = buildProtocolNotificationPayload({
+      role: "juror",
+      goalRow,
+      reason: "juror_reward_claimable",
+      arbitrator: "0x00000000000000000000000000000000000000dd",
+      disputeId: 7n,
+      reward: {
+        bucket: "mixed",
+        bucketLabel: "mixed",
+      },
+    });
+
+    expect(rewardPayload).toEqual({
+      role: "juror",
+      resource: {
+        kind: "juror_dispute",
+        goalTreasury: "0x00000000000000000000000000000000000000aa",
+        budgetTreasury: null,
+        itemId: null,
+        requestIndex: null,
+        arbitrator: "0x00000000000000000000000000000000000000dd",
+        disputeId: "7",
+      },
+      actor: null,
+      labels: {
+        goalName: "alpha",
+      },
+      schedule: null,
+      amounts: null,
+      reward: {
+        bucket: "mixed",
+        bucketLabel: "mixed",
+      },
+    });
+
     expect(
-      buildGoalNotificationPayload({
+      buildProtocolNotificationPayload({
         role: "juror",
         goalRow,
         reason: "juror_vote_deadline_soon",
@@ -357,9 +427,9 @@ describe("protocol notification helpers", () => {
         disputeId: 7n,
         schedule: {
           deliverAt: 35n,
-          votingStartTime: 10n,
-          votingEndTime: 50n,
-          revealPeriodEndTime: 75n,
+          votingStartAt: 10n,
+          votingEndAt: 50n,
+          revealEndAt: 75n,
         },
       })
     ).toEqual({
@@ -382,6 +452,61 @@ describe("protocol notification helpers", () => {
         votingStartAt: "10",
         votingEndAt: "50",
         revealEndAt: "75",
+      },
+      amounts: null,
+    });
+  });
+
+  it("round-trips canonical indexer protocol payloads through wire parsing", () => {
+    const payload = buildProtocolNotificationPayload({
+      role: "goal_owner",
+      goalRow: {
+        id: "0x00000000000000000000000000000000000000aa" as Hex,
+        owner: "0x00000000000000000000000000000000000000bb" as Hex,
+        stakeVault: "0x00000000000000000000000000000000000000ee" as Hex,
+        canonicalRouteSlug: "alpha",
+      },
+      reason: "budget_proposal_challenge_window_ending_soon",
+      budgetTreasury: "0x00000000000000000000000000000000000000cc",
+      itemId:
+        "0x1111111111111111111111111111111111111111111111111111111111111111",
+      requestIndex: 4n,
+      schedule: {
+        deliverAt: 35n,
+        challengeWindowEndAt: 50n,
+        reassertGraceDeadline: 90n,
+      },
+      labels: {
+        reminderContextLabel: " budget proposal ",
+      },
+    });
+
+    expect(parseProtocolNotificationPayload(payload)).toMatchObject({
+      role: "goal_owner",
+      resource: {
+        kind: "budget_request",
+        goalTreasury: "0x00000000000000000000000000000000000000aa",
+        budgetTreasury: "0x00000000000000000000000000000000000000cc",
+        itemId:
+          "0x1111111111111111111111111111111111111111111111111111111111111111",
+        requestIndex: "4",
+        arbitrator: null,
+        disputeId: null,
+      },
+      actor: null,
+      labels: {
+        goalName: "alpha",
+        budgetName: null,
+        mechanismName: null,
+        reminderContextLabel: "budget proposal",
+      },
+      schedule: {
+        deliverAt: "35",
+        votingStartAt: null,
+        votingEndAt: null,
+        revealEndAt: null,
+        challengeWindowEndAt: "50",
+        reassertGraceDeadline: "90",
       },
       amounts: null,
     });

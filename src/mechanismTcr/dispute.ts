@@ -8,7 +8,7 @@ import {
   tcrRequestId,
 } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   challengeWindowReminderLabel,
   challengeWindowReminderReason,
   collectRecipientRoles,
@@ -153,7 +153,7 @@ ponder.on("AllocationMechanismTCR:Dispute", async ({ event, context }) => {
       sourceType: "mechanism_request",
       sourceId: `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}:mechanism_challenged`,
       actorWalletAddress: challenger,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason: "mechanism_challenged",
@@ -184,7 +184,7 @@ ponder.on("AllocationMechanismTCR:Dispute", async ({ event, context }) => {
               notificationClass: "cycle" as const,
               action: "invalidate" as const,
               actorWalletAddress: challenger,
-              payload: buildGoalNotificationPayload({
+              payload: buildProtocolNotificationPayload({
                 role: recipient.role,
                 goalRow,
                 reason: reminderReason,

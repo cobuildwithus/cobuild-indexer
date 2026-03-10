@@ -4,7 +4,7 @@ import type { Hex } from "viem";
 import { arbitratorDispute, jurorVoteReceipt } from "ponder:schema";
 import { arbitratorDisputeId, jurorVoteReceiptId } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   emitProtocolNotifications,
   getGoalRow,
 } from "../helpers/protocolNotifications";
@@ -83,7 +83,7 @@ async function handleVoterSlashed(args: {
         reason: "juror_slashed",
         sourceType: "juror_slash",
         sourceId: `${arbitratorAddress.toLowerCase()}:${event.args.disputeId.toString()}:${event.args.round.toString()}:juror_slashed`,
-        payload: buildGoalNotificationPayload({
+        payload: buildProtocolNotificationPayload({
           role: "juror",
           goalRow,
           reason: "juror_slashed",

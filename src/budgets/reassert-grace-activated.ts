@@ -3,7 +3,7 @@ import { ponder } from "ponder:registry";
 import { budgetTreasury } from "ponder:schema";
 import { reassertGraceReminderSourceId } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   collectRecipientRoles,
   emitProtocolNotificationSchedules,
   getBudgetLifecycleNotificationContext,
@@ -71,7 +71,7 @@ ponder.on("BudgetTreasury:ReassertGraceActivated", async ({ event, context }) =>
       sourceType: "budget_success_assertion_reassert_grace_reminder",
       sourceId: reassertGraceReminderSourceId(event.log.address, event.args.clearedAssertionId),
       deliverAt,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason: "budget_success_assertion_reassert_grace_ending_soon",

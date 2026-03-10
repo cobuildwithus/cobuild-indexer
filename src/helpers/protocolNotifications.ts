@@ -716,7 +716,7 @@ export async function getBudgetLifecycleNotificationContext(args: {
   };
 }
 
-export function buildGoalNotificationPayload(args: {
+export function buildProtocolNotificationPayload(args: {
   role: RecipientRole;
   goalRow: GoalRow | null;
   reason: string;
@@ -728,10 +728,10 @@ export function buildGoalNotificationPayload(args: {
   disputeId?: bigint | null;
   schedule?: {
     deliverAt?: bigint | null;
-    votingStartTime?: bigint | null;
-    votingEndTime?: bigint | null;
-    revealPeriodEndTime?: bigint | null;
-    challengeDeadline?: bigint | null;
+    votingStartAt?: bigint | null;
+    votingEndAt?: bigint | null;
+    revealEndAt?: bigint | null;
+    challengeWindowEndAt?: bigint | null;
     reassertGraceDeadline?: bigint | null;
   } | null;
   labels?: {
@@ -752,6 +752,10 @@ export function buildGoalNotificationPayload(args: {
     claimedReward?: bigint | null;
     claimedGoalSlashReward?: bigint | null;
     claimedCobuildSlashReward?: bigint | null;
+  } | null;
+  reward?: {
+    bucket?: string | null;
+    bucketLabel?: string | null;
   } | null;
 }): Record<string, unknown> {
   const goalTreasuryAddress = normalizeHexOrNull((args.goalRow?.id ?? null) as Hex | null);
@@ -776,17 +780,17 @@ export function buildGoalNotificationPayload(args: {
   const schedule: Record<string, string | null> | null = args.schedule
     ? {
         deliverAt: toStringOrNull(args.schedule.deliverAt ?? null),
-        votingStartAt: toStringOrNull(args.schedule.votingStartTime ?? null),
-        votingEndAt: toStringOrNull(args.schedule.votingEndTime ?? null),
-        revealEndAt: toStringOrNull(args.schedule.revealPeriodEndTime ?? null),
+        votingStartAt: toStringOrNull(args.schedule.votingStartAt ?? null),
+        votingEndAt: toStringOrNull(args.schedule.votingEndAt ?? null),
+        revealEndAt: toStringOrNull(args.schedule.revealEndAt ?? null),
       }
     : null;
 
-  if (schedule && args.schedule && "challengeDeadline" in args.schedule) {
-    schedule.challengeDeadlineAt = toStringOrNull(args.schedule.challengeDeadline ?? null);
+  if (schedule && args.schedule && "challengeWindowEndAt" in args.schedule) {
+    schedule.challengeWindowEndAt = toStringOrNull(args.schedule.challengeWindowEndAt ?? null);
   }
   if (schedule && args.schedule && "reassertGraceDeadline" in args.schedule) {
-    schedule.reassertGraceDeadlineAt = toStringOrNull(args.schedule.reassertGraceDeadline ?? null);
+    schedule.reassertGraceDeadline = toStringOrNull(args.schedule.reassertGraceDeadline ?? null);
   }
 
   const amounts: Record<string, string | null> | null = args.amounts
@@ -825,7 +829,7 @@ export function buildGoalNotificationPayload(args: {
     );
   }
 
-  return {
+  const payload: Record<string, unknown> = {
     role: args.role,
     resource: {
       kind: resourceKindForReason(args.reason),
@@ -845,6 +849,15 @@ export function buildGoalNotificationPayload(args: {
     schedule,
     amounts,
   };
+
+  if (args.reward) {
+    payload.reward = {
+      bucket: args.reward.bucket ?? null,
+      bucketLabel: args.reward.bucketLabel ?? null,
+    };
+  }
+
+  return payload;
 }
 
 export function collectRecipientRoles(args: {

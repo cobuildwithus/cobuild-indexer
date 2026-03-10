@@ -15,7 +15,7 @@ import {
 } from "ponder:schema";
 import { flowRecipientKey, tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   collectRecipientRoles,
   emitProtocolNotifications,
   getGoalRow,
@@ -155,7 +155,7 @@ ponder.on("BudgetStakeLedger:BudgetRegistered", async ({ event, context }) => {
       sourceType: "budget_request",
       sourceId: `${budgetTcr.toLowerCase()}:${recipientId.toLowerCase()}:${requestIndex.toString()}:budget_activated`,
       actorWalletAddress: requester as `0x${string}` | null,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason: "budget_activated",

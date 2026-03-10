@@ -8,7 +8,7 @@ import {
   jurorVoteReceiptId,
 } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   emitProtocolNotifications,
   getGoalRow,
 } from "../helpers/protocolNotifications";
@@ -89,7 +89,7 @@ async function handleVoteRevealed(args: {
       ),
       notificationClass: "cycle" as const,
       action: "invalidate" as const,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: "juror",
         goalRow,
         reason,

@@ -6,6 +6,7 @@ Use this file only for currently active coding work. Keep it minimal and current
 
 | Agent/Session | Task | Files in Scope | Symbols (add/rename/delete) | Dependency Notes | Updated (YYYY-MM-DD) |
 | --- | --- | --- | --- | --- | --- |
+| codex-notification-fixes-main | Fix success-assertion cleanup and protocol notification payload contract follow-ups | `src/goals/success-assertion-cleared.ts`, `src/budgets/success-assertion-cleared.ts`, `src/helpers/protocolNotifications.ts`, `src/arbitrator/reward-notifications.ts`, `tests/protocol-notifications.test.ts`, `tests/protocol-notification-completeness-handlers.test.ts`, `tests/arbitrator-reward-notification-handlers.test.ts` | update `buildProtocolNotificationPayload`; update cleared-handler reminder invalidation; add wire round-trip regression coverage | Coordinates with `wire` payload contract updates in this turn; no schema changes planned | 2026-03-10 |
 
 ## Rules
 

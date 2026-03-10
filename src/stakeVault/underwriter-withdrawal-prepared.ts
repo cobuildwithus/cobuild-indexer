@@ -2,7 +2,7 @@ import { ponder } from "ponder:registry";
 
 import { stakeVault } from "ponder:schema";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   emitProtocolNotifications,
   getGoalRow,
 } from "../helpers/protocolNotifications";
@@ -34,7 +34,7 @@ ponder.on("GoalStakeVault:UnderwriterWithdrawalPrepared", async ({ event, contex
         sourceId,
         notificationClass: "open_close" as const,
         action: "invalidate",
-        payload: buildGoalNotificationPayload({
+        payload: buildProtocolNotificationPayload({
           role: "goal_stakeholder",
           goalRow,
           reason: "underwriter_withdrawal_prep_required",
@@ -46,7 +46,7 @@ ponder.on("GoalStakeVault:UnderwriterWithdrawalPrepared", async ({ event, contex
         sourceType: "underwriter_withdrawal_prep_complete",
         sourceId,
         notificationClass: "edge" as const,
-        payload: buildGoalNotificationPayload({
+        payload: buildProtocolNotificationPayload({
           role: "goal_stakeholder",
           goalRow,
           reason: "underwriter_withdrawal_prep_complete",

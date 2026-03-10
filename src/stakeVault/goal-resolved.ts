@@ -2,7 +2,7 @@ import { ponder } from "ponder:registry";
 
 import { stakeVault } from "ponder:schema";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   emitProtocolNotifications,
   getGoalRow,
   getGoalStakeholderAccounts,
@@ -53,7 +53,7 @@ ponder.on("GoalStakeVault:GoalResolved", async ({ event, context }) => {
       sourceId: `${goalRow.id.toLowerCase()}:${account.toLowerCase()}`,
       notificationClass: "open_close" as const,
       action: "upsert" as const,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: "goal_stakeholder",
         goalRow,
         reason: "underwriter_withdrawal_prep_required",

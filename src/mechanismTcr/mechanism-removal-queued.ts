@@ -3,7 +3,7 @@ import { ponder } from "ponder:registry";
 import { tcrItem, tcrRequest } from "ponder:schema";
 import { requestChallengeReminderSourceId, tcrItemId, tcrRequestId } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   challengeWindowReminderLabel,
   challengeWindowReminderReason,
   collectRecipientRoles,
@@ -55,7 +55,7 @@ ponder.on("AllocationMechanismTCR:MechanismRemovalQueued", async ({ event, conte
       sourceType: "mechanism_request",
       sourceId: `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}:mechanism_removal_accepted`,
       actorWalletAddress: requester,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason: "mechanism_removal_accepted",
@@ -84,7 +84,7 @@ ponder.on("AllocationMechanismTCR:MechanismRemovalQueued", async ({ event, conte
               notificationClass: "cycle" as const,
               action: "invalidate" as const,
               actorWalletAddress: requester,
-              payload: buildGoalNotificationPayload({
+              payload: buildProtocolNotificationPayload({
                 role: recipient.role,
                 goalRow,
                 reason: reminderReason,

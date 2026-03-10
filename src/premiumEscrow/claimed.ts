@@ -11,7 +11,7 @@ import {
   premiumClaimableCycleSourceId,
 } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   emitProtocolNotifications,
   getGoalRow,
 } from "../helpers/protocolNotifications";
@@ -110,7 +110,7 @@ ponder.on("PremiumEscrow:Claimed", async ({ event, context }) => {
           sourceId: nextClaimableNotificationSourceId,
           notificationClass: "cycle" as const,
           action: "upsert" as const,
-          payload: buildGoalNotificationPayload({
+          payload: buildProtocolNotificationPayload({
             role: "budget_underwriter",
             goalRow,
             reason: "premium_claimable",
@@ -128,7 +128,7 @@ ponder.on("PremiumEscrow:Claimed", async ({ event, context }) => {
             sourceId: existingClaimableNotificationSourceId,
             notificationClass: "cycle" as const,
             action: "invalidate" as const,
-            payload: buildGoalNotificationPayload({
+            payload: buildProtocolNotificationPayload({
               role: "budget_underwriter",
               goalRow,
               reason: "premium_claimable",
@@ -150,7 +150,7 @@ ponder.on("PremiumEscrow:Claimed", async ({ event, context }) => {
         sourceType: "premium_claim",
         notificationClass: "edge" as const,
         sourceId: `${escrow.toLowerCase()}:${account.toLowerCase()}:${event.transaction.hash.toLowerCase()}:${event.log.logIndex}`,
-        payload: buildGoalNotificationPayload({
+        payload: buildProtocolNotificationPayload({
           role: "budget_underwriter",
           goalRow,
           reason: "premium_claimed",

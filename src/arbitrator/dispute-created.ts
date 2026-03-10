@@ -16,7 +16,7 @@ import {
   jurorId,
 } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   collectRecipientRoles,
   emitProtocolNotificationSchedules,
   emitProtocolNotifications,
@@ -200,7 +200,7 @@ async function handleDisputeCreated(args: {
       reason: "juror_dispute_created",
       sourceType: "juror_dispute",
       sourceId: `${arbitratorAddress.toLowerCase()}:${disputeId.toString()}:juror_dispute_created`,
-      payload: buildGoalNotificationPayload({
+      payload: buildProtocolNotificationPayload({
         role: recipient.role,
         goalRow,
         reason: "juror_dispute_created",
@@ -208,9 +208,9 @@ async function handleDisputeCreated(args: {
         arbitrator: arbitratorAddress,
         disputeId,
         schedule: {
-          votingStartTime: event.args.votingStartTime,
-          votingEndTime: event.args.votingEndTime,
-          revealPeriodEndTime: event.args.revealPeriodEndTime,
+          votingStartAt: event.args.votingStartTime,
+          votingEndAt: event.args.votingEndTime,
+          revealEndAt: event.args.revealPeriodEndTime,
         },
       }),
     })),
@@ -226,7 +226,7 @@ async function handleDisputeCreated(args: {
         sourceType: "juror_dispute_phase",
         sourceId: `${arbitratorAddress.toLowerCase()}:${disputeId.toString()}:juror_voting_open`,
         deliverAt: event.args.votingStartTime,
-        payload: buildGoalNotificationPayload({
+        payload: buildProtocolNotificationPayload({
           role: recipient.role,
           goalRow,
           reason: "juror_voting_open",
@@ -235,9 +235,9 @@ async function handleDisputeCreated(args: {
           disputeId,
           schedule: {
             deliverAt: event.args.votingStartTime,
-            votingStartTime: event.args.votingStartTime,
-            votingEndTime: event.args.votingEndTime,
-            revealPeriodEndTime: event.args.revealPeriodEndTime,
+            votingStartAt: event.args.votingStartTime,
+            votingEndAt: event.args.votingEndTime,
+            revealEndAt: event.args.revealPeriodEndTime,
           },
         }),
       })),
@@ -247,7 +247,7 @@ async function handleDisputeCreated(args: {
         sourceType: "juror_dispute_phase",
         sourceId: `${arbitratorAddress.toLowerCase()}:${disputeId.toString()}:juror_reveal_open`,
         deliverAt: event.args.votingEndTime,
-        payload: buildGoalNotificationPayload({
+        payload: buildProtocolNotificationPayload({
           role: recipient.role,
           goalRow,
           reason: "juror_reveal_open",
@@ -256,9 +256,9 @@ async function handleDisputeCreated(args: {
           disputeId,
           schedule: {
             deliverAt: event.args.votingEndTime,
-            votingStartTime: event.args.votingStartTime,
-            votingEndTime: event.args.votingEndTime,
-            revealPeriodEndTime: event.args.revealPeriodEndTime,
+            votingStartAt: event.args.votingStartTime,
+            votingEndAt: event.args.votingEndTime,
+            revealEndAt: event.args.revealPeriodEndTime,
           },
         }),
       })),
@@ -279,7 +279,7 @@ async function handleDisputeCreated(args: {
             "juror_vote_deadline_soon"
           ),
           deliverAt,
-          payload: buildGoalNotificationPayload({
+          payload: buildProtocolNotificationPayload({
             role: recipient.role,
             goalRow,
             reason: "juror_vote_deadline_soon",
@@ -288,9 +288,9 @@ async function handleDisputeCreated(args: {
             disputeId,
             schedule: {
               deliverAt,
-              votingStartTime: event.args.votingStartTime,
-              votingEndTime: event.args.votingEndTime,
-              revealPeriodEndTime: event.args.revealPeriodEndTime,
+              votingStartAt: event.args.votingStartTime,
+              votingEndAt: event.args.votingEndTime,
+              revealEndAt: event.args.revealPeriodEndTime,
             },
           }),
         }));
@@ -312,7 +312,7 @@ async function handleDisputeCreated(args: {
             "juror_reveal_deadline_soon"
           ),
           deliverAt,
-          payload: buildGoalNotificationPayload({
+          payload: buildProtocolNotificationPayload({
             role: recipient.role,
             goalRow,
             reason: "juror_reveal_deadline_soon",
@@ -321,9 +321,9 @@ async function handleDisputeCreated(args: {
             disputeId,
             schedule: {
               deliverAt,
-              votingStartTime: event.args.votingStartTime,
-              votingEndTime: event.args.votingEndTime,
-              revealPeriodEndTime: event.args.revealPeriodEndTime,
+              votingStartAt: event.args.votingStartTime,
+              votingEndAt: event.args.votingEndTime,
+              revealEndAt: event.args.revealPeriodEndTime,
             },
           }),
         }));

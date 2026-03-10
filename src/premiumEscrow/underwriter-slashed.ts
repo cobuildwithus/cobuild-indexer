@@ -3,7 +3,7 @@ import { ponder } from "ponder:registry";
 import { goalContextByBudgetTreasury, premiumAccount, premiumEscrow } from "ponder:schema";
 import { premiumAccountId } from "../helpers/ids";
 import {
-  buildGoalNotificationPayload,
+  buildProtocolNotificationPayload,
   emitProtocolNotifications,
   getGoalRow,
 } from "../helpers/protocolNotifications";
@@ -56,7 +56,7 @@ ponder.on("PremiumEscrow:UnderwriterSlashed", async ({ event, context }) => {
         reason: "underwriter_slashed",
         sourceType: "underwriter_slash",
         sourceId: `${escrow.toLowerCase()}:${account.toLowerCase()}:${event.transaction.hash.toLowerCase()}:${event.log.logIndex}`,
-        payload: buildGoalNotificationPayload({
+        payload: buildProtocolNotificationPayload({
           role: "budget_underwriter",
           goalRow,
           reason: "underwriter_slashed",
