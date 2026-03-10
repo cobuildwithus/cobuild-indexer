@@ -576,6 +576,35 @@ export const keeperOutbox = onchainTable(
 );
 
 /**
+ * Recipient-resolved protocol notification intents.
+ * Rows are immutable and replay-safe; downstream workers materialize them into app inbox tables.
+ */
+export const protocolNotificationOutbox = onchainTable(
+  "protocol_notification_outbox",
+  (t) => ({
+    id: t.text().notNull(), // `${sourceType}:${sourceId}:${recipientWalletAddress}`
+    chainId: t.integer().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.bigint().notNull(),
+    txHash: t.hex().notNull(),
+    logIndex: t.integer().notNull(),
+    recipientWalletAddress: t.hex().notNull(),
+    reason: t.text().notNull(),
+    sourceType: t.text().notNull(),
+    sourceId: t.text().notNull(),
+    actorWalletAddress: t.hex(),
+    payload: t.json().notNull(),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.chainId, table.id] }),
+    chainBlockIdx: index().on(table.chainId, table.blockNumber, table.logIndex),
+    recipientIdx: index().on(table.recipientWalletAddress, table.blockNumber),
+    sourceIdx: index().on(table.sourceType, table.sourceId),
+    txLogIdx: index().on(table.txHash, table.logIndex),
+  })
+);
+
+/**
  * Flow entity state (1 row per Flow contract address).
  */
 export const flow = onchainTable("flow", (t) => ({
@@ -818,6 +847,83 @@ export const budgetTreasuryByChildFlow = onchainTable("budget_treasury_by_child_
 }));
 
 /**
+ * Deterministic budget TCR -> goal treasury lookup.
+ */
+export const goalContextByBudgetTcr = onchainTable("goal_context_by_budget_tcr", (t) => ({
+  id: t.hex().primaryKey(), // budgetTcr
+  goalTreasury: t.hex().notNull(),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
+/**
+ * Deterministic budget stake ledger -> goal treasury lookup.
+ */
+export const goalContextByBudgetStakeLedger = onchainTable(
+  "goal_context_by_budget_stake_ledger",
+  (t) => ({
+    id: t.hex().primaryKey(), // budgetStakeLedger
+    goalTreasury: t.hex().notNull(),
+    budgetTcr: t.hex(),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  })
+);
+
+/**
+ * Budget TCR item state used for request-cycle notifications.
+ */
+export const tcrItem = onchainTable(
+  "tcr_item",
+  (t) => ({
+    id: t.text().primaryKey(), // `${tcrAddress}:${itemId}`
+    tcrAddress: t.hex().notNull(),
+    itemId: t.hex().notNull(),
+    goalTreasury: t.hex(),
+    submitter: t.hex(),
+    evidenceGroupId: t.bigint(),
+    latestRequestIndex: t.bigint(),
+    currentStatus: t.integer(),
+    itemData: t.hex(),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    tcrItemIdx: index().on(t.tcrAddress, t.itemId),
+    goalTreasuryIdx: index().on(t.goalTreasury),
+  })
+);
+
+/**
+ * Budget TCR request-cycle state for lifecycle plus canonical actors when the
+ * protocol emits them deterministically.
+ */
+export const tcrRequest = onchainTable(
+  "tcr_request",
+  (t) => ({
+    id: t.text().primaryKey(), // `${tcrAddress}:${itemId}:${requestIndex}`
+    tcrAddress: t.hex().notNull(),
+    itemId: t.hex().notNull(),
+    requestIndex: t.bigint().notNull(),
+    goalTreasury: t.hex(),
+    requestType: t.text().notNull(), // "registration" | "clearing" | "unknown"
+    requester: t.hex(),
+    challenger: t.hex(),
+    disputeId: t.bigint(),
+    submittedAt: t.bigint(),
+    challengedAt: t.bigint(),
+    txHash: t.hex(),
+    updatedAtBlock: t.bigint().notNull(),
+    updatedAtTimestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    tcrRequestIdx: index().on(t.tcrAddress, t.itemId, t.requestIndex),
+    requestDisputeIdx: index().on(t.disputeId),
+    goalTreasuryIdx: index().on(t.goalTreasury),
+  })
+);
+
+/**
  * Deterministic canonical-project -> goal treasuries lookup keyed by `${chainId}-${projectId}`.
  */
 export const goalTreasuriesByProject = onchainTable("goal_treasuries_by_project", (t) => ({
@@ -1014,6 +1120,18 @@ export const stakePosition = onchainTable("stake_position", (t) => ({
   staked: t.bigint().notNull().default(0n),
   withdrawn: t.bigint().notNull().default(0n),
 
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAtTimestamp: t.bigint().notNull(),
+}));
+
+/**
+ * Current goal-stakeholder audience set keyed by goal treasury.
+ * Used for replay-safe notification fanout without non-PK scans.
+ */
+export const goalStakeholderAudience = onchainTable("goal_stakeholder_audience", (t) => ({
+  id: t.hex().primaryKey(), // goalTreasury
+  stakeVault: t.hex(),
+  accounts: t.hex().array().notNull().default([]),
   updatedAtBlock: t.bigint().notNull(),
   updatedAtTimestamp: t.bigint().notNull(),
 }));

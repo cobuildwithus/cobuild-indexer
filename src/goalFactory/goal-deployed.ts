@@ -1,6 +1,10 @@
 import { ponder } from "ponder:registry";
 
-import { goalFactoryDeployment } from "ponder:schema";
+import {
+  goalContextByBudgetStakeLedger,
+  goalContextByBudgetTcr,
+  goalFactoryDeployment,
+} from "ponder:schema";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
 function goalFactoryDeploymentId(args: { chainId: number; goalRevnetId: bigint }): string {
@@ -45,4 +49,34 @@ ponder.on("GoalFactory:GoalDeployed", async ({ event, context }) => {
       ...upsertValues,
     })
     .onConflictDoUpdate(upsertValues);
+
+  await context.db
+    .insert(goalContextByBudgetTcr)
+    .values({
+      id: stack.budgetTCR,
+      goalTreasury: stack.goalTreasury,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    })
+    .onConflictDoUpdate({
+      goalTreasury: stack.goalTreasury,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    });
+
+  await context.db
+    .insert(goalContextByBudgetStakeLedger)
+    .values({
+      id: stack.budgetStakeLedger,
+      goalTreasury: stack.goalTreasury,
+      budgetTcr: stack.budgetTCR,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    })
+    .onConflictDoUpdate({
+      goalTreasury: stack.goalTreasury,
+      budgetTcr: stack.budgetTCR,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    });
 });

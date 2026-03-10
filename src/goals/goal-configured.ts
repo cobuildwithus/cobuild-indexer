@@ -1,5 +1,15 @@
-import { ponder } from "ponder:registry";
-import { flow, goalTreasuriesByProject, goalTreasury, project, stakeVault } from "ponder:schema";
+import { type Context, type Event, ponder } from "ponder:registry";
+import {
+  flow,
+  goalFactoryDeployment,
+  goalContextByBudgetStakeLedger,
+  goalContextByBudgetTcr,
+  goalStakeholderAudience,
+  goalTreasuriesByProject,
+  goalTreasury,
+  project,
+  stakeVault,
+} from "ponder:schema";
 import type { Hex } from "viem";
 
 import { insertProtocolEvent } from "../helpers/protocolEvent";
@@ -65,8 +75,8 @@ function hexArraysEqual(a: Hex[], b: Hex[]): boolean {
 }
 
 async function handleGoalConfigured(args: {
-  event: any;
-  context: any;
+  event: Event<"GoalTreasury:GoalConfigured">;
+  context: Context<"GoalTreasury:GoalConfigured">;
   contractName: "GoalTreasury";
 }) {
   const { event, context, contractName } = args;
@@ -202,6 +212,56 @@ async function handleGoalConfigured(args: {
     .onConflictDoUpdate({
       kind: "goal",
       treasury,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    });
+
+  const factoryDeploymentId = `${context.chain.id}:${event.args.goalRevnetId.toString()}`;
+  const goalDeployment = await context.db.find(goalFactoryDeployment, { id: factoryDeploymentId });
+
+  if (goalDeployment?.budgetTcr) {
+    await context.db
+      .insert(goalContextByBudgetTcr)
+      .values({
+        id: goalDeployment.budgetTcr,
+        goalTreasury: treasury,
+        updatedAtBlock: event.block.number,
+        updatedAtTimestamp: event.block.timestamp,
+      })
+      .onConflictDoUpdate({
+        goalTreasury: treasury,
+        updatedAtBlock: event.block.number,
+        updatedAtTimestamp: event.block.timestamp,
+      });
+  }
+
+  await context.db
+    .insert(goalContextByBudgetStakeLedger)
+    .values({
+      id: event.args.budgetStakeLedger,
+      goalTreasury: treasury,
+      budgetTcr: goalDeployment?.budgetTcr ?? null,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    })
+    .onConflictDoUpdate({
+      goalTreasury: treasury,
+      budgetTcr: goalDeployment?.budgetTcr ?? null,
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    });
+
+  await context.db
+    .insert(goalStakeholderAudience)
+    .values({
+      id: treasury,
+      stakeVault: event.args.stakeVault,
+      accounts: [],
+      updatedAtBlock: event.block.number,
+      updatedAtTimestamp: event.block.timestamp,
+    })
+    .onConflictDoUpdate({
+      stakeVault: event.args.stakeVault,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     });

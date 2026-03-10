@@ -1,6 +1,7 @@
 import { ponder } from "ponder:registry";
 
 import { stakePosition, stakeVault } from "ponder:schema";
+import { syncGoalStakeholderAudience } from "../helpers/protocolNotifications";
 import { stakePositionId } from "../helpers/ids";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
@@ -54,4 +55,12 @@ ponder.on("GoalStakeVault:GoalStaked", async ({ event, context }) => {
       updatedAtBlock: blockNumber,
       updatedAtTimestamp: blockTimestamp,
     }));
+
+  await syncGoalStakeholderAudience({
+    context,
+    stakeVaultAddress: vault,
+    account: event.args.user,
+    blockNumber,
+    blockTimestamp,
+  });
 });

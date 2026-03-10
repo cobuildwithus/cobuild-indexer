@@ -1,0 +1,144 @@
+import { describe, expect, it, vi } from "vitest";
+import type { Hex } from "viem";
+vi.mock("ponder:schema", () => ({
+  goalStakeholderAudience: {},
+  goalTreasury: {},
+  protocolNotificationOutbox: {},
+  stakePosition: {},
+  stakeVault: {},
+}));
+
+const {
+  buildGoalNotificationPayload,
+  collectRecipientRoles,
+  getBigIntArg,
+  getHexArg,
+  protocolNotificationOutboxId,
+  toRequestType,
+} = await import("../src/helpers/protocolNotifications");
+
+describe("protocol notification helpers", () => {
+  it("builds deterministic lowercased outbox ids", () => {
+    expect(
+      protocolNotificationOutboxId({
+        sourceType: "budget_request",
+        sourceId: "Budget:1",
+        recipientWalletAddress: "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      })
+    ).toBe(
+      "budget_request:Budget:1:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    );
+  });
+
+  it("maps request types from numeric protocol values", () => {
+    expect(toRequestType(2n)).toBe("registration");
+    expect(toRequestType(3)).toBe("clearing");
+    expect(toRequestType(99)).toBe("unknown");
+  });
+
+  it("extracts typed event args defensively", () => {
+    const args = {
+      requestType: "2",
+      itemID: "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    };
+
+    expect(getBigIntArg(args, "requestType")).toBe(2n);
+    expect(getHexArg(args, "itemID")).toBe(
+      "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    );
+    expect(getHexArg(args, "missing")).toBeNull();
+  });
+
+  it("dedupes recipients and keeps the highest-priority role per wallet", () => {
+    const recipientRoles = collectRecipientRoles({
+      goalOwner: "0x0000000000000000000000000000000000000002",
+      stakeholderAccounts: [
+        "0x0000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000002",
+      ],
+      requestActors: [
+        {
+          address: "0x0000000000000000000000000000000000000002",
+          role: "challenger",
+        },
+        {
+          address: "0x0000000000000000000000000000000000000003",
+          role: "submitter",
+        },
+      ],
+    });
+
+    expect(recipientRoles).toEqual([
+      {
+        recipientWalletAddress: "0x0000000000000000000000000000000000000001",
+        role: "goal_stakeholder",
+      },
+      {
+        recipientWalletAddress: "0x0000000000000000000000000000000000000002",
+        role: "challenger",
+      },
+      {
+        recipientWalletAddress: "0x0000000000000000000000000000000000000003",
+        role: "submitter",
+      },
+    ]);
+  });
+
+  it("builds structured payloads for request and goal lifecycle reasons", () => {
+    const goalRow = {
+      id: "0x00000000000000000000000000000000000000aa" as Hex,
+      owner: "0x00000000000000000000000000000000000000bb" as Hex,
+      canonicalRouteSlug: "alpha",
+    };
+
+    expect(
+      buildGoalNotificationPayload({
+        role: "requester",
+        goalRow,
+        reason: "budget_accepted",
+        itemId:
+          "0x1111111111111111111111111111111111111111111111111111111111111111",
+        requestIndex: 4n,
+        budgetTreasury: "0x00000000000000000000000000000000000000cc",
+        actorWalletAddress: "0x00000000000000000000000000000000000000dd",
+      })
+    ).toEqual({
+      role: "requester",
+      resource: {
+        kind: "budget_request",
+        goalTreasury: "0x00000000000000000000000000000000000000aa",
+        budgetTreasury: "0x00000000000000000000000000000000000000cc",
+        itemId:
+          "0x1111111111111111111111111111111111111111111111111111111111111111",
+        requestIndex: "4",
+      },
+      actor: {
+        walletAddress: "0x00000000000000000000000000000000000000dd",
+      },
+      labels: {
+        goalName: "alpha",
+      },
+    });
+
+    expect(
+      buildGoalNotificationPayload({
+        role: "goal_owner",
+        goalRow,
+        reason: "goal_succeeded",
+      })
+    ).toEqual({
+      role: "goal_owner",
+      resource: {
+        kind: "goal",
+        goalTreasury: "0x00000000000000000000000000000000000000aa",
+        budgetTreasury: null,
+        itemId: null,
+        requestIndex: null,
+      },
+      actor: null,
+      labels: {
+        goalName: "alpha",
+      },
+    });
+  });
+});

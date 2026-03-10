@@ -1,3 +1,4 @@
+import type { Context } from "ponder:registry";
 import { keeperOutbox, protocolEvent } from "ponder:schema";
 import { toJson } from "./serialize";
 
@@ -15,7 +16,7 @@ function keeperOutboxId(blockNumber: bigint, logIndex: number): bigint {
  * Uses `onConflictDoNothing()` to keep indexing idempotent across replays.
  */
 export async function insertProtocolEvent(args: {
-  context: { db: any; chain: { id: number } };
+  context: Pick<Context<"GoalTreasury:GoalConfigured">, "db" | "chain">;
   event: {
     id?: string;
     name?: string;

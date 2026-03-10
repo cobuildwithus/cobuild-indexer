@@ -32,3 +32,11 @@ export function jurorId(vault: Hex, juror: Hex): string {
 export function premiumAccountId(escrow: Hex, account: Hex): string {
   return `${escrow.toLowerCase()}:${account.toLowerCase()}`;
 }
+
+export function tcrItemId(tcrAddress: Hex, itemId: Hex): string {
+  return `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}`;
+}
+
+export function tcrRequestId(tcrAddress: Hex, itemId: Hex, requestIndex: bigint): string {
+  return `${tcrAddress.toLowerCase()}:${itemId.toLowerCase()}:${requestIndex.toString()}`;
+}

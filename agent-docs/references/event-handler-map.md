@@ -50,7 +50,12 @@
   - `GoalConfigured` also writes canonical project + canonical route linkage fields on `goal_treasury`.
   - `GoalConfigured` also maintains deterministic `goal_treasuries_by_project` KV rows keyed by `${chainId}-${projectId}`.
   - `GoalConfigured` persists event-provided `jurorSlasher`, `underwriterSlasher`, `successResolver`, `goalToken`, and `cobuildToken`, and links `parentFlow`/`strategy` from the existing `flow` row.
+  - `GoalConfigured` also maintains notification lookup rows:
+    - `goal_context_by_budget_tcr`
+    - `goal_context_by_budget_stake_ledger`
+    - `goal_stakeholder_audience`
   - `FlowRateSynced` also writes `goal_treasury_series` + `goal_treasury_series_cursor`.
+  - `StateTransition` also emits recipient-resolved `protocol_notification_outbox` rows for `goal_active`, `goal_succeeded`, and `goal_expired`.
 
 ## Budget Treasury
 
@@ -66,8 +71,10 @@
 - `GoalStakeVault:*` handlers in `src/stakeVault/**`
   - stake/withdraw totals, goal resolution, juror lifecycle/slashing/delegation, underwriter slashing telemetry
   - includes `AllocationSyncFailed` telemetry
+  - goal/cobuild stake and withdraw handlers also maintain `goal_stakeholder_audience` membership from net stake.
 - `BudgetStakeLedger:*` handlers in `src/stakeLedger/**`
   - `BudgetRegistered`, `BudgetRemoved`, `AllocationCheckpointed`
+  - `BudgetRegistered` and `BudgetRemoved` also emit recipient-resolved `protocol_notification_outbox` rows for `budget_activated` and `budget_removed`.
 
 ## Premium Escrow
 
@@ -86,6 +93,13 @@
   - lifecycle projection semantics:
     - `BudgetStackActivationQueued` upserts an `ACTIVATION_QUEUED` stub row for pre-deployment visibility.
     - `BudgetStackRemovalQueued`, `BudgetStackRemovalHandled`, and `BudgetStackTerminalizationRetried` enforce a strict existing `budget_stack` invariant (missing row is a hard projection error).
+  - governance notification projections:
+    - `ItemSubmitted` upserts `tcr_item`
+    - `RequestSubmitted` upserts `tcr_request`, infers a canonical requester only for registration requests via `ItemSubmitted.submitter`, and emits `budget_proposed` / `budget_removal_requested`
+    - `Dispute` updates `tcr_request` dispute state and emits `budget_proposal_challenged` / `budget_removal_challenged` without treating `tx.from` as a canonical challenger
+    - `ItemStatusChange` updates `tcr_item.latestRequestIndex/currentStatus`
+    - `BudgetStackActivationQueued` emits `budget_accepted`
+    - `BudgetStackRemovalQueued` emits `budget_removal_accepted`
   - `BudgetStackDeployed` maintains deterministic recipient/childFlow -> budget treasury lookup KV tables and recipient FK linkage.
 - `BudgetTCRFactory:*` handlers in `src/tcrFactory/**`
   - deployment-for-goal telemetry
@@ -96,6 +110,9 @@
     - `PremiumEscrow` via `BudgetStackDeployed(premiumEscrow)`
 - `GoalFactory:GoalDeployed` handler in `src/goalFactory/goal-deployed.ts`
   - writes `goal_factory_deployment` rows keyed by `${chainId}:${goalRevnetId}` with emitted stack addresses (including router/resolver addresses).
+  - also seeds notification lookup rows:
+    - `goal_context_by_budget_tcr`
+    - `goal_context_by_budget_stake_ledger`
 
 ## Pipeline and Hook
 
@@ -118,6 +135,7 @@
 
 - Raw event audit table: `protocol_event` (scaffold handlers via helper).
 - Keeper outbox stream: `keeper_outbox` (same helper path as `protocol_event`; replay-safe immutable inserts).
+- Notification delivery outbox: `protocol_notification_outbox` (recipient-resolved immutable inbox intents for downstream worker materialization).
 - Legacy handlers update legacy projection tables (`project`, `ruleset`, `loan`, payment/swap telemetry, and related maps).
 - Domain tables are mapped in `ponder.schema.ts` and updated by same-domain handlers.
-- Deterministic lookup/cursor tables (`budget_treasury_by_*`, `goal_treasuries_by_project`, `flow_recipient_by_index`, `sucker_group_by_address`, `goal_treasury_series_cursor`) are maintained in handler write paths to avoid non-PK SQL lookups.
+- Deterministic lookup/cursor tables (`budget_treasury_by_*`, `goal_treasuries_by_project`, `goal_context_by_budget_*`, `goal_stakeholder_audience`, `flow_recipient_by_index`, `sucker_group_by_address`, `goal_treasury_series_cursor`) are maintained in handler write paths to avoid non-PK SQL lookups.

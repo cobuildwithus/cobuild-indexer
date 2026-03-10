@@ -12,6 +12,8 @@
   - Immutable raw log rows (`event.id` keyed).
 - `keeper_outbox`
   - Immutable keeper-consumable outbox rows keyed by deterministic block/log id (`blockNumber*1_000_000 + logIndex`).
+- `protocol_notification_outbox`
+  - Immutable recipient-resolved protocol notification intents keyed by semantic source + recipient identity.
 - `flow`
   - One row per flow contract address, including target/current flow rates plus observed/staleness metadata for cron-refreshed actual-rate reads.
 - `flow_actual_rate_refresh_state`
@@ -30,6 +32,10 @@
   - One row per GoalFactory `GoalDeployed` event keyed by `${chainId}:${goalRevnetId}` with emitted stack addresses.
 - `budget_treasury_by_recipient`, `budget_treasury_by_child_flow`
   - Deterministic lookup KV tables for recipient/childFlow -> budget treasury linkage.
+- `goal_context_by_budget_tcr`, `goal_context_by_budget_stake_ledger`
+  - Deterministic reverse lookup KV tables for resolving parent goal context from budget governance and stake-ledger events.
+- `tcr_item`, `tcr_request`
+  - Budget governance request-cycle projections for lifecycle state, actor attribution, and notification dedupe.
 - `goal_treasuries_by_project`
   - Deterministic canonical-project -> goal treasury linkage (`${chainId}-${projectId}` -> `goal_treasury[]`).
 - `goal_treasury_series`, `goal_treasury_series_cursor`
@@ -38,6 +44,8 @@
   - Pre-aggregated per-goal contributor totals used by interface holdings/profile surfaces.
 - `stake_vault`, `stake_position`, `juror`
   - Stake totals, per-account positions, juror lifecycle.
+- `goal_stakeholder_audience`
+  - Current goal stakeholder membership keyed by goal treasury for replay-safe notification fanout.
 - `premium_escrow`, `premium_account`, `premium_claim`
   - Premium escrow aggregate + per-account checkpoint + per-claim rows.
 - `donation`
@@ -75,6 +83,11 @@
 - `goal_factory_deployment.goalTreasury` -> `goal_treasury.id` (address-level logical linkage when both sides are present).
 - `goal_treasuries_by_project.id` mirrors `goal_treasury.canonicalProjectChainId/canonicalProjectId` composite key semantics and stores `goal_treasury.id` arrays.
 - `stake_position.vault` and `juror.vault` -> `stake_vault.id`
+- `goal_stakeholder_audience.id` -> `goal_treasury.id`
+- `goal_stakeholder_audience.stakeVault` -> `stake_vault.id`
+- `goal_context_by_budget_tcr.goalTreasury` and `goal_context_by_budget_stake_ledger.goalTreasury` -> `goal_treasury.id`
+- `goal_context_by_budget_stake_ledger.budgetTcr` -> `goal_context_by_budget_tcr.id`
+- `tcr_item.goalTreasury` and `tcr_request.goalTreasury` -> `goal_treasury.id`
 - `premium_account.escrow` and `premium_claim.escrow` -> `premium_escrow.id`
 - `goal_treasury_series.goalTreasury` and `goal_treasury_series_cursor.id` -> `goal_treasury.id`.
 - `goal_contributor_aggregate.goalTreasury` -> `goal_treasury.id`.
