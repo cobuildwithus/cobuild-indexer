@@ -8,7 +8,7 @@ Tighten protocol notification correctness after the review pass without changing
 
 - Add explicit notification lifecycle classes for append-only, open/close, and cyclical protocol rows.
 - Keep premium-escrow topology explicit through indexed lookup edges.
-- Make withdrawal-prep notifications invalidate the open state instead of emitting duplicate completion history.
+- Make withdrawal-prep notifications invalidate the open required-state row while emitting a separate append-only completion notification.
 - Ensure `premium_claimable` only opens once linkage is resolvable and can reopen with a fresh cycle source id.
 - Keep shared payload semantics stable while downstream consumers move to a shared presenter.
 - Add the remaining user-facing success-assertion notification reasons for goal and budget treasury flows.

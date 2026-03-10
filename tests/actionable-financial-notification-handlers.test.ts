@@ -633,7 +633,7 @@ describe("actionable financial notification handlers", () => {
     );
   });
 
-  it("invalidates withdrawal-prep-required notifications when prep finishes", async () => {
+  it("invalidates withdrawal-prep-required notifications and emits completion when prep finishes", async () => {
     await import("../src/stakeVault/underwriter-withdrawal-prepared");
 
     const { db } = createDb({
@@ -678,8 +678,27 @@ describe("actionable financial notification handlers", () => {
             action: "invalidate",
             notificationClass: "open_close",
             sourceType: "underwriter_withdrawal_prep_state",
+            sourceId: `${goalTreasury.toLowerCase()}:${account.toLowerCase()}`,
             payload: expect.objectContaining({
               role: "goal_stakeholder",
+              resource: expect.objectContaining({
+                kind: "goal",
+                goalTreasury,
+              }),
+            }),
+          }),
+          expect.objectContaining({
+            recipientWalletAddress: account,
+            reason: "underwriter_withdrawal_prep_complete",
+            notificationClass: "edge",
+            sourceType: "underwriter_withdrawal_prep_complete",
+            sourceId: `${goalTreasury.toLowerCase()}:${account.toLowerCase()}`,
+            payload: expect.objectContaining({
+              role: "goal_stakeholder",
+              resource: expect.objectContaining({
+                kind: "goal",
+                goalTreasury,
+              }),
             }),
           }),
         ],

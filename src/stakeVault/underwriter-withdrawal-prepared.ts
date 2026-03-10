@@ -40,6 +40,18 @@ ponder.on("GoalStakeVault:UnderwriterWithdrawalPrepared", async ({ event, contex
           reason: "underwriter_withdrawal_prep_required",
         }),
       },
+      {
+        recipientWalletAddress: underwriter,
+        reason: "underwriter_withdrawal_prep_complete",
+        sourceType: "underwriter_withdrawal_prep_complete",
+        sourceId,
+        notificationClass: "edge" as const,
+        payload: buildGoalNotificationPayload({
+          role: "goal_stakeholder",
+          goalRow,
+          reason: "underwriter_withdrawal_prep_complete",
+        }),
+      },
     ],
   });
 });

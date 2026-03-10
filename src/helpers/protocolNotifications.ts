@@ -125,7 +125,8 @@ function resourceKindForReason(reason: string): string {
     reason === "goal_success_assertion_cleared" ||
     reason === "goal_success_assertion_resolution_fail_closed" ||
     reason === "goal_success_assertion_reassert_grace_activated" ||
-    reason === "underwriter_withdrawal_prep_required"
+    reason === "underwriter_withdrawal_prep_required" ||
+    reason === "underwriter_withdrawal_prep_complete"
   ) {
     return "goal";
   }
