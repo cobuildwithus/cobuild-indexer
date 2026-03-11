@@ -8,7 +8,7 @@
 
 ## Event Filter Scope
 
-- Several domains are narrowed to `BASE_PROJECT_IDS = [6n]` in `ponder.config.ts`.
+- Several domains are narrowed to the wire-sourced `COBUILD_PROJECT_IDS = [COBUILD_PROJECT_ID_BIGINT]` in `ponder.config.ts`.
 - Cobuild swap tracking is pinned to `chain: "base"` and uses factory indexing for `TokenBought`.
 - Scaffold discovery is rooted at static Base entrypoints from `@cobuild/wire`:
   - `GoalFactory` and `BudgetTCRFactory` start at block `42941210`.
