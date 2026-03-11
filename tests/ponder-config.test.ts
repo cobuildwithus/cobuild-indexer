@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { COBUILD_PROJECT_ID_BIGINT } from "@cobuild/wire";
-import { contracts } from "../addresses";
+import { COBUILD_PROJECT_ID_BIGINT, COBUILD_TOKEN_ADDRESS } from "@cobuild/wire";
 
 vi.mock("ponder", () => ({
   createConfig: <T>(config: T) => config,
@@ -100,6 +99,6 @@ describe("ponder config cobuild filters", () => {
   });
 
   it("tracks the canonical cobuild token address for ERC20 transfers", () => {
-    expect(ponderConfig.contracts.ERC20.address).toEqual([contracts.CobuildToken]);
+    expect(ponderConfig.contracts.ERC20.address).toEqual([COBUILD_TOKEN_ADDRESS]);
   });
 });

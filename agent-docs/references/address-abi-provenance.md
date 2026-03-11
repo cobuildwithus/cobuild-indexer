@@ -4,9 +4,9 @@
 
 Address composition:
 - `addresses.revnet.ts`: Juicebox/Revnet contract addresses derived from `juice-sdk-core`.
-- `addresses.cobuild.ts`: Cobuild deployment addresses and related integration constants.
+- `addresses.cobuild.ts`: wire-backed Cobuild deployment addresses plus local-only non-wire integration constants.
 - `addresses.ts`: merged export used by runtime config and handlers.
-- `@cobuild/wire`: canonical Base entrypoint + implementation address exports (`baseEntrypoints`, ABI symbols) used by scaffold discovery in `ponder.config.ts`.
+- `@cobuild/wire`: canonical Base entrypoint + implementation address exports (`baseContracts`, `baseEntrypoints`, ABI symbols) used by scaffold discovery and Cobuild runtime addresses in `ponder.config.ts`.
 
 ABI generation:
 - `wagmi.config.ts` defines ABI generation pipeline.

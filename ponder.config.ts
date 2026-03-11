@@ -2,6 +2,7 @@ import { createConfig, factory } from "ponder";
 import { config, getChainsAndRpcUrls, IndexerConfig } from "./src/lib/config";
 import {
   COBUILD_PROJECT_ID_BIGINT,
+  COBUILD_TOKEN_ADDRESS,
   allocationMechanismTcrAbi as AllocationMechanismTCRAbi,
   baseEntrypoints,
   budgetStakeLedgerAbi as BudgetStakeLedgerAbi,
@@ -35,7 +36,7 @@ import {
 } from "juice-sdk-core";
 
 const COBUILD_PROJECT_IDS: bigint[] = [COBUILD_PROJECT_ID_BIGINT];
-const COBUILD_PROJECT_TOKEN_ADDRESSES = [contracts.CobuildToken] as const;
+const COBUILD_PROJECT_TOKEN_ADDRESSES = [COBUILD_TOKEN_ADDRESS] as const;
 
 /**
  * Canonical scaffold entrypoint addresses from @cobuild/wire (v1-core deploys).
