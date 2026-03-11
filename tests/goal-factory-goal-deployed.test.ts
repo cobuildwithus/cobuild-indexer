@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  insertProtocolEventMock,
-  ponderOnMock,
-} = vi.hoisted(() => ({
+const { insertProtocolEventMock, ponderOnMock } = vi.hoisted(() => ({
   insertProtocolEventMock: vi.fn(),
   ponderOnMock: vi.fn(),
 }));
@@ -94,106 +91,119 @@ type GoalDeployedHandler = (args: {
       };
     };
     log: { address: `0x${string}` };
-    block: { number: bigint; timestamp: bigint };
     transaction: { hash: `0x${string}` };
+    block: { number: bigint; timestamp: bigint };
   };
   context: { chain: { id: number }; db: ReturnType<typeof createDb>["db"] };
 }) => Promise<void>;
 
-describe("goal factory goal deployed handler", () => {
+describe("GoalFactory:GoalDeployed handler", () => {
   beforeEach(() => {
     vi.resetModules();
-    ponderOnMock.mockReset();
-    insertProtocolEventMock.mockReset();
+    vi.clearAllMocks();
   });
 
-  it("seeds goal token project mapping and project revnet linkage from the factory event", async () => {
+  it("seeds goal token lookup and project revnet linkage from the factory event", async () => {
     await import("../src/goalFactory/goal-deployed");
 
-    const handler = ponderOnMock.mock.calls[0]?.[1] as GoalDeployedHandler | undefined;
+    const handler = ponderOnMock.mock.calls.at(-1)?.[1] as GoalDeployedHandler | undefined;
     if (!handler) throw new Error("Expected GoalFactory:GoalDeployed handler registration.");
 
     const { db, insertCalls, updateCalls } = createDb();
-    const stack = {
-      goalToken: "0x0000000000000000000000000000000000000011",
-      goalSuperToken: "0x0000000000000000000000000000000000000012",
-      goalTreasury: "0x0000000000000000000000000000000000000013",
-      goalFlow: "0x0000000000000000000000000000000000000014",
-      stakeVault: "0x0000000000000000000000000000000000000015",
-      budgetStakeLedger: "0x0000000000000000000000000000000000000016",
-      splitHook: "0x0000000000000000000000000000000000000017",
-      jurorSlasherRouter: "0x0000000000000000000000000000000000000018",
-      underwriterSlasherRouter: "0x0000000000000000000000000000000000000019",
-      successResolver: "0x0000000000000000000000000000000000000020",
-      budgetTCR: "0x0000000000000000000000000000000000000021",
-      arbitrator: "0x0000000000000000000000000000000000000022",
-    } as const;
+    const goalToken = "0x00000000000000000000000000000000000000aa" as const;
+    const goalTreasury = "0x00000000000000000000000000000000000000ab" as const;
+    const budgetTCR = "0x00000000000000000000000000000000000000ac" as const;
+    const budgetStakeLedger = "0x00000000000000000000000000000000000000ad" as const;
+    const stakeVault = "0x00000000000000000000000000000000000000ae" as const;
 
-    await handler({
-      event: {
-        args: {
-          caller: "0x0000000000000000000000000000000000000001",
-          goalRevnetId: 42n,
-          stack,
-        },
-        log: {
-          address: "0x0000000000000000000000000000000000000002",
-        },
-        block: {
-          number: 100n,
-          timestamp: 200n,
-        },
-        transaction: {
-          hash: "0x0000000000000000000000000000000000000000000000000000000000000003",
+    const event: Parameters<GoalDeployedHandler>[0]["event"] = {
+      args: {
+        caller: "0x00000000000000000000000000000000000000f1",
+        goalRevnetId: 77n,
+        stack: {
+          goalToken,
+          goalSuperToken: "0x00000000000000000000000000000000000000b0",
+          goalTreasury,
+          goalFlow: "0x00000000000000000000000000000000000000b1",
+          stakeVault,
+          budgetStakeLedger,
+          splitHook: "0x00000000000000000000000000000000000000b2",
+          jurorSlasherRouter: "0x00000000000000000000000000000000000000b3",
+          underwriterSlasherRouter: "0x00000000000000000000000000000000000000b4",
+          successResolver: "0x00000000000000000000000000000000000000b5",
+          budgetTCR,
+          arbitrator: "0x00000000000000000000000000000000000000b6",
         },
       },
-      context: {
-        chain: { id: 8453 },
-        db,
+      log: { address: "0x00000000000000000000000000000000000000f0" },
+      transaction: {
+        hash: "0x00000000000000000000000000000000000000000000000000000000000000f2",
       },
-    });
+      block: { number: 101n, timestamp: 202n },
+    };
+
+    const context = {
+      chain: { id: 8453 },
+      db,
+    };
+
+    await handler({ event, context });
 
     expect(insertProtocolEventMock).toHaveBeenCalledWith({
-      context: {
-        chain: { id: 8453 },
-        db,
-      },
-      event: expect.objectContaining({
-        args: expect.objectContaining({
-          goalRevnetId: 42n,
-        }),
-      }),
+      context,
+      event,
       contractName: "GoalFactory",
     });
 
-    expect(insertCalls.map((call) => call.table)).toEqual([
-      "goalFactoryDeployment",
-      "ERC20ToProjectId",
-      "goalContextByBudgetTcr",
-      "goalContextByBudgetStakeLedger",
-      "goalContextByArbitrator",
-    ]);
-    expect(insertCalls[1]).toEqual({
-      table: "ERC20ToProjectId",
-      value: {
-        erc20: stack.goalToken,
-        chainId: 8453,
-        projectId: 42,
-      },
-      onConflictArg: {
-        projectId: 42,
-      },
-    });
+    expect(insertCalls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          table: "ERC20ToProjectId",
+          value: {
+            erc20: goalToken,
+            chainId: 8453,
+            projectId: 77,
+          },
+          onConflictArg: {
+            projectId: 77,
+          },
+        }),
+        expect.objectContaining({
+          table: "goalContextByBudgetTcr",
+          value: expect.objectContaining({
+            id: budgetTCR,
+            goalTreasury,
+          }),
+        }),
+        expect.objectContaining({
+          table: "goalContextByBudgetStakeLedger",
+          value: expect.objectContaining({
+            id: budgetStakeLedger,
+            goalTreasury,
+            budgetTcr: budgetTCR,
+          }),
+        }),
+        expect.objectContaining({
+          table: "goalContextByArbitrator",
+          value: expect.objectContaining({
+            goalTreasury,
+            stakeVault,
+            budgetTcr: budgetTCR,
+          }),
+        }),
+      ])
+    );
+
     expect(updateCalls).toEqual([
       {
         table: "project",
         key: {
           chainId: 8453,
-          projectId: 42,
+          projectId: 77,
         },
         setArg: {
           isRevnet: true,
-          erc20: stack.goalToken,
+          erc20: goalToken,
         },
       },
     ]);
