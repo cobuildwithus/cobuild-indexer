@@ -237,6 +237,10 @@ describe("arbitrator reward notification handlers", () => {
               claimableGoalSlashReward: "4",
               claimableCobuildSlashReward: "1",
             }),
+            reward: {
+              bucket: "mixed",
+              bucketLabel: "mixed",
+            },
           }),
         }),
       ]),
@@ -329,6 +333,10 @@ describe("arbitrator reward notification handlers", () => {
               claimedGoalSlashReward: "4",
               claimedCobuildSlashReward: "5",
             }),
+            reward: {
+              bucket: "mixed",
+              bucketLabel: "mixed",
+            },
           }),
         }),
         expect.objectContaining({
