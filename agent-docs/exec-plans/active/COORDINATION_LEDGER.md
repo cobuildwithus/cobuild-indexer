@@ -6,6 +6,7 @@ Use this file only for currently active coding work. Keep it minimal and current
 
 | Agent/Session | Task | Files in Scope | Symbols (add/rename/delete) | Dependency Notes | Updated (YYYY-MM-DD) |
 | --- | --- | --- | --- | --- | --- |
+| codex-revnet-project-cutover | Update indexer project/revnet filters and token address to wire-sourced COBUILD constants | `ponder.config.ts`, `tests/ponder-config.test.ts`, tests/docs/package version metadata as needed | replace local base project/token pins with wire-sourced COBUILD project/token constants; add config invariants test coverage | Depends on published `@cobuild/wire` project-id exports; keep handler/runtime behavior otherwise unchanged | 2026-03-11 |
 
 ## Rules
 
