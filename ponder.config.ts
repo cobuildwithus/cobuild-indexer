@@ -1,7 +1,6 @@
 import { createConfig, factory } from "ponder";
 import { config, getChainsAndRpcUrls, IndexerConfig } from "./src/lib/config";
 import {
-  COBUILD_PROJECT_ID_BIGINT,
   COBUILD_TOKEN_ADDRESS,
   allocationMechanismTcrAbi as AllocationMechanismTCRAbi,
   baseEntrypoints,
@@ -35,8 +34,7 @@ import {
   revLoansAbi,
 } from "juice-sdk-core";
 
-const COBUILD_PROJECT_IDS: bigint[] = [COBUILD_PROJECT_ID_BIGINT];
-const COBUILD_PROJECT_TOKEN_ADDRESSES = [COBUILD_TOKEN_ADDRESS] as const;
+const ROOT_PROJECT_TOKEN_ADDRESSES = [COBUILD_TOKEN_ADDRESS] as const;
 
 /**
  * Canonical scaffold entrypoint addresses from @cobuild/wire (v1-core deploys).
@@ -109,6 +107,7 @@ const BudgetTCRProtocolEventsAbi = [
 ] as const satisfies Abi;
 
 type GoalFactoryStackAddressParameter =
+  | "stack.goalToken"
   | "stack.arbitrator"
   | "stack.goalFlow"
   | "stack.goalTreasury"
@@ -136,9 +135,7 @@ export default createConfig({
         ...config.RevDeployer,
         base: {
           ...config.RevDeployer.base,
-          filter: [
-            { event: "DeployRevnet", args: { revnetId: COBUILD_PROJECT_IDS } },
-          ],
+          filter: [{ event: "DeployRevnet", args: {} }],
         },
       },
       abi: revDeployerAbi,
@@ -150,9 +147,9 @@ export default createConfig({
         base: {
           ...config.JBTokens.base,
           filter: [
-            { event: "DeployERC20", args: { projectId: COBUILD_PROJECT_IDS } },
-            { event: "Mint", args: { projectId: COBUILD_PROJECT_IDS } },
-            { event: "Burn", args: { projectId: COBUILD_PROJECT_IDS } },
+            { event: "DeployERC20", args: {} },
+            { event: "Mint", args: {} },
+            { event: "Burn", args: {} },
           ],
         },
       },
@@ -171,12 +168,9 @@ export default createConfig({
           ...config.JBController.base,
           filter: [
             { event: "LaunchProject", args: {} },
-            { event: "MintTokens", args: { projectId: COBUILD_PROJECT_IDS } },
-            {
-              event: "SendReservedTokensToSplits",
-              args: { projectId: COBUILD_PROJECT_IDS },
-            },
-            { event: "SetUri", args: { projectId: COBUILD_PROJECT_IDS } },
+            { event: "MintTokens", args: {} },
+            { event: "SendReservedTokensToSplits", args: {} },
+            { event: "SetUri", args: {} },
           ],
         },
       },
@@ -185,8 +179,14 @@ export default createConfig({
     },
     ERC20: {
       abi: erc20Abi,
-      address: COBUILD_PROJECT_TOKEN_ADDRESSES,
+      address: ROOT_PROJECT_TOKEN_ADDRESSES,
       chain: config.ERC20,
+    },
+    GoalToken: {
+      abi: erc20Abi,
+      chain: "base",
+      address: goalFactoryStackAddress("stack.goalToken"),
+      startBlock: SCAFFOLD_START_BLOCK,
     },
     JBMultiTerminal: {
       chain: {
@@ -194,15 +194,12 @@ export default createConfig({
         base: {
           ...config.JBMultiTerminal.base,
           filter: [
-            { event: "AddToBalance", args: { projectId: COBUILD_PROJECT_IDS } },
-            { event: "CashOutTokens", args: { projectId: COBUILD_PROJECT_IDS } },
-            { event: "Pay", args: { projectId: COBUILD_PROJECT_IDS } },
-            { event: "SendPayouts", args: { projectId: COBUILD_PROJECT_IDS } },
-            {
-              event: "SetAccountingContext",
-              args: { projectId: COBUILD_PROJECT_IDS },
-            },
-            { event: "UseAllowance", args: { projectId: COBUILD_PROJECT_IDS } },
+            { event: "AddToBalance", args: {} },
+            { event: "CashOutTokens", args: {} },
+            { event: "Pay", args: {} },
+            { event: "SendPayouts", args: {} },
+            { event: "SetAccountingContext", args: {} },
+            { event: "UseAllowance", args: {} },
           ],
         },
       },
@@ -215,11 +212,8 @@ export default createConfig({
         base: {
           ...config.JBRulesets.base,
           filter: [
-            { event: "RulesetQueued", args: { projectId: COBUILD_PROJECT_IDS } },
-            {
-              event: "RulesetInitialized",
-              args: { projectId: COBUILD_PROJECT_IDS },
-            },
+            { event: "RulesetQueued", args: {} },
+            { event: "RulesetInitialized", args: {} },
           ],
         },
       },
@@ -232,13 +226,10 @@ export default createConfig({
         base: {
           ...config.RevLoans.base,
           filter: [
-            { event: "Borrow", args: { revnetId: COBUILD_PROJECT_IDS } },
-            { event: "Liquidate", args: { revnetId: COBUILD_PROJECT_IDS } },
-            {
-              event: "ReallocateCollateral",
-              args: { revnetId: COBUILD_PROJECT_IDS },
-            },
-            { event: "RepayLoan", args: { revnetId: COBUILD_PROJECT_IDS } },
+            { event: "Borrow", args: {} },
+            { event: "Liquidate", args: {} },
+            { event: "ReallocateCollateral", args: {} },
+            { event: "RepayLoan", args: {} },
             { event: "Transfer", args: {} },
           ],
         },

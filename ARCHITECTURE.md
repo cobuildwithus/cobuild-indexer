@@ -1,6 +1,6 @@
 # CoBuild Indexer Architecture
 
-Last updated: 2026-03-05
+Last updated: 2026-03-11
 
 ## Runtime Shape
 
@@ -19,10 +19,11 @@ Last updated: 2026-03-05
 
 ## Indexing Model
 
-- Legacy surfaces are configured from `src/lib/config.ts`, `addresses.ts`, and `IndexerConfig` with project-scoped event filters for Base project ids.
+- Legacy singleton surfaces are configured from `src/lib/config.ts`, `addresses.ts`, and `IndexerConfig` with explicit event allowlists on Base shared contracts rather than per-project filters.
 - Scaffold entrypoints in `ponder.config.ts` use canonical Base addresses exported by `@cobuild/wire` (`baseEntrypoints`).
 - Goal stack contracts are first-hop factory-discovered from `GoalFactory:GoalDeployed` (`goalFlow`, `goalTreasury`, `stakeVault`, `budgetStakeLedger`, `splitHook`, routers, success resolver).
 - Dynamic discovery:
+  - Root-token transfers remain bound to the wire-sourced `COBUILD_TOKEN_ADDRESS`, and goal-token transfers are discovered from `GoalFactory:GoalDeployed(stack.goalToken)`.
   - `BudgetTCR` addresses are discovered from `BudgetTCRFactory:BudgetTCRStackDeployedForGoal`.
   - `ChildFlow`, `PremiumEscrow`, and `BudgetTreasury` addresses are discovered from `BudgetTCRFactory:BudgetStackDeployed`.
   - `GoalFlowAllocationLedgerPipeline` addresses are discovered from the pipeline-extended `GoalFactory:GoalDeployed` payload (`stack.goalFlowAllocationLedgerPipeline`).

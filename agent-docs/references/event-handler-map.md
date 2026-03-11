@@ -19,7 +19,7 @@
   - Maintains `sucker_group` membership plus deterministic `_kv_sucker_group_by_address` rows for PK-only address->group resolution.
 - `RevLoans:*` in `src/contracts/rev-loans/**`
   - `Borrow`, `Liquidate`, `ReallocateCollateral`, `RepayLoan`, `Transfer`
-- `ERC20:Transfer` (project token transfers) in `src/contracts/erc20/transfer.ts`
+- `ERC20:Transfer` and `GoalToken:Transfer` (root token + GoalFactory-discovered goal token transfers) in `src/contracts/erc20/transfer.ts`
 - `CobuildSwap:BatchReactionSwap` + dynamic `TokenBought:Transfer` in `src/contracts/cobuild-swap/**` and `src/contracts/token-bought/**`
 - Block/cron logic in `src/contracts/crons/ruleset-changed.ts`
 
@@ -154,6 +154,7 @@
     - `PremiumEscrow` via `BudgetStackDeployed(premiumEscrow)`
 - `GoalFactory:GoalDeployed` handler in `src/goalFactory/goal-deployed.ts`
   - writes `goal_factory_deployment` rows keyed by `${chainId}:${goalRevnetId}` with emitted stack addresses (including router/resolver addresses).
+  - seeds `_kv_ERC20ToProjectId` and canonical `project.erc20` linkage for the emitted `goalToken`.
   - also seeds notification lookup rows:
     - `goal_context_by_budget_tcr`
     - `goal_context_by_budget_stake_ledger`

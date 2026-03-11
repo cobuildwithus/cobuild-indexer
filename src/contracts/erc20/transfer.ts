@@ -2,11 +2,14 @@ import { ponder, type Context, type Event } from "ponder:registry";
 import { zeroAddress } from "viem";
 import { ERC20ToProjectId, participant, project } from "ponder:schema";
 
+type TransferEventName = "ERC20:Transfer" | "GoalToken:Transfer";
+
 ponder.on("ERC20:Transfer", handleTransfer);
+ponder.on("GoalToken:Transfer", handleTransfer);
 
 async function handleTransfer(params: {
-  event: Event<"ERC20:Transfer">;
-  context: Context<"ERC20:Transfer">;
+  event: Event<TransferEventName>;
+  context: Context<TransferEventName>;
 }) {
   const { event, context } = params;
   const { value } = event.args;
@@ -22,7 +25,7 @@ async function handleTransfer(params: {
   });
 
   if (!projectMapping) {
-    throw new Error("Missing project");
+    throw new Error(`Missing project mapping for token ${tokenContract}`);
   }
 
   const projectId = projectMapping.projectId;
@@ -33,7 +36,7 @@ async function handleTransfer(params: {
   });
 
   if (!_project) {
-    throw new Error("Missing project");
+    throw new Error(`Missing project ${projectId}`);
   }
 
   // Decrease the amount from the sender
@@ -43,7 +46,6 @@ async function handleTransfer(params: {
       .set((row) => ({
         balance: row.balance - value,
       }));
-
   }
 
   // Increase the amount for the receiver
@@ -63,6 +65,5 @@ async function handleTransfer(params: {
       .onConflictDoUpdate((row) => ({
         balance: row.balance + value,
       }));
-
   }
 }

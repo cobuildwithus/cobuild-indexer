@@ -8,7 +8,10 @@
 
 ## Event Filter Scope
 
-- Several domains are narrowed to the wire-sourced `COBUILD_PROJECT_IDS = [COBUILD_PROJECT_ID_BIGINT]` in `ponder.config.ts`.
+- Shared REV/JB singleton contracts are indexed on Base with explicit event allowlists rather than project-id/revnet-id filters.
+- ERC20 transfer scope remains address-scoped:
+  - root Cobuild token uses the static wire-sourced `COBUILD_TOKEN_ADDRESS`
+  - goal-token transfers are factory-discovered from `GoalFactory:GoalDeployed(stack.goalToken)`
 - Cobuild swap tracking is pinned to `chain: "base"` and uses factory indexing for `TokenBought`.
 - Scaffold discovery is rooted at static Base entrypoints from `@cobuild/wire`:
   - `GoalFactory` and `BudgetTCRFactory` start at block `42941210`.

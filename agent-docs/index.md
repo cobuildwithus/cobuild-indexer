@@ -1,6 +1,6 @@
 # Cobuild Indexer Agent Docs Index
 
-Last verified: 2026-03-10 (notification source expansion)
+Last verified: 2026-03-11 (dynamic goal token scope cutover)
 
 ## Purpose
 
@@ -10,7 +10,7 @@ This index is the table of contents for durable, repository-local context that a
 
 | Path | Purpose | Source of truth | Owner | Review cadence | Criticality | Last verified |
 | --- | --- | --- | --- | --- | --- | --- |
-| `ARCHITECTURE.md` | Top-level runtime/domain map and invariants. | `src/**`, `ponder.config.ts`, `ponder.schema.ts` | Indexer Maintainers | Per architecture PR | High | 2026-03-05 |
+| `ARCHITECTURE.md` | Top-level runtime/domain map and invariants. | `src/**`, `ponder.config.ts`, `ponder.schema.ts` | Indexer Maintainers | Per architecture PR | High | 2026-03-11 |
 | `agent-docs/design-docs/index.md` | Index for durable design/principles docs. | `agent-docs/design-docs/**` | Indexer Maintainers | Monthly | Medium | 2026-02-25 |
 | `agent-docs/design-docs/core-beliefs.md` | Core beliefs for agent-first repository operations. | Team process + architecture decisions | Indexer Maintainers | Quarterly | Medium | 2026-02-25 |
 | `agent-docs/product-specs/index.md` | Index for product/projection constraints. | `agent-docs/product-specs/**` | Indexer + Product Consumers | Monthly | High | 2026-02-25 |
@@ -27,9 +27,9 @@ This index is the table of contents for durable, repository-local context that a
 | `agent-docs/prompts/task-finish-review.md` | Reusable final completion audit prompt for correctness/security review. | Completion workflow | Indexer Maintainers | Per process change | Medium | 2026-02-25 |
 | `agent-docs/references/README.md` | Internal/external reference packs for implementation and review. | `agent-docs/references/**` | Indexer Maintainers | Monthly | Medium | 2026-02-25 |
 | `agent-docs/references/module-boundary-map.md` | Layer ownership and dependency-direction map for indexer surfaces. | `src/**`, `ponder.config.ts`, `ponder.schema.ts`, scripts | Indexer Maintainers | Per architecture-boundary PR | High | 2026-02-25 |
-| `agent-docs/references/event-handler-map.md` | Event/block handler inventory and touched tables. | `src/**`, `ponder.config.ts` | Indexer Maintainers | Per indexed-event PR | High | 2026-03-10 |
+| `agent-docs/references/event-handler-map.md` | Event/block handler inventory and touched tables. | `src/**`, `ponder.config.ts` | Indexer Maintainers | Per indexed-event PR | High | 2026-03-11 |
 | `agent-docs/references/schema-relations-map.md` | Table/PK/index/relations map and identifier semantics. | `ponder.schema.ts` | Indexer Maintainers | Per schema PR | High | 2026-03-10 |
-| `agent-docs/references/rpc-chain-config-map.md` | Chain scope, start-block, and RPC failover model. | `src/lib/config.ts`, `src/lib/rpc-transport.ts`, `ponder.config.ts` | Indexer Maintainers | Per infra/config PR | High | 2026-03-05 |
+| `agent-docs/references/rpc-chain-config-map.md` | Chain scope, start-block, and RPC failover model. | `src/lib/config.ts`, `src/lib/rpc-transport.ts`, `ponder.config.ts` | Indexer Maintainers | Per infra/config PR | High | 2026-03-11 |
 | `agent-docs/references/address-abi-provenance.md` | Address and ABI source-of-truth and update workflow. | `addresses*.ts`, `wagmi.config.ts`, `abis.ts` | Indexer Maintainers | Per deployment/ABI PR | High | 2026-03-10 |
 | `agent-docs/references/api-query-surface.md` | GraphQL/API surface, expectations, and caveats. | `src/api/index.ts`, schema/query consumers | Indexer Maintainers | Per API/query-contract PR | High | 2026-02-25 |
 | `agent-docs/references/testing-ci-map.md` | Verification and CI enforcement map, including published-wire dependency guards. | `.github/workflows/**`, `scripts/**`, package scripts | Indexer Maintainers | Per CI/process PR | Medium | 2026-03-07 |
@@ -39,7 +39,7 @@ This index is the table of contents for durable, repository-local context that a
 | `agent-docs/references/hono-llms.txt` | External Hono reference pack for API boundary behavior. | Hono docs | Indexer Maintainers | Quarterly | Low | 2026-02-25 |
 | `agent-docs/references/juice-sdk-core-llms.txt` | External Juice SDK reference pack used by handlers. | Juice SDK docs + source | Indexer Maintainers | Quarterly | Low | 2026-02-25 |
 | `agent-docs/generated/README.md` | Generated doc artifacts produced by scripts. | `agent-docs/generated/**` | Indexer Maintainers | Per script change | Medium | 2026-02-25 |
-| `agent-docs/exec-plans/` | Execution plans for active and completed work. | PR-linked plan docs | Indexer Maintainers | Per multi-file/high-risk PR | High | 2026-03-10 |
+| `agent-docs/exec-plans/` | Execution plans for active and completed work. | PR-linked plan docs | Indexer Maintainers | Per multi-file/high-risk PR | High | 2026-03-11 |
 | `agent-docs/exec-plans/tech-debt-tracker.md` | Rolling debt register with owner/priority/status. | Audits, incidents, reviews | Indexer Maintainers | Bi-weekly | Medium | 2026-02-25 |
 
 ## Conventions

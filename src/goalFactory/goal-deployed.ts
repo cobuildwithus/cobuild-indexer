@@ -1,10 +1,12 @@
 import { ponder } from "ponder:registry";
 
 import {
+  ERC20ToProjectId,
   goalContextByArbitrator,
   goalContextByBudgetStakeLedger,
   goalContextByBudgetTcr,
   goalFactoryDeployment,
+  project,
 } from "ponder:schema";
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
@@ -16,6 +18,8 @@ ponder.on("GoalFactory:GoalDeployed", async ({ event, context }) => {
   await insertProtocolEvent({ context, event, contractName: "GoalFactory" });
 
   const stack = event.args.stack;
+  const chainId = context.chain.id;
+  const projectId = Number(event.args.goalRevnetId);
   const upsertValues = {
     goalFactory: event.log.address,
     caller: event.args.caller,
@@ -50,6 +54,27 @@ ponder.on("GoalFactory:GoalDeployed", async ({ event, context }) => {
       ...upsertValues,
     })
     .onConflictDoUpdate(upsertValues);
+
+  await context.db
+    .insert(ERC20ToProjectId)
+    .values({
+      erc20: stack.goalToken,
+      chainId,
+      projectId,
+    })
+    .onConflictDoUpdate({
+      projectId,
+    });
+
+  await context.db
+    .update(project, {
+      chainId,
+      projectId,
+    })
+    .set({
+      isRevnet: true,
+      erc20: stack.goalToken,
+    });
 
   await context.db
     .insert(goalContextByBudgetTcr)

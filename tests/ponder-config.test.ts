@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { COBUILD_PROJECT_ID_BIGINT, COBUILD_TOKEN_ADDRESS } from "@cobuild/wire";
+import { COBUILD_TOKEN_ADDRESS, baseEntrypoints } from "@cobuild/wire";
 
 vi.mock("ponder", () => ({
   createConfig: <T>(config: T) => config,
@@ -38,43 +38,38 @@ const ponderConfig = (await import("../ponder.config")).default;
 
 type Filter = {
   event: string;
-  args: Record<string, readonly bigint[] | bigint[] | undefined>;
+  args: Record<string, unknown>;
 };
 
-const expectProjectFilters = (
+const expectBroadFilters = (
   filters: readonly Filter[],
-  eventNames: readonly string[],
-  argumentKey: "projectId" | "revnetId"
+  eventNames: readonly string[]
 ) => {
-  const expectedProjectIds = [COBUILD_PROJECT_ID_BIGINT];
   const filteredEvents = filters.filter((filter) => eventNames.includes(filter.event));
 
   expect(filteredEvents).toHaveLength(eventNames.length);
   expect(filteredEvents.map((filter) => filter.event)).toEqual(eventNames);
 
   for (const filter of filteredEvents) {
-    expect(filter.args[argumentKey]).toEqual(expectedProjectIds);
+    expect(filter.args).toEqual({});
   }
 };
 
-describe("ponder config cobuild filters", () => {
-  it("pins all canonical project and revnet filters to the wire-sourced cobuild project id", () => {
-    expectProjectFilters(
+describe("ponder config scope", () => {
+  it("broadens shared REV and Juicebox contract filters while preserving explicit event lists", () => {
+    expectBroadFilters(
       ponderConfig.contracts.REVDeployer.chain.base.filter,
-      ["DeployRevnet"],
-      "revnetId"
+      ["DeployRevnet"]
     );
-    expectProjectFilters(
+    expectBroadFilters(
       ponderConfig.contracts.JBTokens.chain.base.filter,
-      ["DeployERC20", "Mint", "Burn"],
-      "projectId"
+      ["DeployERC20", "Mint", "Burn"]
     );
-    expectProjectFilters(
+    expectBroadFilters(
       ponderConfig.contracts.JBController.chain.base.filter,
-      ["MintTokens", "SendReservedTokensToSplits", "SetUri"],
-      "projectId"
+      ["LaunchProject", "MintTokens", "SendReservedTokensToSplits", "SetUri"]
     );
-    expectProjectFilters(
+    expectBroadFilters(
       ponderConfig.contracts.JBMultiTerminal.chain.base.filter,
       [
         "AddToBalance",
@@ -83,22 +78,31 @@ describe("ponder config cobuild filters", () => {
         "SendPayouts",
         "SetAccountingContext",
         "UseAllowance",
-      ],
-      "projectId"
+      ]
     );
-    expectProjectFilters(
+    expectBroadFilters(
       ponderConfig.contracts.JBRulesets.chain.base.filter,
-      ["RulesetQueued", "RulesetInitialized"],
-      "projectId"
+      ["RulesetQueued", "RulesetInitialized"]
     );
-    expectProjectFilters(
+    expectBroadFilters(
       ponderConfig.contracts.RevLoans.chain.base.filter,
-      ["Borrow", "Liquidate", "ReallocateCollateral", "RepayLoan"],
-      "revnetId"
+      ["Borrow", "Liquidate", "ReallocateCollateral", "RepayLoan", "Transfer"]
     );
   });
 
-  it("tracks the canonical cobuild token address for ERC20 transfers", () => {
+  it("tracks the canonical root token address for ERC20 transfers", () => {
     expect(ponderConfig.contracts.ERC20.address).toEqual([COBUILD_TOKEN_ADDRESS]);
+  });
+
+  it("discovers goal token transfer contracts from GoalFactory deployments", () => {
+    expect(ponderConfig.contracts.GoalToken).toMatchObject({
+      abi: expect.any(Array),
+      chain: "base",
+      startBlock: 42_941_210,
+      address: {
+        address: baseEntrypoints.goalFactory,
+        parameter: "stack.goalToken",
+      },
+    });
   });
 });
