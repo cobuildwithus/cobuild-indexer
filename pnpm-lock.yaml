@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@cobuild/wire':
-        specifier: 0.2.2
-        version: 0.2.2(typescript@5.9.3)(zod@4.3.5)
+        specifier: 0.3.0
+        version: 0.3.0(typescript@5.9.3)(zod@4.3.5)
       drizzle-orm:
         specifier: ^0.41.0
         version: 0.41.0(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(kysely@0.26.3)(pg@8.16.3)
@@ -76,8 +76,8 @@ packages:
     resolution: {integrity: sha512-wxpb5fwLya/DjNlBS1YOzqrccPk73OoEFxViMpMVDmIfI+UjcA16qSzO+hLndwpGAY3Xnzbk2yMvlZvtrlkDbw==}
     hasBin: true
 
-  '@cobuild/wire@0.2.2':
-    resolution: {integrity: sha512-71zLbff6vZx4nUU4Wlf5MHp/M8LhexcEXtdpuP3GRFh3NIkGa9/XegFUgXvxUtQk8O5ey5wOdTHDBGMuhBqkXg==}
+  '@cobuild/wire@0.3.0':
+    resolution: {integrity: sha512-D0uUkQ1xUqV5A8LN0mGQ3JGoSqmSz37WIhmWuCiH9T7xfhZTqZPAK1lsAtMw8LTfZn8fJlT7cuhnOk1nvAyj9Q==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -2167,8 +2167,8 @@ packages:
       typescript:
         optional: true
 
-  viem@2.47.1:
-    resolution: {integrity: sha512-frlK109+X5z2vlZeIGKa6Rxev6CcIpumV/VVhaIPc/QFotiB6t/CgUwkMlYfr4F2YNBZZ2l6jguWz2sY1XrQHw==}
+  viem@2.47.2:
+    resolution: {integrity: sha512-etDIwDgmDiGaPg8rUbJtUFuC3/nAJCbhMYyfh5dOcqNNkzBWTNcS2VluPSM5JVo+9U3b2hle2RkBEq3+xyvlvg==}
     peerDependencies:
       typescript: '>=5.0.4'
     peerDependenciesMeta:
@@ -2347,9 +2347,9 @@ snapshots:
 
   '@cobuild/review-gpt@0.2.15': {}
 
-  '@cobuild/wire@0.2.2(typescript@5.9.3)(zod@4.3.5)':
+  '@cobuild/wire@0.3.0(typescript@5.9.3)(zod@4.3.5)':
     dependencies:
-      viem: 2.47.1(typescript@5.9.3)(zod@4.3.5)
+      viem: 2.47.2(typescript@5.9.3)(zod@4.3.5)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -4249,7 +4249,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  viem@2.47.1(typescript@5.9.3)(zod@4.3.5):
+  viem@2.47.2(typescript@5.9.3)(zod@4.3.5):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
