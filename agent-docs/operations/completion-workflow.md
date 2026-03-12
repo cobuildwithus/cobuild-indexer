@@ -1,6 +1,6 @@
 # Completion Workflow
 
-Last verified: 2026-02-25
+Last verified: 2026-03-12
 
 ## Sequence
 
@@ -14,8 +14,9 @@ Non-docs rule: for changes touching production code or tests, all three audit pa
 4. The coverage-audit pass should implement the highest-impact missing tests it identifies when a runnable test harness exists.
 5. Re-run required checks after the simplify + test-coverage sequence.
 6. Run a completion audit using `agent-docs/prompts/task-finish-review.md` with full change context.
-7. Final handoff remains gated on green required checks; completing audits does not waive verification requirements.
-8. Do not skip these passes unless the user explicitly instructs to skip them for that turn.
+7. Final handoff must report required-check results; green required checks remain the default completion bar.
+8. If a required check fails for a credibly unrelated pre-existing reason, commit your exact touched files and hand off with the failing command, failing target, and why your diff did not cause it. If you cannot defend that separation, treat the failure as blocking.
+9. Do not skip these passes unless the user explicitly instructs to skip them for that turn.
 
 ## Coordination Ledger (Always Required)
 
