@@ -8,6 +8,11 @@ You are a senior engineer running a cleanup pass after functional changes are al
 Goal:
 Simplify and harden the modified code without changing externally visible behavior.
 
+Preflight (required):
+
+- Read `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` before review.
+- Honor any explicit exclusive/refactor notes from the ledger; otherwise work carefully on top of active rows without reverting adjacent edits.
+
 Approach:
 
 - Delete first: remove dead code, obsolete branches, unused imports/deps, and no-op abstractions.

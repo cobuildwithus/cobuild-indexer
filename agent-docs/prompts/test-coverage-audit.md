@@ -8,6 +8,11 @@ You are performing a post-simplify test-coverage pass for completed changes.
 Goal:
 Find meaningful coverage gaps introduced by the change set, then implement the highest-impact tests to close those gaps before final completion audit.
 
+Preflight (required):
+
+- Read `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` before review/edits.
+- Honor any explicit exclusive/refactor notes from the ledger; otherwise work carefully on top of active rows without reverting adjacent edits.
+
 Audit for:
 
 - missing coverage on modified behavior and directly affected call paths

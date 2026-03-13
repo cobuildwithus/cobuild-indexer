@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@cobuild/wire':
-        specifier: 0.3.3
-        version: 0.3.3(typescript@5.9.3)(zod@4.3.5)
+        specifier: 0.3.4
+        version: 0.3.4(typescript@5.9.3)(zod@4.3.5)
       drizzle-orm:
         specifier: ^0.41.0
         version: 0.41.0(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(kysely@0.26.3)(pg@8.20.0)
@@ -76,8 +76,8 @@ packages:
     resolution: {integrity: sha512-PkCFUHM0KtceB3rn9dHESH/AJWVQ0ccwZzSEzACTcUgCcaJICpBqCtMG0Vd/7B18U5V7cdKIaFgqhVv2eAvGnA==}
     hasBin: true
 
-  '@cobuild/wire@0.3.3':
-    resolution: {integrity: sha512-bPEN3JdqBliRBnQ/dTI2RAiFPv9t3Gov0mHHk+rjcnDNmBJlVEdyEOW6MGRvGtAb9kToxePAnlX3Aqw42/SrRg==}
+  '@cobuild/wire@0.3.4':
+    resolution: {integrity: sha512-ueoBq8UIO6O5mbAoyzBiVOEtnceK17wGbyBYjm34mDb5Pm2lCGU1YjIAvBssChINKB40XDjWkMXTvgd3iqdAHQ==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -2187,7 +2187,7 @@ snapshots:
 
   '@cobuild/review-gpt@0.3.2': {}
 
-  '@cobuild/wire@0.3.3(typescript@5.9.3)(zod@4.3.5)':
+  '@cobuild/wire@0.3.4(typescript@5.9.3)(zod@4.3.5)':
     dependencies:
       viem: 2.47.2(typescript@5.9.3)(zod@4.3.5)
     transitivePeerDependencies:

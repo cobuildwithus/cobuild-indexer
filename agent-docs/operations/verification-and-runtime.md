@@ -32,9 +32,10 @@ Last verified: 2026-02-25
 - Workflow:
   - before first edit, add your row,
   - before spawning audit/review subagents, ensure your row is current,
-  - require subagents to read the ledger and respect ownership boundaries,
-  - update your row whenever file scope or symbol plans change,
+  - require subagents to read the ledger and honor any explicit exclusive/refactor notes,
+  - update your row whenever file scope, symbol plans, or exclusivity expectations change,
   - remove your row when the task is complete or abandoned.
+  - allow overlap by default when agents stay within declared scope, read the current file state first, and preserve adjacent edits.
 
 ## Runtime Guardrails
 

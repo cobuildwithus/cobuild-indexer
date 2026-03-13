@@ -1,6 +1,6 @@
 # Cobuild Indexer Agent Docs Index
 
-Last verified: 2026-03-13 (wire-owned scaffold start block)
+Last verified: 2026-03-13 (coordination-ledger semantics softened to allow overlap by default)
 
 ## Purpose
 
@@ -47,7 +47,7 @@ This index is the table of contents for durable, repository-local context that a
 - Keep AGENTS files short and route-oriented.
 - Update this index whenever docs are added, removed, or moved.
 - For multi-file/high-risk work, add a plan in `agent-docs/exec-plans/active/`.
-- Keep `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` current for active coding tasks.
+- Keep `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` current for active coding tasks, and mark rows as exclusive only when overlap is genuinely unsafe.
 - Active treasury terminal failure event sync plan: `agent-docs/exec-plans/active/2026-03-09-treasury-terminal-failure-event-sync.md`.
 - Active TCR request-actor event sync plan: `agent-docs/exec-plans/active/2026-03-10-tcr-request-actor-event-sync.md`.
 - Active notification completeness pass plan: `agent-docs/exec-plans/active/2026-03-10-notification-review-followups.md`.

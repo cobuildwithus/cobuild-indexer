@@ -5,6 +5,11 @@ action: thorough review
 
 You are performing a final audit of completed changes. Use full diff/context and inspect all modified files plus directly affected call paths.
 
+Preflight (required):
+
+- Read `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` before review.
+- Honor any explicit exclusive/refactor notes from the ledger; otherwise work carefully on top of active rows without reverting adjacent edits.
+
 Review for:
 
 - functional and behavioral regressions

@@ -46,7 +46,8 @@ If instructions still conflict after applying this order, ask the user before ac
 - Default to additive integration with existing indexer services; do not perform hard cutovers or remove legacy surfaces unless the user explicitly requests it.
 - Historical plan docs under `agent-docs/exec-plans/completed/` are immutable snapshots.
 - COORDINATION_LEDGER hard gate for every coding task (single-agent and multi-agent): before any code change, add or update your active entry in `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` with scope and planned symbol add/rename/delete work; do not edit code, generate code, or apply patches until that entry exists; if you cannot update the ledger first, stop and escalate; keep the entry current as scope changes, and remove your entry when done.
-- Any spawned subagent that may review or edit code must read `COORDINATION_LEDGER.md`, follow the same hard gate before making code changes, and must not touch files/symbols owned by another active entry.
+- Ledger rows are active-work notices by default, not hard file locks. Read overlapping rows first, preserve adjacent edits, and coordinate through scope/symbol notes. Treat a row as exclusive only when it explicitly says overlap is unsafe, the lane is a large refactor, or the user gives a conflicting direction.
+- Any spawned subagent that may review or edit code must read `COORDINATION_LEDGER.md`, follow the same hard gate before making code changes, and honor any explicit exclusive/refactor notes on overlapping rows.
 - Run completion workflow audit passes (`simplify`, `test-coverage-audit`, `task-finish-review`) for every non-doc change that touches production code or tests; skip only when the user explicitly says to skip for that turn.
 - Docs/process-only changes skip completion workflow audit passes unless the user explicitly asks to run them.
 - Keep this file short and route-oriented; keep durable detail in `agent-docs/`.
@@ -61,6 +62,7 @@ If instructions still conflict after applying this order, ask the user before ac
 - If unrelated breakage appears in files you did not touch, continue scoped work; only fix it when your changes caused it or the user asked.
 - If you create temporary artifacts for testing/exploration, remove them before handoff unless the user asked to keep them.
 - Do not introduce “break now, fix later” phases.
+- Prefer narrow ledger rows and symbol claims. If you need temporary exclusive control of a file or symbol cluster, say so explicitly in the row notes and explain why overlap is unsafe.
 - For multi-file or high-risk work, add an execution plan in `agent-docs/exec-plans/active/`.
 - When architecture-significant behavior changes, update matching docs in `agent-docs/` and `agent-docs/index.md`.
 
