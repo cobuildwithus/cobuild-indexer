@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@cobuild/repo-tools": "^0.1.13",
-    "@cobuild/review-gpt": "^0.2.15",
+    "@cobuild/review-gpt": "^0.2.16",
     "@types/node": "^20.9.0",
     "@wagmi/cli": "^2.5.1",
     "eslint": "^8.53.0",
