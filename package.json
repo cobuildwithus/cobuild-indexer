@@ -21,7 +21,7 @@
     "verify": "pnpm wire:ensure-published && pnpm typecheck && pnpm lint && pnpm docs:drift && pnpm docs:gardening"
   },
   "dependencies": {
-    "@cobuild/wire": "0.3.2",
+    "@cobuild/wire": "0.3.3",
     "drizzle-orm": "^0.41.0",
     "hono": "^4.5.0",
     "juice-sdk-core": "^2.1.2",
