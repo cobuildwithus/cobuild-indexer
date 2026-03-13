@@ -19,8 +19,8 @@ ABI generation:
 - Never change contract addresses without validating filter targets and handler assumptions.
 - Keep generated `abis.ts` in sync with deployed contract versions.
 - Keep factory event payload assumptions in `ponder.config.ts` (`GoalDeployed`, `BudgetTCRStackDeployedForGoal`, `BudgetStackDeployed`) aligned with deployed `v1-core` emitters.
-- When published `@cobuild/wire` lags a local protocol event cutover, prefer a narrowly scoped `ponder.config.ts` event-fragment override and remove it after the refreshed package is published.
-- The current Base factory rollout is bridged locally in `ponder.config.ts` by pinning the new `GoalFactory` / `BudgetTCRFactory` entrypoints and the refreshed `GoalDeployed` stack fragment until the next `@cobuild/wire` publish.
+- When published `@cobuild/wire` lags a local protocol event cutover, prefer a narrowly scoped `ponder.config.ts` event-fragment override and remove it once the refreshed package publishes.
+- The current Base factory discovery path consumes the published `@cobuild/wire` `0.3.1` entrypoint addresses and ABI fragments, with scaffold cutover starting at block `43290000`.
 
 ## Safe Update Workflow
 

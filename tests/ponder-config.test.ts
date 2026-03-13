@@ -56,7 +56,8 @@ const expectBroadFilters = (
 };
 
 describe("ponder config scope", () => {
-  const bridgedGoalFactory = "0x0f27EE0Aa0F01A6BcAF64e662977337dA5D476ce";
+  const bridgedGoalFactory = "0x88c3E04bE35b16A248d66c48C78aEf4e864eb1B3";
+  const bridgedBudgetTcrFactory = "0x764c0207a6fc6a4c740649B1e3Cc3c913adfb95D";
 
   it("broadens shared REV and Juicebox contract filters while preserving explicit event lists", () => {
     expectBroadFilters(
@@ -100,7 +101,7 @@ describe("ponder config scope", () => {
     expect(ponderConfig.contracts.GoalToken).toMatchObject({
       abi: expect.any(Array),
       chain: "base",
-      startBlock: 43_288_154,
+      startBlock: 43_290_000,
       address: {
         address: bridgedGoalFactory,
         parameter: "stack.goalToken",
@@ -108,11 +109,11 @@ describe("ponder config scope", () => {
     });
   });
 
-  it("bridges the GoalFactory contract onto the cutover GoalDeployed event shape", () => {
+  it("uses the published wire GoalFactory contract with the rerun GoalDeployed event shape", () => {
     expect(ponderConfig.contracts.GoalFactory).toMatchObject({
       chain: "base",
       address: bridgedGoalFactory,
-      startBlock: 43_288_154,
+      startBlock: 43_290_000,
     });
 
     const goalDeployedEvent = ponderConfig.contracts.GoalFactory.abi.find(
@@ -133,6 +134,15 @@ describe("ponder config scope", () => {
           ]),
         }),
       ],
+    });
+  });
+
+  it("uses the published wire BudgetTCRFactory discovery address for the rerun deployment", () => {
+    expect(ponderConfig.contracts.BudgetTCRFactory).toMatchObject({
+      abi: expect.any(Array),
+      chain: "base",
+      address: bridgedBudgetTcrFactory,
+      startBlock: 43_290_000,
     });
   });
 });

@@ -6,10 +6,13 @@ import {
   budgetStakeLedgerAbi as BudgetStakeLedgerAbi,
   budgetTcrAbi as BudgetTCRAbi,
   budgetTcrFactoryAbi as BudgetTCRFactoryAbi,
+  budgetTcrFactoryAddress,
   budgetTreasuryAbi as BudgetTreasuryAbi,
   cobuildSwapImplAbi,
   erc20VotesArbitratorAbi as ERC20VotesArbitratorAbi,
   flowAbi as FlowAbi,
+  goalFactoryAbi as GoalFactoryAbi,
+  goalFactoryAddress,
   goalFlowAllocationLedgerPipelineAbi as GoalFlowAllocationLedgerPipelineAbi,
   goalRevnetSplitHookAbi as GoalRevnetSplitHookAbi,
   goalStakeVaultAbi as GoalStakeVaultAbi,
@@ -20,7 +23,7 @@ import {
   underwriterSlasherRouterAbi as UnderwriterSlasherRouterAbi,
 } from "@cobuild/wire";
 import { contracts } from "./addresses";
-import { erc20Abi, getAbiItem, parseAbiItem, type Abi } from "viem";
+import { erc20Abi, getAbiItem, type Abi } from "viem";
 import {
   jbControllerAbi,
   jbMultiTerminalAbi,
@@ -34,22 +37,12 @@ import {
 
 const ROOT_PROJECT_TOKEN_ADDRESSES = [COBUILD_TOKEN_ADDRESS] as const;
 
-/**
- * Local bridge until the refreshed @cobuild/wire package publishes the latest
- * Base factory entrypoints from the v1-core rollout.
- */
-const ENTRYPOINTS = {
-  GOAL_FACTORY: "0x0f27EE0Aa0F01A6BcAF64e662977337dA5D476ce",
-  BUDGET_TCR_FACTORY: "0x2EA70b65C2d1243A967C0eac37d63a296A3E40cb",
-} as const;
+const SCAFFOLD_START_BLOCK = 43_290_000;
 
-const SCAFFOLD_START_BLOCK = 43_288_154;
-
-// Factory discovery callbacks landed in v1-core before the refreshed wire
-// package published, so these are pinned explicitly for the cutover.
-const GOAL_DEPLOYED = parseAbiItem(
-  "event GoalDeployed(address indexed caller, uint256 indexed goalRevnetId, (uint256 goalRevnetId,address goalToken,address goalSuperToken,address goalTreasury,address goalFlow,address goalAllocatorStrategy,address goalFlowAllocationLedgerPipeline,address stakeVault,address budgetStakeLedger,address splitHook,address jurorSlasherRouter,address underwriterSlasherRouter,address successResolver,address budgetController,address arbitrator) stack)"
-);
+const GOAL_DEPLOYED = getAbiItem({
+  abi: GoalFactoryAbi,
+  name: "GoalDeployed",
+});
 
 const GoalFactoryProtocolEventsAbi = [GOAL_DEPLOYED] as const satisfies Abi;
 
@@ -58,9 +51,10 @@ const BUDGET_TCR_STACK_DEPLOYED_FOR_GOAL = getAbiItem({
   name: "BudgetTCRStackDeployedForGoal",
 });
 
-const BUDGET_STACK_DEPLOYED_FROM_FACTORY = parseAbiItem(
-  "event BudgetStackDeployed(address indexed budgetTCR, bytes32 indexed itemID, address indexed childFlow, address budgetTreasury, address premiumEscrow, address strategy)"
-);
+const BUDGET_STACK_DEPLOYED_FROM_FACTORY = getAbiItem({
+  abi: BudgetTCRFactoryAbi,
+  name: "BudgetStackDeployed",
+});
 
 const BUDGET_ALLOCATION_MECHANISM_DEPLOYED_FROM_FACTORY = getAbiItem({
   abi: BudgetTCRFactoryAbi,
@@ -73,8 +67,6 @@ const BudgetTCRFactoryProtocolEventsAbi = [
   BUDGET_ALLOCATION_MECHANISM_DEPLOYED_FROM_FACTORY,
 ] as const satisfies Abi;
 
-// Published @cobuild/wire may lag the latest local protocol event cutover, so
-// the changed BudgetTCR event fragments are pinned here until the next wire release.
 const BUDGET_TCR_REQUEST_SUBMITTED = {
   type: "event",
   name: "RequestSubmitted",
@@ -122,7 +114,7 @@ type GoalFactoryStackAddressParameter =
 
 const goalFactoryStackAddress = (parameter: GoalFactoryStackAddressParameter) =>
   factory({
-    address: ENTRYPOINTS.GOAL_FACTORY,
+    address: goalFactoryAddress,
     event: GOAL_DEPLOYED,
     parameter,
   });
@@ -271,7 +263,7 @@ export default createConfig({
     GoalFactory: {
       abi: GoalFactoryProtocolEventsAbi,
       chain: "base",
-      address: ENTRYPOINTS.GOAL_FACTORY,
+      address: goalFactoryAddress,
       startBlock: SCAFFOLD_START_BLOCK,
     },
     GoalFlow: {
@@ -284,7 +276,7 @@ export default createConfig({
       abi: FlowAbi,
       chain: "base",
       address: factory({
-        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        address: budgetTcrFactoryAddress,
         event: BUDGET_STACK_DEPLOYED_FROM_FACTORY,
         parameter: "childFlow",
       }),
@@ -324,7 +316,7 @@ export default createConfig({
       abi: PremiumEscrowAbi,
       chain: "base",
       address: factory({
-        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        address: budgetTcrFactoryAddress,
         event: BUDGET_STACK_DEPLOYED_FROM_FACTORY,
         parameter: "premiumEscrow",
       }),
@@ -351,14 +343,14 @@ export default createConfig({
     BudgetTCRFactory: {
       abi: BudgetTCRFactoryProtocolEventsAbi,
       chain: "base",
-      address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+      address: budgetTcrFactoryAddress,
       startBlock: SCAFFOLD_START_BLOCK,
     },
     BudgetTCR: {
       abi: BudgetTCRAbi,
       chain: "base",
       address: factory({
-        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        address: budgetTcrFactoryAddress,
         event: BUDGET_TCR_STACK_DEPLOYED_FOR_GOAL,
         parameter: "budgetTCR",
       }),
@@ -368,7 +360,7 @@ export default createConfig({
       abi: BudgetTCRProtocolEventsAbi,
       chain: "base",
       address: factory({
-        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        address: budgetTcrFactoryAddress,
         event: BUDGET_TCR_STACK_DEPLOYED_FOR_GOAL,
         parameter: "budgetTCR",
       }),
@@ -384,7 +376,7 @@ export default createConfig({
       abi: AllocationMechanismTCRAbi,
       chain: "base",
       address: factory({
-        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        address: budgetTcrFactoryAddress,
         event: BUDGET_ALLOCATION_MECHANISM_DEPLOYED_FROM_FACTORY,
         parameter: "allocationMechanism",
       }),
@@ -394,7 +386,7 @@ export default createConfig({
       abi: ERC20VotesArbitratorAbi,
       chain: "base",
       address: factory({
-        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        address: budgetTcrFactoryAddress,
         event: BUDGET_ALLOCATION_MECHANISM_DEPLOYED_FROM_FACTORY,
         parameter: "allocationMechanismArbitrator",
       }),
@@ -404,7 +396,7 @@ export default createConfig({
       abi: BudgetTreasuryAbi,
       chain: "base",
       address: factory({
-        address: ENTRYPOINTS.BUDGET_TCR_FACTORY,
+        address: budgetTcrFactoryAddress,
         event: BUDGET_STACK_DEPLOYED_FROM_FACTORY,
         parameter: "budgetTreasury",
       }),
