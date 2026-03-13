@@ -3,7 +3,6 @@ import { config, getChainsAndRpcUrls, IndexerConfig } from "./src/lib/config";
 import {
   COBUILD_TOKEN_ADDRESS,
   allocationMechanismTcrAbi as AllocationMechanismTCRAbi,
-  baseEntrypoints,
   budgetStakeLedgerAbi as BudgetStakeLedgerAbi,
   budgetTcrAbi as BudgetTCRAbi,
   budgetTcrFactoryAbi as BudgetTCRFactoryAbi,
@@ -11,7 +10,6 @@ import {
   cobuildSwapImplAbi,
   erc20VotesArbitratorAbi as ERC20VotesArbitratorAbi,
   flowAbi as FlowAbi,
-  goalFactoryAbi as GoalFactoryAbi,
   goalFlowAllocationLedgerPipelineAbi as GoalFlowAllocationLedgerPipelineAbi,
   goalRevnetSplitHookAbi as GoalRevnetSplitHookAbi,
   goalStakeVaultAbi as GoalStakeVaultAbi,
@@ -37,20 +35,23 @@ import {
 const ROOT_PROJECT_TOKEN_ADDRESSES = [COBUILD_TOKEN_ADDRESS] as const;
 
 /**
- * Canonical scaffold entrypoint addresses from @cobuild/wire (v1-core deploys).
+ * Local bridge until the refreshed @cobuild/wire package publishes the latest
+ * Base factory entrypoints from the v1-core rollout.
  */
 const ENTRYPOINTS = {
-  GOAL_FACTORY: baseEntrypoints.goalFactory,
-  BUDGET_TCR_FACTORY: baseEntrypoints.budgetTcrFactory,
+  GOAL_FACTORY: "0x0f27EE0Aa0F01A6BcAF64e662977337dA5D476ce",
+  BUDGET_TCR_FACTORY: "0x2EA70b65C2d1243A967C0eac37d63a296A3E40cb",
 } as const;
 
-const SCAFFOLD_START_BLOCK = 42_941_210;
+const SCAFFOLD_START_BLOCK = 43_288_154;
 
-// Factory discovery callbacks landed in v1-core may not be present in the
-// currently published factory ABI surface, so these are pinned explicitly.
+// Factory discovery callbacks landed in v1-core before the refreshed wire
+// package published, so these are pinned explicitly for the cutover.
 const GOAL_DEPLOYED = parseAbiItem(
-  "event GoalDeployed(address indexed caller, uint256 indexed goalRevnetId, (uint256 goalRevnetId,address goalToken,address goalSuperToken,address goalTreasury,address goalFlow,address goalFlowAllocationLedgerPipeline,address stakeVault,address budgetStakeLedger,address splitHook,address jurorSlasherRouter,address underwriterSlasherRouter,address successResolver,address budgetTCR,address arbitrator) stack)"
+  "event GoalDeployed(address indexed caller, uint256 indexed goalRevnetId, (uint256 goalRevnetId,address goalToken,address goalSuperToken,address goalTreasury,address goalFlow,address goalAllocatorStrategy,address goalFlowAllocationLedgerPipeline,address stakeVault,address budgetStakeLedger,address splitHook,address jurorSlasherRouter,address underwriterSlasherRouter,address successResolver,address budgetController,address arbitrator) stack)"
 );
+
+const GoalFactoryProtocolEventsAbi = [GOAL_DEPLOYED] as const satisfies Abi;
 
 const BUDGET_TCR_STACK_DEPLOYED_FOR_GOAL = getAbiItem({
   abi: BudgetTCRFactoryAbi,
@@ -268,7 +269,7 @@ export default createConfig({
 
     // Integrated scaffold stack (goal/budget flows + telemetry)
     GoalFactory: {
-      abi: GoalFactoryAbi,
+      abi: GoalFactoryProtocolEventsAbi,
       chain: "base",
       address: ENTRYPOINTS.GOAL_FACTORY,
       startBlock: SCAFFOLD_START_BLOCK,

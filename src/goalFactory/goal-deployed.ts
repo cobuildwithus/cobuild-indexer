@@ -18,6 +18,7 @@ ponder.on("GoalFactory:GoalDeployed", async ({ event, context }) => {
   await insertProtocolEvent({ context, event, contractName: "GoalFactory" });
 
   const stack = event.args.stack;
+  const budgetTcr = stack.budgetController;
   const chainId = context.chain.id;
   const projectId = Number(event.args.goalRevnetId);
   const upsertValues = {
@@ -33,7 +34,7 @@ ponder.on("GoalFactory:GoalDeployed", async ({ event, context }) => {
     jurorSlasherRouter: stack.jurorSlasherRouter,
     underwriterSlasherRouter: stack.underwriterSlasherRouter,
     successResolver: stack.successResolver,
-    budgetTcr: stack.budgetTCR,
+    budgetTcr,
     arbitrator: stack.arbitrator,
     txHash: event.transaction.hash,
     blockNumber: event.block.number,
@@ -79,7 +80,7 @@ ponder.on("GoalFactory:GoalDeployed", async ({ event, context }) => {
   await context.db
     .insert(goalContextByBudgetTcr)
     .values({
-      id: stack.budgetTCR,
+      id: budgetTcr,
       goalTreasury: stack.goalTreasury,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
@@ -95,13 +96,13 @@ ponder.on("GoalFactory:GoalDeployed", async ({ event, context }) => {
     .values({
       id: stack.budgetStakeLedger,
       goalTreasury: stack.goalTreasury,
-      budgetTcr: stack.budgetTCR,
+      budgetTcr,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
       goalTreasury: stack.goalTreasury,
-      budgetTcr: stack.budgetTCR,
+      budgetTcr,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     });
@@ -112,14 +113,14 @@ ponder.on("GoalFactory:GoalDeployed", async ({ event, context }) => {
       id: stack.arbitrator,
       goalTreasury: stack.goalTreasury,
       stakeVault: stack.stakeVault,
-      budgetTcr: stack.budgetTCR,
+      budgetTcr,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
       goalTreasury: stack.goalTreasury,
       stakeVault: stack.stakeVault,
-      budgetTcr: stack.budgetTCR,
+      budgetTcr,
       updatedAtBlock: event.block.number,
       updatedAtTimestamp: event.block.timestamp,
     });

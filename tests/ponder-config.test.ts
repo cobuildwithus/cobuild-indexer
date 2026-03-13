@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { COBUILD_TOKEN_ADDRESS, baseEntrypoints } from "@cobuild/wire";
+import { COBUILD_TOKEN_ADDRESS } from "@cobuild/wire";
 
 vi.mock("ponder", () => ({
   createConfig: <T>(config: T) => config,
@@ -56,6 +56,8 @@ const expectBroadFilters = (
 };
 
 describe("ponder config scope", () => {
+  const bridgedGoalFactory = "0x0f27EE0Aa0F01A6BcAF64e662977337dA5D476ce";
+
   it("broadens shared REV and Juicebox contract filters while preserving explicit event lists", () => {
     expectBroadFilters(
       ponderConfig.contracts.REVDeployer.chain.base.filter,
@@ -98,11 +100,39 @@ describe("ponder config scope", () => {
     expect(ponderConfig.contracts.GoalToken).toMatchObject({
       abi: expect.any(Array),
       chain: "base",
-      startBlock: 42_941_210,
+      startBlock: 43_288_154,
       address: {
-        address: baseEntrypoints.goalFactory,
+        address: bridgedGoalFactory,
         parameter: "stack.goalToken",
       },
+    });
+  });
+
+  it("bridges the GoalFactory contract onto the cutover GoalDeployed event shape", () => {
+    expect(ponderConfig.contracts.GoalFactory).toMatchObject({
+      chain: "base",
+      address: bridgedGoalFactory,
+      startBlock: 43_288_154,
+    });
+
+    const goalDeployedEvent = ponderConfig.contracts.GoalFactory.abi.find(
+      (entry: { type: string; name?: string }) =>
+        entry.type === "event" && entry.name === "GoalDeployed"
+    );
+
+    expect(goalDeployedEvent).toBeDefined();
+    expect(goalDeployedEvent).toMatchObject({
+      inputs: [
+        expect.objectContaining({ name: "caller" }),
+        expect.objectContaining({ name: "goalRevnetId" }),
+        expect.objectContaining({
+          name: "stack",
+          components: expect.arrayContaining([
+            expect.objectContaining({ name: "goalAllocatorStrategy" }),
+            expect.objectContaining({ name: "budgetController" }),
+          ]),
+        }),
+      ],
     });
   });
 });

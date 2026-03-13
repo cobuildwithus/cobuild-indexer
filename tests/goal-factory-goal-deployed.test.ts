@@ -86,7 +86,7 @@ type GoalDeployedHandler = (args: {
         jurorSlasherRouter: `0x${string}`;
         underwriterSlasherRouter: `0x${string}`;
         successResolver: `0x${string}`;
-        budgetTCR: `0x${string}`;
+        budgetController: `0x${string}`;
         arbitrator: `0x${string}`;
       };
     };
@@ -131,7 +131,7 @@ describe("GoalFactory:GoalDeployed handler", () => {
           jurorSlasherRouter: "0x00000000000000000000000000000000000000b3",
           underwriterSlasherRouter: "0x00000000000000000000000000000000000000b4",
           successResolver: "0x00000000000000000000000000000000000000b5",
-          budgetTCR,
+          budgetController: budgetTCR,
           arbitrator: "0x00000000000000000000000000000000000000b6",
         },
       },
