@@ -1,6 +1,6 @@
 # Cobuild Indexer Agent Docs Index
 
-Last verified: 2026-03-13 (published wire 0.3.1 scaffold cutover)
+Last verified: 2026-03-13 (wire-owned scaffold start block)
 
 ## Purpose
 

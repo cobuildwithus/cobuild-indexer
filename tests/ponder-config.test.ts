@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { COBUILD_TOKEN_ADDRESS } from "@cobuild/wire";
+import { BASE_SCAFFOLD_START_BLOCK, COBUILD_TOKEN_ADDRESS } from "@cobuild/wire";
 
 vi.mock("ponder", () => ({
   createConfig: <T>(config: T) => config,
@@ -101,7 +101,7 @@ describe("ponder config scope", () => {
     expect(ponderConfig.contracts.GoalToken).toMatchObject({
       abi: expect.any(Array),
       chain: "base",
-      startBlock: 43_290_000,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
       address: {
         address: bridgedGoalFactory,
         parameter: "stack.goalToken",
@@ -113,7 +113,7 @@ describe("ponder config scope", () => {
     expect(ponderConfig.contracts.GoalFactory).toMatchObject({
       chain: "base",
       address: bridgedGoalFactory,
-      startBlock: 43_290_000,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     });
 
     const goalDeployedEvent = ponderConfig.contracts.GoalFactory.abi.find(
@@ -142,7 +142,7 @@ describe("ponder config scope", () => {
       abi: expect.any(Array),
       chain: "base",
       address: bridgedBudgetTcrFactory,
-      startBlock: 43_290_000,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     });
   });
 });

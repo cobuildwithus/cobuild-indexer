@@ -2,7 +2,7 @@
 
 ## Goal
 
-Align indexer scaffold discovery to published `@cobuild/wire@0.3.1` and the rerun Base factory deployment block.
+Align indexer scaffold discovery to the published `@cobuild/wire` factory surface and the canonical Base scaffold start-block export.
 
 ## Constraints
 
@@ -13,7 +13,7 @@ Align indexer scaffold discovery to published `@cobuild/wire@0.3.1` and the reru
 ## Scope
 
 - Remove the temporary local GoalFactory/BudgetTCRFactory bridge now that the published `@cobuild/wire` package includes the rerun addresses and event shapes.
-- Update `SCAFFOLD_START_BLOCK` to `43_290_000`.
+- Replace the local `SCAFFOLD_START_BLOCK` constant with the published `BASE_SCAFFOLD_START_BLOCK` export.
 - Keep the GoalFactory handler/tests and provenance docs aligned.
 
 ## Verification

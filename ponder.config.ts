@@ -1,6 +1,7 @@
 import { createConfig, factory } from "ponder";
 import { config, getChainsAndRpcUrls, IndexerConfig } from "./src/lib/config";
 import {
+  BASE_SCAFFOLD_START_BLOCK,
   COBUILD_TOKEN_ADDRESS,
   allocationMechanismTcrAbi as AllocationMechanismTCRAbi,
   budgetStakeLedgerAbi as BudgetStakeLedgerAbi,
@@ -36,8 +37,6 @@ import {
 } from "juice-sdk-core";
 
 const ROOT_PROJECT_TOKEN_ADDRESSES = [COBUILD_TOKEN_ADDRESS] as const;
-
-const SCAFFOLD_START_BLOCK = 43_290_000;
 
 const GOAL_DEPLOYED = getAbiItem({
   abi: GoalFactoryAbi,
@@ -179,7 +178,7 @@ export default createConfig({
       abi: erc20Abi,
       chain: "base",
       address: goalFactoryStackAddress("stack.goalToken"),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     JBMultiTerminal: {
       chain: {
@@ -264,13 +263,13 @@ export default createConfig({
       abi: GoalFactoryProtocolEventsAbi,
       chain: "base",
       address: goalFactoryAddress,
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     GoalFlow: {
       abi: FlowAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.goalFlow"),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     ChildFlow: {
       abi: FlowAbi,
@@ -280,37 +279,37 @@ export default createConfig({
         event: BUDGET_STACK_DEPLOYED_FROM_FACTORY,
         parameter: "childFlow",
       }),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     GoalTreasury: {
       abi: GoalTreasuryAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.goalTreasury"),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     UMATreasurySuccessResolver: {
       abi: UmaTreasurySuccessResolverAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.successResolver"),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     UnderwriterSlasherRouter: {
       abi: UnderwriterSlasherRouterAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.underwriterSlasherRouter"),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     JurorSlasherRouter: {
       abi: JurorSlasherRouterAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.jurorSlasherRouter"),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     GoalStakeVault: {
       abi: GoalStakeVaultAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.stakeVault"),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     PremiumEscrow: {
       abi: PremiumEscrowAbi,
@@ -320,31 +319,31 @@ export default createConfig({
         event: BUDGET_STACK_DEPLOYED_FROM_FACTORY,
         parameter: "premiumEscrow",
       }),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     GoalRevnetSplitHook: {
       abi: GoalRevnetSplitHookAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.splitHook"),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     GoalFlowAllocationLedgerPipeline: {
       abi: GoalFlowAllocationLedgerPipelineAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.goalFlowAllocationLedgerPipeline"),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     BudgetStakeLedger: {
       abi: BudgetStakeLedgerAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.budgetStakeLedger"),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     BudgetTCRFactory: {
       abi: BudgetTCRFactoryProtocolEventsAbi,
       chain: "base",
       address: budgetTcrFactoryAddress,
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     BudgetTCR: {
       abi: BudgetTCRAbi,
@@ -354,7 +353,7 @@ export default createConfig({
         event: BUDGET_TCR_STACK_DEPLOYED_FOR_GOAL,
         parameter: "budgetTCR",
       }),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     BudgetTCRProtocolEvents: {
       abi: BudgetTCRProtocolEventsAbi,
@@ -364,13 +363,13 @@ export default createConfig({
         event: BUDGET_TCR_STACK_DEPLOYED_FOR_GOAL,
         parameter: "budgetTCR",
       }),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     ERC20VotesArbitrator: {
       abi: ERC20VotesArbitratorAbi,
       chain: "base",
       address: goalFactoryStackAddress("stack.arbitrator"),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     AllocationMechanismTCR: {
       abi: AllocationMechanismTCRAbi,
@@ -380,7 +379,7 @@ export default createConfig({
         event: BUDGET_ALLOCATION_MECHANISM_DEPLOYED_FROM_FACTORY,
         parameter: "allocationMechanism",
       }),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     MechanismERC20VotesArbitrator: {
       abi: ERC20VotesArbitratorAbi,
@@ -390,7 +389,7 @@ export default createConfig({
         event: BUDGET_ALLOCATION_MECHANISM_DEPLOYED_FROM_FACTORY,
         parameter: "allocationMechanismArbitrator",
       }),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
     BudgetTreasury: {
       abi: BudgetTreasuryAbi,
@@ -400,7 +399,7 @@ export default createConfig({
         event: BUDGET_STACK_DEPLOYED_FROM_FACTORY,
         parameter: "budgetTreasury",
       }),
-      startBlock: SCAFFOLD_START_BLOCK,
+      startBlock: BASE_SCAFFOLD_START_BLOCK,
     },
   },
   blocks: {

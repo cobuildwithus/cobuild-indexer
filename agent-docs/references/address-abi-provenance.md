@@ -6,7 +6,7 @@ Address composition:
 - `addresses.revnet.ts`: Juicebox/Revnet contract addresses derived from `juice-sdk-core`.
 - `addresses.cobuild.ts`: wire-backed Cobuild deployment addresses plus local-only non-wire integration constants.
 - `addresses.ts`: merged export used by runtime config and handlers.
-- `@cobuild/wire`: canonical Base entrypoint + implementation address exports (`baseContracts`, `baseEntrypoints`, ABI symbols) used by scaffold discovery and Cobuild runtime addresses in `ponder.config.ts`.
+- `@cobuild/wire`: canonical Base entrypoint + implementation address exports (`baseContracts`, `baseEntrypoints`, `BASE_SCAFFOLD_START_BLOCK`, ABI symbols) used by scaffold discovery and Cobuild runtime addresses in `ponder.config.ts`.
 
 ABI generation:
 - `wagmi.config.ts` defines ABI generation pipeline.
@@ -20,7 +20,7 @@ ABI generation:
 - Keep generated `abis.ts` in sync with deployed contract versions.
 - Keep factory event payload assumptions in `ponder.config.ts` (`GoalDeployed`, `BudgetTCRStackDeployedForGoal`, `BudgetStackDeployed`) aligned with deployed `v1-core` emitters.
 - When published `@cobuild/wire` lags a local protocol event cutover, prefer a narrowly scoped `ponder.config.ts` event-fragment override and remove it once the refreshed package publishes.
-- The current Base factory discovery path consumes the published `@cobuild/wire` `0.3.1` entrypoint addresses and ABI fragments, with scaffold cutover starting at block `43290000`.
+- The current Base factory discovery path consumes the published `@cobuild/wire` entrypoint addresses, ABI fragments, and `BASE_SCAFFOLD_START_BLOCK` export for scaffold cutover.
 
 ## Safe Update Workflow
 

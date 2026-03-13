@@ -14,7 +14,7 @@
   - goal-token transfers are factory-discovered from `GoalFactory:GoalDeployed(stack.goalToken)`
 - Cobuild swap tracking is pinned to `chain: "base"` and uses factory indexing for `TokenBought`.
 - Scaffold discovery is rooted at the published Base entrypoints from `@cobuild/wire`:
-  - `GoalFactory` and `BudgetTCRFactory` start at block `43290000`.
+  - `GoalFactory` and `BudgetTCRFactory` inherit `BASE_SCAFFOLD_START_BLOCK` from `@cobuild/wire`.
   - First-hop stack contracts are discovered from factory events (no manual bootstrap lists).
   - Second-level stack contracts (`ChildFlow`, `BudgetTreasury`, `PremiumEscrow`) are discovered from `BudgetTCRFactory:BudgetStackDeployed`.
 
