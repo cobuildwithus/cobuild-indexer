@@ -13,12 +13,13 @@ async function sendReservedTokensToSplits(params: {
 }) {
   const { event, context } = params;
   const { args } = event;
-  const { projectId: _projectId, tokenCount } = args;
+  const { projectId: _projectId, rulesetId, tokenCount } = args;
   const projectId = Number(_projectId);
   const chainId = context.chain.id;
 
   await context.db.update(project, { chainId, projectId }).set((p) => ({
     pendingReservedTokens: p.pendingReservedTokens - tokenCount,
+    currentRulesetId: rulesetId,
   }));
 
   await refreshProjectCashoutCoefficients({

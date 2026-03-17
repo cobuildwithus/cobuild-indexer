@@ -74,20 +74,24 @@ export async function refreshProjectCashoutCoefficients({
     );
   }
 
-  const currentRuleset = await db.find(ruleset, {
-    chainId,
-    rulesetId: currentProject.currentRulesetId,
-    projectId,
-  });
+  const hasActiveRuleset = currentProject.currentRulesetId !== 0n;
+  const currentRuleset = hasActiveRuleset
+    ? await db.find(ruleset, {
+        chainId,
+        rulesetId: currentProject.currentRulesetId,
+        projectId,
+      })
+    : null;
 
-  if (!currentRuleset) {
+  if (hasActiveRuleset && !currentRuleset) {
     throw new Error(
       `Ruleset ${currentProject.currentRulesetId} not found for project ${projectId} on chain ${chainId}`
     );
   }
 
   const overflow = currentProject.balance;
-  const tax = BigInt(currentRuleset.cashOutTaxRate);
+  const cashOutTaxRate = currentRuleset?.cashOutTaxRate ?? 0;
+  const tax = BigInt(cashOutTaxRate);
 
   const totalSupplyWithPending =
     currentProject.erc20Supply + currentProject.pendingReservedTokens;
@@ -117,7 +121,7 @@ export async function refreshProjectCashoutCoefficients({
       cashoutB: B,
       balance: overflow,
       totalSupply: totalSupplyWithPending,
-      cashOutTaxRate: Number(currentRuleset.cashOutTaxRate),
+      cashOutTaxRate,
     });
   }
 

@@ -12,7 +12,7 @@ async function useAllowance(params: {
   const { args } = event;
   const { id: chainId } = context.chain;
 
-  const { projectId: _projectId, amountPaidOut } = args;
+  const { projectId: _projectId, rulesetId, amountPaidOut } = args;
   const projectId = Number(_projectId);
 
   await context.db
@@ -22,6 +22,7 @@ async function useAllowance(params: {
     })
     .set((p) => ({
       balance: p.balance - amountPaidOut,
+      currentRulesetId: rulesetId,
     }));
 
   await refreshProjectCashoutCoefficients({
