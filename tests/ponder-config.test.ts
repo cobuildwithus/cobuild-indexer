@@ -56,8 +56,8 @@ const expectBroadFilters = (
 };
 
 describe("ponder config scope", () => {
-  const bridgedGoalFactory = "0x88c3E04bE35b16A248d66c48C78aEf4e864eb1B3";
-  const bridgedBudgetTcrFactory = "0x764c0207a6fc6a4c740649B1e3Cc3c913adfb95D";
+  const bridgedGoalFactory = "0xA8a7d64D4bb1Fe9B73F69336a607979CB24B771E";
+  const bridgedBudgetTcrFactory = "0x39E473250eD0cb7b8BF41faeea9f7BdDb97A1d57";
 
   it("broadens shared REV and Juicebox contract filters while preserving explicit event lists", () => {
     expectBroadFilters(
