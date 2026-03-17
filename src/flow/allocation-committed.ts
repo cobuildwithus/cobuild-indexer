@@ -22,7 +22,7 @@ import {
 const EMPTY_HEX = "0x" as Hex;
 
 function scaledAllocationsByIndex(packedSnapshot: Hex) {
-  const byIndex = new Map<number, number>();
+  const byIndex = new Map<bigint, bigint>();
   for (const entry of decodePackedSnapshot(packedSnapshot)) {
     byIndex.set(entry.recipientIndex, entry.allocationScaled);
   }
@@ -151,8 +151,8 @@ async function applyAllocationStateTransition(args: {
     // On-chain, removed recipients are skipped entirely by FlowAllocations.
     if (recipientRow.isRemoved) continue;
 
-    const oldScaled = oldByIndex.get(idx) ?? 0;
-    const newScaled = newByIndex.get(idx) ?? 0;
+    const oldScaled = oldByIndex.get(idx) ?? 0n;
+    const newScaled = newByIndex.get(idx) ?? 0n;
 
     const oldComputedUnits = computedUnitsFromScaledAllocation(oldWeight, oldScaled);
     const newComputedUnits = computedUnitsFromScaledAllocation(newWeight, newScaled);

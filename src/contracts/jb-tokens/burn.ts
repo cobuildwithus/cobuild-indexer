@@ -29,7 +29,7 @@ async function burn({
     chainId,
     projectId,
     snapshot: {
-      timestamp: Number(event.block.timestamp),
+      timestamp: event.block.timestamp,
       txHash: event.transaction.hash,
     },
   });

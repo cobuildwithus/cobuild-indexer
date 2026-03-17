@@ -13,7 +13,7 @@ export const chainId = (t: PgColumnsBuilders) => ({
   chainId: t.integer().notNull(),
 });
 export const createdAt = (t: PgColumnsBuilders) => ({
-  createdAt: t.integer().notNull(),
+  createdAt: t.bigint().notNull(),
 });
 
 export const projectId = (t: PgColumnsBuilders) => ({
@@ -29,7 +29,7 @@ export const balance = (t: PgColumnsBuilders) => ({
 });
 
 export const timestamp = (t: PgColumnsBuilders) => ({
-  timestamp: t.integer().notNull(),
+  timestamp: t.bigint().notNull(),
 });
 export const logIndex = (t: PgColumnsBuilders) => ({
   logIndex: t.integer().notNull(),
@@ -38,7 +38,7 @@ export const blockNumber = (t: PgColumnsBuilders) => ({
   blockNumber: t.bigint().notNull(),
 });
 export const blockTimestamp = (t: PgColumnsBuilders) => ({
-  blockTimestamp: t.integer().notNull(),
+  blockTimestamp: t.bigint().notNull(),
 });
 export const txHash = (t: PgColumnsBuilders) => ({ txHash: t.hex().notNull() });
 export const caller = (t: PgColumnsBuilders) => ({ caller: t.hex().notNull() });
@@ -141,7 +141,7 @@ export const suckerGroup = onchainTable("sucker_group", (t) => ({
     .primaryKey(),
   projects: t.text().array().notNull().default([]),
   addresses: t.hex().array().notNull().default([]),
-  createdAt: t.integer().notNull(),
+  createdAt: t.bigint().notNull(),
 }));
 
 /**
@@ -178,7 +178,7 @@ export const participant = onchainTable(
     ...suckerGroupId(t),
     isRevnet: t.boolean(),
     address: t.hex().notNull(),
-    firstOwned: t.integer(),
+    firstOwned: t.bigint(),
     borrowableAmount: t.bigint().notNull().default(BigInt(0)),
   }),
   (t) => ({
@@ -220,7 +220,7 @@ export const loan = onchainTable(
     borrowAmount: t.bigint().notNull(),
     collateral: t.bigint().notNull(),
     sourceFeeAmount: t.bigint().notNull(),
-    prepaidDuration: t.integer().notNull(),
+    prepaidDuration: t.bigint().notNull(),
     prepaidFeePercent: t.integer().notNull(),
     beneficiary: t.hex().notNull(),
     owner: t.hex().notNull(),
@@ -248,7 +248,7 @@ export const borrowLoanEvent = onchainTable("borrow_loan_event", (t) => ({
   borrowAmount: t.bigint().notNull(),
   collateral: t.bigint().notNull(),
   sourceFeeAmount: t.bigint().notNull(),
-  prepaidDuration: t.integer().notNull(),
+  prepaidDuration: t.bigint().notNull(),
   prepaidFeePercent: t.integer().notNull(),
   beneficiary: t.hex().notNull(),
   token: t.hex().notNull(),
@@ -321,7 +321,7 @@ export const ruleset = onchainTable(
 
     // Timestamps
     ...createdAt(t), // when queued/initialized
-    queuedAt: t.integer().notNull(),
+    queuedAt: t.bigint().notNull(),
 
     // Core ruleset properties from JBRuleset struct
     cycleNumber: t.integer().notNull(),
@@ -335,7 +335,7 @@ export const ruleset = onchainTable(
     // Metadata fields (unpacked from uint256)
     reservedPercent: t.integer().notNull(),
     cashOutTaxRate: t.integer().notNull(),
-    baseCurrency: t.integer().notNull(),
+    baseCurrency: t.bigint().notNull(),
 
     // Boolean flags from metadata
     pausePay: t.boolean().notNull(),
@@ -711,7 +711,7 @@ export const flowRecipient = onchainTable("flow_recipient", (t) => ({
   recipient: t.hex().notNull(), // address
   approvedBy: t.hex(),
 
-  recipientIndex: t.integer().notNull(), // 0-based
+  recipientIndex: t.bigint().notNull(), // uint32 stored as bigint
   recipientType: t.integer().notNull(), // uint8 enum in contract
   isRemoved: t.boolean().notNull().default(false),
 
@@ -749,7 +749,7 @@ export const flowRecipientByIndex = onchainTable("flow_recipient_by_index", (t) 
   id: t.text().primaryKey(), // `${flow}:${recipientIndex}`
 
   flowId: t.hex().notNull(),
-  recipientIndex: t.integer().notNull(),
+  recipientIndex: t.bigint().notNull(),
   flowRecipientId: t.text().notNull(), // `${flow}:${recipientId}`
   recipientId: t.hex().notNull(),
 
@@ -790,9 +790,9 @@ export const allocationEntryState = onchainTable("allocation_entry_state", (t) =
 
   recipientId: t.hex().notNull(),
   recipient: t.hex().notNull(),
-  recipientIndex: t.integer().notNull(),
+  recipientIndex: t.bigint().notNull(),
 
-  allocationScaled: t.integer().notNull(), // uint32
+  allocationScaled: t.bigint().notNull(), // uint32 stored as bigint
   computedUnits: t.bigint().notNull(), // computed units for THIS allocationKey (no baseline)
 
   updatedAtBlock: t.bigint().notNull(),
@@ -1240,8 +1240,8 @@ export const goalContributorAggregate = onchainTable(
     contributor: t.hex().notNull(),
     totalContributed: t.bigint().notNull().default(0n),
     contributionCount: t.integer().notNull().default(0),
-    firstContributedAt: t.integer().notNull(),
-    lastContributedAt: t.integer().notNull(),
+    firstContributedAt: t.bigint().notNull(),
+    lastContributedAt: t.bigint().notNull(),
     firstContributionTxHash: t.hex().notNull(),
     lastContributionTxHash: t.hex().notNull(),
     updatedAtBlock: t.bigint().notNull(),

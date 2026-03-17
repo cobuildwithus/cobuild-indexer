@@ -61,7 +61,7 @@ export async function refreshProjectCashoutCoefficients({
   db: Context["db"];
   chainId: number;
   projectId: number;
-  snapshot?: { timestamp: number; txHash: `0x${string}` };
+  snapshot?: { timestamp: bigint; txHash: `0x${string}` };
 }) {
   const currentProject = await db.find(project, {
     chainId,

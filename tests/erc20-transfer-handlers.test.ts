@@ -144,12 +144,12 @@ describe("erc20 transfer handlers", () => {
       {
         table: "participant",
         value: {
-          createdAt: 123,
+          createdAt: 123n,
           address: to,
           chainId: 8453,
           projectId: 42,
           balance: 15n,
-          firstOwned: 123,
+          firstOwned: 123n,
           isRevnet: true,
           suckerGroupId: "group-42",
         },

@@ -26,7 +26,7 @@ async function sendReservedTokensToSplits(params: {
     chainId,
     projectId,
     snapshot: {
-      timestamp: Number(event.block.timestamp),
+      timestamp: event.block.timestamp,
       txHash: event.transaction.hash,
     },
   });

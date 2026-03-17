@@ -53,12 +53,12 @@ async function handleTransfer(params: {
     await context.db
       .insert(participant)
       .values({
-        createdAt: Number(event.block.timestamp),
+        createdAt: event.block.timestamp,
         address: to,
         chainId,
         projectId,
         balance: value,
-        firstOwned: Number(event.block.timestamp),
+        firstOwned: event.block.timestamp,
         isRevnet: _project.isRevnet,
         suckerGroupId: _project.suckerGroupId,
       })

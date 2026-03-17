@@ -28,14 +28,14 @@ async function create(params: {
   const newSuckerGroup = await context.db.insert(suckerGroup).values({
     projects: [projectUniqueId],
     addresses: [] as `0x${string}`[],
-    createdAt: Number(block.timestamp),
+    createdAt: block.timestamp,
   });
 
   await context.db.insert(project).values({
     chainId,
     projectId: projectIdNum,
     isRevnet: false,
-    createdAt: Number(block.timestamp),
+    createdAt: block.timestamp,
     owner,
     deployer: caller,
     suckerGroupId: newSuckerGroup.id,

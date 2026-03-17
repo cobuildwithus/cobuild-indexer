@@ -2,7 +2,7 @@ export function unpackMetadata(metadata: bigint) {
   return {
     reservedPercent: Number((metadata >> 4n) & 0xffffn),
     cashOutTaxRate: Number((metadata >> 20n) & 0xffffn),
-    baseCurrency: Number((metadata >> 36n) & 0xffffffffn),
+    baseCurrency: (metadata >> 36n) & 0xffffffffn,
     pausePay: ((metadata >> 68n) & 1n) === 1n,
     pauseCreditTransfers: ((metadata >> 69n) & 1n) === 1n,
     allowOwnerMinting: ((metadata >> 70n) & 1n) === 1n,

@@ -57,11 +57,11 @@ async function handleBorrow(params: {
     beneficiary,
     borrowAmount,
     collateral: collateralCount,
-    createdAt: Number(_loan.createdAt),
+    createdAt: BigInt(_loan.createdAt),
     token: source.token,
     terminal: source.terminal,
     sourceFeeAmount,
-    prepaidDuration: Number(_loan.prepaidDuration),
+    prepaidDuration: BigInt(_loan.prepaidDuration),
     prepaidFeePercent: Number(_loan.prepaidFeePercent),
     tokenUri,
   });
@@ -70,7 +70,7 @@ async function handleBorrow(params: {
   await context.db.insert(borrowLoanEvent).values({
     chainId,
     txHash: event.transaction.hash,
-    timestamp: Number(event.block.timestamp),
+    timestamp: event.block.timestamp,
     caller: event.transaction.from,
     from: event.transaction.from,
     logIndex: event.log.logIndex,
@@ -82,7 +82,7 @@ async function handleBorrow(params: {
     token: source.token,
     terminal: source.terminal,
     sourceFeeAmount,
-    prepaidDuration: Number(_loan.prepaidDuration),
+    prepaidDuration: BigInt(_loan.prepaidDuration),
     prepaidFeePercent: Number(_loan.prepaidFeePercent),
   });
 
@@ -95,7 +95,7 @@ async function handleBorrow(params: {
       _project.erc20Symbol || "ETH"
     } as collateral`,
     chainId,
-    timestamp: Number(event.block.timestamp),
+    timestamp: event.block.timestamp,
     txHash: event.transaction.hash,
     suckerGroupId: _project.suckerGroupId,
   });

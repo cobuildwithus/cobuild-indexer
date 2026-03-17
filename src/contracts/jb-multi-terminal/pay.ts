@@ -54,7 +54,7 @@ async function applyGoalContributorAggregateDelta(args: {
 }) {
   const { context, event, payer, amount, suckerGroupId } = args;
   const contributor = payer.toLowerCase() as Hex;
-  const eventTimestamp = Number(event.block.timestamp);
+  const eventTimestamp = event.block.timestamp;
   const eventTxHash = event.transaction.hash;
   const goals = await loadGoalTreasuriesForSuckerGroup({ context, suckerGroupId });
   if (goals.length === 0) return;
@@ -155,7 +155,7 @@ async function pay(params: {
   const insertedPayEvent = await context.db.insert(payEvent).values({
     chainId,
     txHash: event.transaction.hash,
-    timestamp: Number(event.block.timestamp),
+    timestamp: event.block.timestamp,
     caller,
     from: event.transaction.from,
     logIndex: event.log.logIndex,
@@ -207,7 +207,7 @@ async function pay(params: {
       }`,
       memo: memo || undefined,
       chainId,
-      timestamp: Number(event.block.timestamp),
+      timestamp: event.block.timestamp,
       txHash: event.transaction.hash,
       suckerGroupId,
     });
@@ -218,7 +218,7 @@ async function pay(params: {
     chainId,
     projectId,
     snapshot: {
-      timestamp: Number(event.block.timestamp),
+      timestamp: event.block.timestamp,
       txHash: event.transaction.hash,
     },
   });

@@ -29,9 +29,9 @@ async function handleRulesetQueued({
 
   const projectId = Number(_projectId);
   const chainId = context.chain.id;
-  const duration = Number(_duration);
+  const duration = _duration;
   const weightCutPercent = Number(_weightCutPercent);
-  const mustStartAtOrAfter = Number(_mustStartAtOrAfter);
+  const mustStartAtOrAfter = _mustStartAtOrAfter;
 
   // The raw weight value from the event. This may be a flag (1) indicating the
   // on-chain contract derived the real weight from the previous ruleset. We
@@ -94,7 +94,7 @@ async function handleRulesetQueued({
     const _derivedStart = deriveStartFrom(
       baseRuleset.start,
       baseRuleset.duration,
-      BigInt(mustStartAtOrAfter)
+      mustStartAtOrAfter
     );
 
     // ---------------------------------------------------------------------
@@ -143,9 +143,9 @@ async function handleRulesetQueued({
     ? deriveStartFrom(
         baseRuleset.start,
         baseRuleset.duration,
-        BigInt(mustStartAtOrAfter)
+        mustStartAtOrAfter
       )
-    : BigInt(mustStartAtOrAfter);
+    : mustStartAtOrAfter;
 
   // Create or update the ruleset with all queue data
   await context.db
@@ -155,17 +155,17 @@ async function handleRulesetQueued({
       projectId,
       suckerGroupId: projectSuckerGroupId,
       rulesetId,
-      createdAt: Number(event.block.timestamp),
-      queuedAt: Number(event.block.timestamp),
+      createdAt: event.block.timestamp,
+      queuedAt: event.block.timestamp,
       cycleNumber,
       basedOnId: previousRuleset?.basedOnId || 0n,
       start: derivedStart,
-      duration: BigInt(duration),
+      duration,
       weight,
       weightCutPercent,
       approvalHook: approvalHook === zeroAddress ? null : approvalHook,
       metadata: _metadata,
-      mustStartAtOrAfter: BigInt(mustStartAtOrAfter),
+      mustStartAtOrAfter,
       caller,
       // Unpacked metadata fields
       reservedPercent: unpackedMetadata.reservedPercent,
@@ -192,15 +192,15 @@ async function handleRulesetQueued({
       metadataExtra: unpackedMetadata.metadataExtra,
     })
     .onConflictDoUpdate({
-      queuedAt: Number(event.block.timestamp),
+      queuedAt: event.block.timestamp,
       cycleNumber,
       start: derivedStart,
-      duration: BigInt(duration),
+      duration,
       weight,
       weightCutPercent,
       approvalHook: approvalHook === zeroAddress ? null : approvalHook,
       metadata: _metadata,
-      mustStartAtOrAfter: BigInt(mustStartAtOrAfter),
+      mustStartAtOrAfter,
       caller,
       // Update all unpacked metadata fields
       reservedPercent: unpackedMetadata.reservedPercent,
@@ -227,7 +227,7 @@ async function handleRulesetQueued({
       metadataExtra: unpackedMetadata.metadataExtra,
     });
 
-  const currentTimestamp = new Date().getTime() / 1000;
+  const currentTimestamp = event.block.timestamp;
   if (currentTimestamp > derivedStart) {
     await context.db
       .update(project, {
@@ -243,7 +243,7 @@ async function handleRulesetQueued({
       chainId,
       projectId,
       snapshot: {
-        timestamp: Number(event.block.timestamp),
+        timestamp: event.block.timestamp,
         txHash: event.transaction.hash,
       },
     });

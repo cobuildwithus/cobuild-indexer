@@ -40,7 +40,7 @@ async function cashOutTokens(params: {
     currency: updatedProject.accountingTokenSymbol || "ETH",
     description: `cashed out ${formatAmount(cashOutCount, 18)} $${updatedProject.erc20Symbol}`,
     chainId,
-    timestamp: Number(event.block.timestamp),
+    timestamp: event.block.timestamp,
     txHash: event.transaction.hash,
     suckerGroupId,
   });
@@ -50,7 +50,7 @@ async function cashOutTokens(params: {
     chainId,
     projectId,
     snapshot: {
-      timestamp: Number(event.block.timestamp),
+      timestamp: event.block.timestamp,
       txHash: event.transaction.hash,
     },
   });

@@ -56,8 +56,8 @@ async function handleRulesetInitialized({
       projectId,
       suckerGroupId: projectSuckerGroupId,
       rulesetId,
-      createdAt: Number(event.block.timestamp),
-      queuedAt: Number(event.block.timestamp), // Set to same as createdAt for now
+      createdAt: event.block.timestamp,
+      queuedAt: event.block.timestamp, // Set to same as createdAt for now
       cycleNumber, // Provisional value; will be re-evaluated when queued
       basedOnId,
       start: 0n, // Will be updated when queued
@@ -69,7 +69,7 @@ async function handleRulesetInitialized({
       // Default metadata values
       reservedPercent: 0,
       cashOutTaxRate: 0,
-      baseCurrency: 0,
+      baseCurrency: 0n,
       pausePay: false,
       pauseCreditTransfers: false,
       allowOwnerMinting: false,
@@ -90,6 +90,6 @@ async function handleRulesetInitialized({
       // update cycleNumber here to avoid overwriting the finalized
       // values that the later RulesetQueued handler will compute.
       basedOnId,
-      createdAt: Number(event.block.timestamp),
+      createdAt: event.block.timestamp,
     });
 }

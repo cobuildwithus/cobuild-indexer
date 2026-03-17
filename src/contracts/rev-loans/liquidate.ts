@@ -38,7 +38,7 @@ async function handleLiquidate(params: {
   await context.db.insert(liquidateLoanEvent).values({
     chainId,
     txHash: event.transaction.hash,
-    timestamp: Number(event.block.timestamp),
+    timestamp: event.block.timestamp,
     caller: event.transaction.from,
     from: event.transaction.from,
     logIndex: event.log.logIndex,
@@ -57,7 +57,7 @@ async function handleLiquidate(params: {
       _project.erc20Symbol || "ETH"
     }`,
     chainId,
-    timestamp: Number(event.block.timestamp),
+    timestamp: event.block.timestamp,
     txHash: event.transaction.hash,
     suckerGroupId: _project.suckerGroupId,
   });

@@ -30,10 +30,10 @@ async function handleReallocateCollateral(params: {
     projectId,
     chainId,
     suckerGroupId: _project.suckerGroupId,
-    createdAt: Number(reallocatedLoan.createdAt),
+    createdAt: BigInt(reallocatedLoan.createdAt),
     borrowAmount: reallocatedLoan.amount,
     collateral: reallocatedLoan.collateral,
-    prepaidDuration: Number(reallocatedLoan.prepaidDuration),
+    prepaidDuration: BigInt(reallocatedLoan.prepaidDuration),
     prepaidFeePercent: Number(reallocatedLoan.prepaidFeePercent),
     token: reallocatedLoan.source.token,
     terminal: reallocatedLoan.source.terminal,
@@ -46,7 +46,7 @@ async function handleReallocateCollateral(params: {
   await context.db.insert(reallocateLoanEvent).values({
     chainId,
     txHash: event.transaction.hash,
-    timestamp: Number(event.block.timestamp),
+    timestamp: event.block.timestamp,
     caller: event.transaction.from,
     from: event.transaction.from,
     logIndex: event.log.logIndex,
@@ -66,7 +66,7 @@ async function handleReallocateCollateral(params: {
       _project.erc20Symbol || "ETH"
     }`,
     chainId,
-    timestamp: Number(event.block.timestamp),
+    timestamp: event.block.timestamp,
     txHash: event.transaction.hash,
     suckerGroupId: _project.suckerGroupId,
   });

@@ -60,7 +60,7 @@ ponder.on("TokenBought:Transfer", async ({ event, context }) => {
     logIndex: event.log.logIndex,
     txHash: event.transaction.hash,
     blockNumber: event.block.number,
-    blockTimestamp: Number(timestamp),
+    blockTimestamp: timestamp,
     chainId,
   });
 });

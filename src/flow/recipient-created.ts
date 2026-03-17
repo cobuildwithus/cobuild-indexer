@@ -12,7 +12,7 @@ async function handleRecipientCreated(args: { event: any; context: any; contract
   const flowId = event.log.address;
   const recipientId = event.args.recipientId;
   const info = event.args.recipient;
-  const recipientIndex = Number(info.recipientIndexPlusOne) - 1;
+  const recipientIndex = BigInt(info.recipientIndexPlusOne) - 1n;
   const isRemoved = Boolean(info.isRemoved);
   const blockNumber = event.block.number;
   const blockTimestamp = event.block.timestamp;

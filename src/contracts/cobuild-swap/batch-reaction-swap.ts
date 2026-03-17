@@ -9,7 +9,7 @@ ponder.on("CobuildSwap:BatchReactionSwap", async ({ event, context }) => {
   const { tokenIn, tokenOut, amountIn, fee, amountOut, router } = event.args;
 
   const chainId = context.chain.id;
-  const timestamp = Number(event.block.timestamp);
+  const timestamp = event.block.timestamp;
   const id = `${event.transaction.hash}-${event.log.logIndex}`;
 
   if (tokenIn.toLowerCase() !== contracts.USDCBase.toLowerCase()) {

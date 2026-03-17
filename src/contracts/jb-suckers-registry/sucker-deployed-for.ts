@@ -75,7 +75,7 @@ async function suckerDeployedFor(params: {
   const newSuckerGroup = await context.db.insert(suckerGroup).values({
     projects: nextProjects,
     addresses: nextAddresses,
-    createdAt: Number(event.block.timestamp),
+    createdAt: event.block.timestamp,
   });
 
   // Update all affiliated projects to point to the new merged group.

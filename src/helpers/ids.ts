@@ -4,7 +4,7 @@ export function flowRecipientKey(flow: Hex, recipientId: Hex): string {
   return `${flow.toLowerCase()}:${recipientId.toLowerCase()}`;
 }
 
-export function flowRecipientByIndexKey(flow: Hex, recipientIndex: number): string {
+export function flowRecipientByIndexKey(flow: Hex, recipientIndex: bigint | number): string {
   return `${flow.toLowerCase()}:${recipientIndex}`;
 }
 

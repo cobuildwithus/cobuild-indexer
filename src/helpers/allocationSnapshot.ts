@@ -6,8 +6,8 @@ export const WEIGHT_SCALE = 1_000_000_000_000_000n; // 1e15
 export const DEFAULT_DISTRIBUTION_UNITS = 10n;
 
 export type PackedSnapshotEntry = {
-  recipientIndex: number; // uint32
-  allocationScaled: number; // uint32 (PPM)
+  recipientIndex: bigint; // uint32
+  allocationScaled: bigint; // uint32 (PPM)
 };
 
 /**
@@ -43,7 +43,10 @@ export function decodePackedSnapshot(packed: Hex): PackedSnapshotEntry[] {
       (bytes[offset + 7] ?? 0);
 
     // >>> 0 forces unsigned 32-bit
-    entries.push({ recipientIndex: idx >>> 0, allocationScaled: alloc >>> 0 });
+    entries.push({
+      recipientIndex: BigInt(idx >>> 0),
+      allocationScaled: BigInt(alloc >>> 0),
+    });
   }
 
   return entries;
@@ -53,9 +56,12 @@ export function decodePackedSnapshot(packed: Hex): PackedSnapshotEntry[] {
  * Replicates FlowUnitMath.poolUnitsFromScaledAllocation(weight, allocationScaled, PPM_SCALE)
  * This returns the per-allocationKey "computed units" (does NOT include DEFAULT_DISTRIBUTION_UNITS).
  */
-export function computedUnitsFromScaledAllocation(weight: bigint, allocationScaled: number): bigint {
-  if (allocationScaled === 0) return 0n;
-  const scaled = BigInt(allocationScaled);
+export function computedUnitsFromScaledAllocation(
+  weight: bigint,
+  allocationScaled: bigint
+): bigint {
+  if (allocationScaled === 0n) return 0n;
+  const scaled = allocationScaled;
   const weightedAllocation = (scaled * weight) / PPM_SCALE;
   return weightedAllocation / WEIGHT_SCALE;
 }
