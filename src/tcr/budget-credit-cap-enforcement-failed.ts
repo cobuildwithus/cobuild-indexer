@@ -2,6 +2,9 @@ import { ponder } from "ponder:registry";
 
 import { insertProtocolEvent } from "../helpers/protocolEvent";
 
-ponder.on("BudgetTCR:BudgetCreditCapEnforcementFailed", async ({ event, context }) => {
-  await insertProtocolEvent({ context, event, contractName: "BudgetTCR" });
-});
+ponder.on(
+  "BudgetTCR:BudgetGateEnforcementFailed",
+  async ({ event, context }) => {
+    await insertProtocolEvent({ context, event, contractName: "BudgetTCR" });
+  },
+);
