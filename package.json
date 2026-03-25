@@ -29,7 +29,7 @@
     "viem": "^2.0.0"
   },
   "devDependencies": {
-    "@cobuild/repo-tools": "^0.1.13",
+    "@cobuild/repo-tools": "^0.1.14",
     "@cobuild/review-gpt": "^0.4.2",
     "@types/node": "^20.9.0",
     "@wagmi/cli": "^2.5.1",
