@@ -92,7 +92,7 @@ If instructions still conflict after applying this order, ask the user before ac
 ## Completion Workflow
 
 - For any non-doc change that touches production code or tests, run the full completion workflow in `agent-docs/operations/completion-workflow.md` before final handoff.
-- When this workflow is required, do not rush or interrupt the subagent passes: wait for each `simplify`, `test-coverage-audit`, and `task-finish-review` pass to return, review the result, and resolve or explicitly hand off any follow-up before final handoff.
+- When this workflow is required, do not rush or interrupt the subagent passes: expect each `simplify`, `test-coverage-audit`, and `task-finish-review` pass to take about 5 to 10 minutes on non-trivial diffs, wait for each pass to return, and do not cancel one early unless you have concrete evidence it is stuck or off-scope.
 - Skip this workflow for docs/process-only turns unless the user explicitly asks for the full audit sequence.
 
 ## Notes
