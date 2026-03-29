@@ -16,7 +16,7 @@ Last verified: 2026-02-25
 | --- | --- | --- |
 | Docs-only (`*.md`, `agent-docs/**`) | Run baseline checks + docs gates | Run `pnpm test` only if a `test` script exists. |
 | Non-doc changes (runtime/config/scripts) | Run baseline checks + docs gates | Add/close execution plans and keep coordination ledger current as required. |
-| Non-doc changes touching production code/tests | Run baseline checks + docs gates + completion workflow | Follow `agent-docs/operations/completion-workflow.md` before handoff. |
+| Non-doc changes touching production code/tests | Run baseline checks + docs gates + completion workflow | Follow `agent-docs/operations/completion-workflow.md` before handoff; coverage/proof-gap review is handled inside the final completion audit. |
 | User explicitly says to skip checks for this turn | Skip checks | User instruction takes precedence for that turn. |
 
 ## Multi-Agent Change Ledger

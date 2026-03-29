@@ -1,6 +1,6 @@
 # Cobuild Indexer Agent Docs Index
 
-Last verified: 2026-03-28 (coordination-ledger semantics softened to allow overlap by default, and completion-workflow audit prompts now include explicit 5-to-10-minute wait guidance so review subagents are not canceled early)
+Last verified: 2026-03-30 (completion workflow now folds coverage/proof-gap review into the final completion audit while preserving the legacy coverage prompt path as a compatibility redirect)
 
 ## Purpose
 
@@ -21,10 +21,10 @@ This index is the table of contents for durable, repository-local context that a
 | `agent-docs/RELIABILITY.md` | Replay/determinism guardrails and failure modes. | `src/contracts/**`, `ponder.schema.ts`, config + cron behavior | Indexer Maintainers | Per reliability-affecting PR | High | 2026-03-05 |
 | `agent-docs/SECURITY.md` | Security constraints, trust boundaries, and escalation rules. | RPC/config boundaries, API surface, data exposure paths | Indexer Maintainers | Per security-affecting PR | High | 2026-02-25 |
 | `agent-docs/operations/verification-and-runtime.md` | Required verification matrix, runtime guardrails, and coordination workflow. | `package.json`, `.github/workflows/**`, scripts | Indexer Maintainers | Per process/CI PR | High | 2026-02-25 |
-| `agent-docs/operations/completion-workflow.md` | Simplify/coverage/completion-audit workflow for non-doc changes, including unrelated required-check failure commit handling. | Completion workflow + prompts | Indexer Maintainers | Per process change | High | 2026-03-28 |
+| `agent-docs/operations/completion-workflow.md` | Simplify/final-completion-audit workflow for non-doc changes, including unrelated required-check failure commit handling and coverage/proof-gap review inside the final completion audit. | Completion workflow + prompts | Indexer Maintainers | Per process change | High | 2026-03-30 |
 | `agent-docs/prompts/simplify.md` | Reusable simplification pass prompt for behavior-preserving cleanup with parallel-agent handoff output. | Completion workflow | Indexer Maintainers | Per process change | Medium | 2026-03-28 |
-| `agent-docs/prompts/test-coverage-audit.md` | Reusable test-coverage audit prompt for high-impact regression reduction with parallel-agent handoff output. | Completion workflow | Indexer Maintainers | Per process change | Medium | 2026-03-28 |
-| `agent-docs/prompts/task-finish-review.md` | Reusable final completion audit prompt for correctness/security review with parallel-agent handoff output. | Completion workflow | Indexer Maintainers | Per process change | Medium | 2026-03-28 |
+| `agent-docs/prompts/test-coverage-audit.md` | Deprecated compatibility redirect that points older references at `agent-docs/prompts/task-finish-review.md`; it is no longer a separate required audit pass. | Completion workflow compatibility | Indexer Maintainers | Per process change | Low | 2026-03-30 |
+| `agent-docs/prompts/task-finish-review.md` | Reusable final completion audit prompt for correctness/security review with parallel-agent handoff output, including coverage/proof-gap review. | Completion workflow | Indexer Maintainers | Per process change | Medium | 2026-03-30 |
 | `agent-docs/references/README.md` | Internal/external reference packs for implementation and review. | `agent-docs/references/**` | Indexer Maintainers | Monthly | Medium | 2026-02-25 |
 | `agent-docs/references/module-boundary-map.md` | Layer ownership and dependency-direction map for indexer surfaces. | `src/**`, `ponder.config.ts`, `ponder.schema.ts`, scripts | Indexer Maintainers | Per architecture-boundary PR | High | 2026-02-25 |
 | `agent-docs/references/event-handler-map.md` | Event/block handler inventory and touched tables. | `src/**`, `ponder.config.ts` | Indexer Maintainers | Per indexed-event PR | High | 2026-03-11 |

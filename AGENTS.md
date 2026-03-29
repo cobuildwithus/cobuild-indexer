@@ -48,7 +48,7 @@ If instructions still conflict after applying this order, ask the user before ac
 - COORDINATION_LEDGER hard gate for every coding task (single-agent and multi-agent): before any code change, add or update your active entry in `agent-docs/exec-plans/active/COORDINATION_LEDGER.md` with scope and planned symbol add/rename/delete work; do not edit code, generate code, or apply patches until that entry exists; if you cannot update the ledger first, stop and escalate; keep the entry current as scope changes, and remove your entry when done.
 - Ledger rows are active-work notices by default, not hard file locks. Read overlapping rows first, preserve adjacent edits, and coordinate through scope/symbol notes. Treat a row as exclusive only when it explicitly says overlap is unsafe, the lane is a large refactor, or the user gives a conflicting direction.
 - Any spawned subagent that may review or edit code must read `COORDINATION_LEDGER.md`, follow the same hard gate before making code changes, and honor any explicit exclusive/refactor notes on overlapping rows.
-- Run completion workflow audit passes (`simplify`, `test-coverage-audit`, `task-finish-review`) for every non-doc change that touches production code or tests; skip only when the user explicitly says to skip for that turn.
+- Run completion workflow audit passes (`simplify`, `task-finish-review`) for every non-doc change that touches production code or tests; skip only when the user explicitly says to skip for that turn. The final completion audit owns remaining coverage/proof-gap review; do not require a separate `test-coverage-audit` pass.
 - Docs/process-only changes skip completion workflow audit passes unless the user explicitly asks to run them.
 - Keep this file short and route-oriented; keep durable detail in `agent-docs/`.
 
@@ -92,7 +92,7 @@ If instructions still conflict after applying this order, ask the user before ac
 ## Completion Workflow
 
 - For any non-doc change that touches production code or tests, run the full completion workflow in `agent-docs/operations/completion-workflow.md` before final handoff.
-- When this workflow is required, do not rush or interrupt the subagent passes: expect each `simplify`, `test-coverage-audit`, and `task-finish-review` pass to take about 5 to 10 minutes on non-trivial diffs, wait for each pass to return, and do not cancel one early unless you have concrete evidence it is stuck or off-scope.
+- When this workflow is required, do not rush or interrupt the subagent passes: expect each `simplify` and `task-finish-review` pass to take about 5 to 10 minutes on non-trivial diffs, wait for each pass to return, and do not cancel one early unless you have concrete evidence it is stuck or off-scope.
 - Skip this workflow for docs/process-only turns unless the user explicitly asks for the full audit sequence.
 
 ## Notes
