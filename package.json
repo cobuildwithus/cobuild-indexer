@@ -29,8 +29,8 @@
     "viem": "^2.0.0"
   },
   "devDependencies": {
-    "@cobuild/repo-tools": "^0.1.14",
-    "@cobuild/review-gpt": "^0.5.8",
+    "@cobuild/repo-tools": "^0.1.15",
+    "@cobuild/review-gpt": "^0.5.9",
     "@types/node": "^20.9.0",
     "@wagmi/cli": "^2.5.1",
     "eslint": "^8.53.0",
