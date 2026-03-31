@@ -16,6 +16,7 @@
     "docs:drift": "bash scripts/check-agent-docs-drift.sh",
     "docs:gardening": "bash scripts/doc-gardening.sh --fail-on-issues",
     "review:gpt": "cobuild-review-gpt --config scripts/review-gpt.config.sh",
+    "review:gpt:simplify": "cobuild-review-gpt --config scripts/review-gpt.config.sh --preset simplify",
     "wire:ensure-published": "bash scripts/wire-ensure-published.sh",
     "package:audit-context": "bash scripts/package-audit-context.sh",
     "verify": "pnpm wire:ensure-published && pnpm typecheck && pnpm lint && pnpm docs:drift && pnpm docs:gardening"
@@ -30,7 +31,7 @@
   },
   "devDependencies": {
     "@cobuild/repo-tools": "^0.1.15",
-    "@cobuild/review-gpt": "^0.5.16",
+    "@cobuild/review-gpt": "^0.5.17",
     "@types/node": "^20.9.0",
     "@wagmi/cli": "^2.5.1",
     "eslint": "^8.53.0",
